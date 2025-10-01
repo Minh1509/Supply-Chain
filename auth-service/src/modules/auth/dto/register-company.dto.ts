@@ -3,7 +3,6 @@ export class RegisterCompanyDto {
   companyName: string;
   taxCode: string;
   address: string;
-  country: string;
   companyType: string;
   mainIndustry: string;
   representativeName: string;

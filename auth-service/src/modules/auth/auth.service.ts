@@ -54,7 +54,7 @@ export class AuthService extends BaseService {
   async registerCompany(dto: RegisterCompanyDto): Promise<SuccessResponseDto> {
     // Check email
     const existedUser = await this.userRepo.findOne({ where: { email: dto.email } });
-    if (existedUser) {
+    if (existedUser && existedUser.verified) {
       throw new RpcException({
         ...ERROR_RESPONSE.BAD_REQUEST,
         message: `Email đã được sử dụng`,
@@ -88,7 +88,6 @@ export class AuthService extends BaseService {
         companyCode: await this.generateCompanyCode(companyRepo),
         taxCode: dto.taxCode,
         address: dto.address,
-        country: dto.country,
         companyType: dto.companyType,
         mainIndustry: dto.mainIndustry,
         representativeName: dto.representativeName,

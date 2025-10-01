@@ -20,9 +20,6 @@ export class Company extends AbstractEntity<Company> {
   address: string;
 
   @Column({ nullable: true })
-  country: string;
-
-  @Column({ nullable: true })
   companyType: string;
 
   @Column({ nullable: true })

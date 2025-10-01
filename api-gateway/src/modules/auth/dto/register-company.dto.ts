@@ -18,11 +18,6 @@ export class RegisterCompanyDto {
   @IsNotEmpty()
   address: string;
 
-  @ApiProperty({ example: 'Vietnam' })
-  @IsString()
-  @IsNotEmpty()
-  country: string;
-
   @ApiProperty({ example: 'doanh nghiệp sản xuất' })
   @IsString()
   @IsNotEmpty()
@@ -61,7 +56,7 @@ export class RegisterCompanyDto {
 
   @ApiProperty({ example: 'E001' })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   employeeCode: string;
 
   @ApiProperty({ example: 'Quản lý' })
