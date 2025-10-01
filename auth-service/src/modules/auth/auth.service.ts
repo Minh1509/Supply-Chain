@@ -85,7 +85,7 @@ export class AuthService extends BaseService {
       // Tạo company
       const company = companyRepo.create({
         companyName: dto.companyName,
-        companyCode: await this.generateCompanyCode(),
+        companyCode: await this.generateCompanyCode(companyRepo),
         taxCode: dto.taxCode,
         address: dto.address,
         country: dto.country,
@@ -109,7 +109,10 @@ export class AuthService extends BaseService {
       for (const depName of departmentNames) {
         const dep = departmentRepo.create({
           companyId: savedCompany.id,
-          departmentCode: await this.generateDepartmentCode(savedCompany.id),
+          departmentCode: await this.generateDepartmentCode(
+            savedCompany.id,
+            departmentRepo,
+          ),
           departmentName: depName,
         });
         departments.push(await departmentRepo.save(dep));
@@ -470,42 +473,41 @@ export class AuthService extends BaseService {
     return this.jwtService.signAsync(tokenPayload, { expiresIn });
   }
 
-  private async generateCompanyCode(): Promise<string> {
+  private async generateCompanyCode(repo?: Repository<Company>): Promise<string> {
+    const companyRepo = repo ?? this.companyRepo;
     const prefix = 'C';
-    let code: string;
-    let exists = true;
 
-    while (exists) {
-      const count = await this.companyRepo.count({
+    while (true) {
+      const count = await companyRepo.count({
         where: { companyCode: Like(`${prefix}%`) },
       });
-      code = prefix + (count + 1).toString().padStart(4, '0');
+      const code = prefix + (count + 1).toString().padStart(4, '0');
 
-      const existing = await this.companyRepo.findOne({ where: { companyCode: code } });
-      if (!existing) exists = false;
+      const existing = await companyRepo.findOne({ where: { companyCode: code } });
+      if (!existing) return code;
     }
-
-    return code;
   }
 
-  private async generateDepartmentCode(companyId: number): Promise<string> {
+  private async generateDepartmentCode(
+    companyId: number,
+    repo?: Repository<Department>,
+  ): Promise<string> {
+    const departmentRepo = repo ?? this.departmentRepo;
     const prefix = `D${companyId}`;
     let code: string;
-    let exists = true;
 
-    while (exists) {
-      const count = await this.departmentRepo.count({
+    while (true) {
+      const count = await departmentRepo.count({
         where: { departmentCode: Like(`${prefix}%`) },
       });
       code = prefix + (count + 1).toString().padStart(2, '0');
 
-      const existing = await this.departmentRepo.findOne({
+      const existing = await departmentRepo.findOne({
         where: { departmentCode: code },
       });
-      if (!existing) exists = false;
-    }
 
-    return code;
+      if (!existing) return code;
+    }
   }
 
   private generateUsername(email: string, companyId: number): string {
