@@ -3,11 +3,17 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
-# Build outputs
-dist/
+# Build outputs (keep dist/ for production build if needed)
+# dist/
 build/
 *.tgz
+coverage/
+
+# Yarn
+.yarn/
+.pnp.*
 
 # Environment files
 .env
