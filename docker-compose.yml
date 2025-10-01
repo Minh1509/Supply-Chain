@@ -17,7 +17,7 @@ services:
   auth-service:
     build:
       context: ./auth-service
-    image: api-gateway:1.0.0
+    image: auth-service:1.0.0
     container_name: auth-service
     env_file: ./auth-service/.env.docker
     depends_on:
@@ -34,7 +34,7 @@ services:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
     ports:
-      - "5666:5672" 
+      - "5666:5672"
       - "15666:15672"
     networks:
       - supply-chain
