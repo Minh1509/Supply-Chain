@@ -22,6 +22,7 @@
     "migrate:gen": "typeorm-ts-node-commonjs migration:generate -d ormconfig",
     "migrate:create": "typeorm migration:create",
     "migrate:run": "typeorm-ts-node-commonjs migration:run -d ormconfig",
+    "migrate:prod": "typeorm migration:run -d dist/ormconfig.js",
     "migrate:revert": "typeorm-ts-node-commonjs migration:revert -d ormconfig",
     "seed:config": "ts-node ./node_modules/typeorm-seeding/dist/cli.js src/config -r ormconfig.ts",
     "seed:run": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed -r ormconfig.ts",
