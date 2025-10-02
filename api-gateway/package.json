@@ -37,6 +37,7 @@
     "class-validator": "^0.14.2",
     "express-rate-limit": "^8.1.0",
     "helmet": "^8.1.0",
+    "husky": "^9.1.7",
     "joi": "^17.13.3",
     "multer": "^2.0.2",
     "nest-winston": "^1.10.2",
