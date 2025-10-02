@@ -11,6 +11,10 @@ import { AuthModule } from './auth/auth.module';
 import { CompanyModule } from './company/company.module';
 import { DepartmentModule } from './department/department.module';
 import { EmployeeModule } from './employee/employee.module';
+import { ItemModule } from './General/item/item.module';
+import { ManufactureLineModule } from './General/manufactureLine/manufactureLine.module';
+import { ManufacturePlantModule } from './General/manufacturePlant/manufacturePlant.module';
+import { ProductModule } from './General/product/product.module';
 import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
 import { UserModule } from './user/user.module';
 import { getWinstonConfig } from '../common/utilities';
@@ -39,6 +43,10 @@ import { appConfiguration, rabbitmqConfiguration } from '../config';
     DepartmentModule,
     CompanyModule,
     AdminModule,
+    ItemModule,
+    ProductModule,
+    ManufacturePlantModule,
+    ManufactureLineModule,
   ],
   controllers: [],
   providers: [
