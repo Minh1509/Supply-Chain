@@ -10,7 +10,8 @@ services:
     ports:
       - "8000:3000"
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     networks:
       - supply-chain
     restart: unless-stopped
@@ -23,9 +24,12 @@ services:
     container_name: auth-service
     env_file: ./auth-service/.env.docker
     depends_on:
-      - rabbitmq
-      - redis
-      - postgres
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_started
     networks:
       - supply-chain
     restart: unless-stopped
@@ -37,7 +41,8 @@ services:
     container_name: notification-service
     env_file: ./notification-service/.env.docker
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     networks:
       - supply-chain
     restart: unless-stopped
@@ -54,6 +59,11 @@ services:
     networks:
       - supply-chain
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
