@@ -17,6 +17,7 @@ services:
   auth-service:
     build:
       context: ./auth-service
+      dockerfile: Dockerfile.prod
     image: auth-service:1.0.0
     container_name: auth-service
     env_file: ./auth-service/.env.docker
