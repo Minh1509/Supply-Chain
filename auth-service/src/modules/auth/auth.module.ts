@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { codeExpiresConfiguration, jwtConfiguration } from 'src/config';
 import { Company, Department, Employee, User } from 'src/entities';
+import { AuthPublisherService } from './auth-publisher.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RabbitmqModule } from '../shared/rabbitmq/rabbitmq.module';
@@ -28,6 +29,7 @@ import { RedisModule } from '../shared/redis/redis.module';
     RabbitmqModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, AuthPublisherService],
+  exports: [AuthService, AuthPublisherService],
 })
 export class AuthModule {}

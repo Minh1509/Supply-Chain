@@ -23,7 +23,7 @@ export class CreateEmployeesTable1758853596771 implements MigrationInterface {
           {
             name: 'employee_code',
             type: 'varchar',
-            isNullable: false,
+            isNullable: true,
           },
           {
             name: 'employee_name',

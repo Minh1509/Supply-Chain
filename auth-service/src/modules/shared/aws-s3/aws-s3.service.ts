@@ -175,6 +175,6 @@ export class AwsS3Service {
       }),
     );
 
-    return `https://${this.cloudfrontUrl}/${fileKey}`;
+    return `${this.cloudfrontUrl}/${fileKey}`;
   }
 }

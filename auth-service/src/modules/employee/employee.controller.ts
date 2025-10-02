@@ -31,9 +31,8 @@ export class EmployeeController {
   }
 
   @MessagePattern(EMPLOYEE_CONSTANTS.UPDATE_AVATAR)
-  async updateAvatar(@Payload() payload: { id: number; file: Express.Multer.File }) {
+  async updateAvatar(@Payload() payload: { id: number; file: any }) {
     this.logger.debug('EmployeeController.updateAvatar', { payload });
-    const avatarUrl = await this.employeeService.updateAvatar(payload.id, payload.file);
-    return { avatarUrl };
+    return await this.employeeService.updateAvatar(payload.id, payload.file);
   }
 }

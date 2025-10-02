@@ -64,7 +64,7 @@ export class AdminCompanyService extends BaseService {
     });
   }
 
-  async updateLogo(id: number, file: Express.Multer.File) {
+  async updateLogo(id: number, file: any) {
     const company = await this.companyRepo.findOneBy({ id });
     if (!company)
       throw new RpcException({
@@ -77,11 +77,15 @@ export class AdminCompanyService extends BaseService {
         message: 'Logo không hợp lệ',
       });
 
+    if (file.buffer && file.buffer?.type === 'Buffer') {
+      file.buffer = Buffer.from(file.buffer?.data);
+    }
+
     const logoUrl = await this.awsS3Service.uploadFile(file, 'company-logos');
     company.logoUrl = logoUrl;
     await this.companyRepo.save(company);
 
-    return logoUrl;
+    return { url: logoUrl };
   }
 
   async getMonthlyCompanyReport(): Promise<MonthlyCompanyReportResponseDto[]> {

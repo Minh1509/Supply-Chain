@@ -15,8 +15,9 @@ import { UserStatus } from 'src/common/enums/user.enum';
 import { HashUtil, TimeUtil } from 'src/common/utilities';
 import { codeExpiresConfiguration, jwtConfiguration } from 'src/config';
 import { Company, Department, Employee, User } from 'src/entities';
-import { ConnectionReadyEvent, DataSource, Like, Repository } from 'typeorm';
+import { DataSource, Like, Repository } from 'typeorm';
 import { Logger } from 'winston';
+import { AuthPublisherService } from './auth-publisher.service';
 import { JwtPayload, UserRequestPayload } from './auth.interface';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
@@ -47,6 +48,7 @@ export class AuthService extends BaseService {
     private dataSource: DataSource,
     private readonly redisService: RedisService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly authPublisherService: AuthPublisherService,
   ) {
     super();
   }
@@ -89,10 +91,11 @@ export class AuthService extends BaseService {
         taxCode: dto.taxCode,
         address: dto.address,
         companyType: dto.companyType,
-        mainIndustry: dto.mainIndustry,
+        mainIndustry: dto.mainIndustry ?? null,
         representativeName: dto.representativeName,
+        startDate: dto.startDate ?? new Date(),
         joinDate: new Date(),
-        phoneNumber: dto.phoneNumber,
+        phoneNumber: dto.phoneNumber ?? null,
         email: dto.email,
         status: CompanyStatus.ACTIVE,
       });
@@ -131,9 +134,9 @@ export class AuthService extends BaseService {
       // Tạo employee
       const employee = employeeRepo.create({
         departmentId: managementDepartment.id,
-        employeeCode: dto.employeeCode,
+        employeeCode: dto.employeeCode ?? null,
         employeeName: dto.representativeName,
-        position: 'Quản lý',
+        position: dto.position ?? 'Quản lý',
         email: dto.email,
         status: EmployeeStatus.ACTIVE,
       });
@@ -151,7 +154,6 @@ export class AuthService extends BaseService {
       });
       const savedUser = await userRepo.save(user);
 
-      // Commit transaction
       await queryRunner.commitTransaction();
 
       // Gửi mail sau khi commit
@@ -515,7 +517,8 @@ export class AuthService extends BaseService {
   }
 
   private async generateOtpAndSendMail(user: User): Promise<number> {
-    const otp = Math.floor(100000 + Math.random() * 900000);
+    // const otp = Math.floor(100000 + Math.random() * 900000);
+    const otp = 123456;
 
     await this.redisService.setValue<number>(
       this.redisService.getVerifyOTPKey(user.id),
@@ -524,7 +527,11 @@ export class AuthService extends BaseService {
     );
 
     // TODO: send email
-    // await this.emailService.sendOtpToEmail(user.email, otp);
+    this.authPublisherService.sendVerifyOtp(
+      user.email,
+      otp,
+      this.codeExpiresConfig.verifyOTP,
+    );
 
     return otp;
   }

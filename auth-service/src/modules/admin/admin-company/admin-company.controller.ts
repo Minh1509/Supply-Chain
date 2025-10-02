@@ -19,7 +19,7 @@ export class AdminCompanyController {
   }
 
   @MessagePattern(ADMIN_COMPANY_CONSTANTS.UPDATE_LOGO)
-  async updateLogo(@Payload() payload: { id: number; file: Express.Multer.File }) {
+  async updateLogo(@Payload() payload: { id: number; file: any }) {
     this.logger.debug('AdminCompanyController.updateLogo', { payload });
     return this.adminCompanyService.updateLogo(payload.id, payload.file);
   }

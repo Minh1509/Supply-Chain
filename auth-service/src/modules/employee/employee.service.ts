@@ -78,7 +78,7 @@ export class EmployeeService {
     );
   }
 
-  async updateAvatar(id: number, file: Express.Multer.File): Promise<string> {
+  async updateAvatar(id: number, file: any) {
     const employee = await this.employeeRepo.findOne({ where: { id } });
 
     if (!employee) {
@@ -95,10 +95,14 @@ export class EmployeeService {
       });
     }
 
+    if (file.buffer && file.buffer?.type === 'Buffer') {
+      file.buffer = Buffer.from(file.buffer?.data);
+    }
+
     const avatarUrl = await this.awsS3Service.uploadFile(file, 'employee-avatars');
     employee.avatar = avatarUrl;
     await this.employeeRepo.save(employee);
 
-    return avatarUrl;
+    return { url: avatarUrl };
   }
 }

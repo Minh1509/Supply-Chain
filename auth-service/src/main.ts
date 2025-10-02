@@ -1,10 +1,9 @@
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { WinstonModule } from 'nest-winston';
 import { getWinstonConfig } from './common/utilities/log.util';
-import { getAppConfig, rabbitmqConfiguration } from './config';
+import { getAppConfig } from './config';
 import { AppModule } from './modules/app.module';
 
 async function bootstrap() {
@@ -36,7 +35,7 @@ async function bootstrap() {
 
   !isProductionEnv &&
     logger.log({
-      message: `Microservice ${appName} is listening`,
+      message: `Microservice ${appName} is listening with queue: ${process.env.RABBITMQ_QUEUE}`,
       context: 'Bootstrap',
     });
 }

@@ -6,13 +6,24 @@ import {
   Inject,
   Param,
   ParseIntPipe,
-  Patch,
+  Post,
   Put,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { firstValueFrom } from 'rxjs';
 import { RABBITMQ_CONSTANTS } from 'src/common/constants/rabbitmq.constant';
+import { UploadResponseDto } from 'src/common/dto/upload-response.dto';
 import { SwaggerApiDocument } from 'src/decorators';
 import { EmployeeUserDto } from './dto/employee-user.dto';
 import { EMPLOYEE_CONSTANTS } from './employee.constant';
@@ -74,6 +85,36 @@ export class EmployeeController {
   async update(@Param('id', ParseIntPipe) id: number, @Body() body: EmployeeUserDto) {
     return await firstValueFrom(
       this.authClient.send(EMPLOYEE_CONSTANTS.UPDATE, { id, body }),
+    );
+  }
+
+  @Post(':id/avatar')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiOperation({
+    summary: `[Admin] updateAvatarEmployee`,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: UploadResponseDto,
+  })
+  async uploadLogo(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return await firstValueFrom(
+      this.authClient.send(EMPLOYEE_CONSTANTS.UPDATE_AVATAR, { id, file }),
     );
   }
 }

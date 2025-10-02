@@ -10,3 +10,7 @@ export const AUTH_CONSTANTS = {
   SYSADMIN_VERIFY_OTP: 'auth.sysadmin-verify-otp',
   VERIFY_TOKEN: 'auth.verify-token',
 };
+
+export const EVENT_CONSTANTS = {
+  VERIFY_OTP: 'mail.verify-otp',
+};
