@@ -5,3 +5,6 @@ postgres-data/
 redis-data/
 rabbitmq-data/
 
+postgres-data-prod/
+redis-data-prod/
+rabbitmq-data-prod/

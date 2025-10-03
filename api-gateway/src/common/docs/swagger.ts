@@ -4,7 +4,6 @@ import { getAppConfig } from 'src/config';
 
 export const setupSwagger = (app: INestApplication) => {
   const { appName, isProductionEnv } = getAppConfig();
-  if (isProductionEnv) return;
 
   const config = new DocumentBuilder()
     .setTitle(`${appName} Documentation Swagger`)
