@@ -26,9 +26,9 @@ services:
       rabbitmq:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       postgres:
-        condition: service_started
+        condition: service_healthy
     networks:
       - supply-chain
     restart: unless-stopped
@@ -42,6 +42,22 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+    networks:
+      - supply-chain
+    restart: unless-stopped
+
+  general_service:
+    build:
+      context: ./general-service
+    image: general-service:1.0.0
+    container_name: general-service
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
     networks:
       - supply-chain
     restart: unless-stopped
@@ -72,6 +88,11 @@ services:
     networks:
       - supply-chain
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres:
     image: postgres:15-alpine
@@ -86,6 +107,11 @@ services:
     networks:
       - supply-chain
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   supply-chain:

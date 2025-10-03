@@ -6,10 +6,10 @@ services:
       context: ./api-gateway
       dockerfile: Dockerfile.prod
     image: api-gateway:1.0.5
-    container_name: api-gateway
+    container_name: api-gateway-prod
     env_file: ./api-gateway/.env.prod
     ports:
-      - "31000:3000"
+      - "31000:5000"
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -22,8 +22,10 @@ services:
       context: ./auth-service
       dockerfile: Dockerfile.prod
     image: auth-service:1.0.5
-    container_name: auth-service
+    container_name: auth-service-prod
     env_file: ./auth-service/.env.prod
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -40,8 +42,10 @@ services:
       context: ./notification-service
       dockerfile: Dockerfile.prod
     image: notification-service:1.0.5
-    container_name: notification-service
+    container_name: notification-service-prod
     env_file: ./notification-service/.env.prod
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -49,9 +53,26 @@ services:
       - supply-chain-prod
     restart: unless-stopped
 
+  general_service:
+    build:
+      context: ./general-service
+      dockerfile: Dockerfile.prod
+    image: general-service:1.0.5
+    container_name: general-service-prod
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - supply-chain-prod
+    restart: unless-stopped
+
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
-    container_name: rabbitmq
+    container_name: rabbitmq-prod
     environment:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
@@ -59,7 +80,7 @@ services:
       - "5678:5672"
       - "15678:15672"
     volumes:
-      - ./rabbitmq-data:/var/lib/rabbitmq
+      - ./rabbitmq-data-prod:/var/lib/rabbitmq
     networks:
       - supply-chain-prod
     restart: unless-stopped
@@ -71,11 +92,11 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: redis
+    container_name: redis-prod
     ports:
       - "6380:6379"
     volumes:
-      - ./redis-data:/data
+      - ./redis-data-prod:/data
     networks:
       - supply-chain-prod
     restart: unless-stopped
@@ -87,14 +108,14 @@ services:
 
   postgres:
     image: postgres:15-alpine
-    container_name: postgres
+    container_name: postgres-prod
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
       - "5470:5432"
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - ./postgres-data-prod:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - supply-chain-prod
