@@ -4,46 +4,49 @@ services:
   api-gateway:
     build:
       context: ./api-gateway
-    image: api-gateway:1.0.0
+      dockerfile: Dockerfile.prod
+    image: api-gateway:1.0.5
     container_name: api-gateway
-    env_file: ./api-gateway/.env.docker
+    env_file: ./api-gateway/.env.prod
     ports:
-      - "8000:3000"
+      - "31000:3000"
     depends_on:
       rabbitmq:
         condition: service_healthy
     networks:
-      - supply-chain
+      - supply-chain-prod
     restart: unless-stopped
 
   auth-service:
     build:
       context: ./auth-service
-    image: auth-service:1.0.0
+      dockerfile: Dockerfile.prod
+    image: auth-service:1.0.5
     container_name: auth-service
-    env_file: ./auth-service/.env.docker
+    env_file: ./auth-service/.env.prod
     depends_on:
       rabbitmq:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       postgres:
-        condition: service_started
+        condition: service_healthy
     networks:
-      - supply-chain
+      - supply-chain-prod
     restart: unless-stopped
 
   notification-service:
     build:
       context: ./notification-service
-    image: notification-service:1.0.0
+      dockerfile: Dockerfile.prod
+    image: notification-service:1.0.5
     container_name: notification-service
-    env_file: ./notification-service/.env.docker
+    env_file: ./notification-service/.env.prod
     depends_on:
       rabbitmq:
         condition: service_healthy
     networks:
-      - supply-chain
+      - supply-chain-prod
     restart: unless-stopped
 
   rabbitmq:
@@ -53,10 +56,12 @@ services:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
     ports:
-      - "5666:5672"
-      - "15666:15672"
+      - "5678:5672"
+      - "15678:15672"
+    volumes:
+      - ./rabbitmq-data:/var/lib/rabbitmq
     networks:
-      - supply-chain
+      - supply-chain-prod
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
@@ -68,10 +73,17 @@ services:
     image: redis:7-alpine
     container_name: redis
     ports:
-      - "6366:6379"
+      - "6380:6379"
+    volumes:
+      - ./redis-data:/data
     networks:
-      - supply-chain
+      - supply-chain-prod
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres:
     image: postgres:15-alpine
@@ -80,13 +92,19 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5466:5432"
+      - "5470:5432"
     volumes:
+      - ./postgres-data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - supply-chain
+      - supply-chain-prod
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
-  supply-chain:
+  supply-chain-prod:
     driver: bridge
