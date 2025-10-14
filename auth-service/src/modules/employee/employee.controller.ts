@@ -25,9 +25,9 @@ export class EmployeeController {
   }
 
   @MessagePattern(EMPLOYEE_CONSTANTS.UPDATE)
-  async update(@Payload() payload: { id: number; data: any }) {
+  async update(@Payload() payload: { id: number; body: any }) {
     this.logger.debug('EmployeeController.update', { payload });
-    return this.employeeService.update(payload.id, payload.data);
+    return this.employeeService.update(payload.id, payload.body);
   }
 
   @MessagePattern(EMPLOYEE_CONSTANTS.UPDATE_AVATAR)

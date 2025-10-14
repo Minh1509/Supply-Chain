@@ -13,9 +13,9 @@ export class AdminCompanyController {
   ) {}
 
   @MessagePattern(ADMIN_COMPANY_CONSTANTS.UPDATE)
-  async updateCompany(@Payload() payload: { id: number; data: any }) {
+  async updateCompany(@Payload() payload: { id: number; body: any }) {
     this.logger.debug('AdminCompanyController.updateCompany', { payload });
-    return this.adminCompanyService.update(payload.data, payload.id);
+    return this.adminCompanyService.update(payload.body, payload.id);
   }
 
   @MessagePattern(ADMIN_COMPANY_CONSTANTS.UPDATE_LOGO)

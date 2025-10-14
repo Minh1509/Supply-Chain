@@ -32,7 +32,7 @@ export class AdminCompanyService extends BaseService {
         message: 'Công ty không tồn tại!',
       });
 
-    if (body.companyCode) {
+    if (body?.companyCode) {
       const isCodeExists = await this.companyRepo.exists({
         where: { companyCode: body.companyCode, id: Not(id) },
       });
@@ -44,7 +44,7 @@ export class AdminCompanyService extends BaseService {
       }
     }
 
-    if (body.taxCode) {
+    if (body?.taxCode) {
       const isTaxExists = await this.companyRepo.exists({
         where: { taxCode: body.taxCode, id: Not(id) },
       });
