@@ -30,7 +30,7 @@ public class ItemService {
 
         Item item = new Item();
         item.setCompanyId(companyId);
-        item.setItemCode(itemCode != null ? itemCode : generateItemCode(companyId));
+        item.setItemCode(generateItemCode(companyId));
         item.setItemName(itemData.getItemName());
         item.setItemType(itemData.getItemType());
 

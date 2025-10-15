@@ -7,6 +7,7 @@ import { SwaggerApiDocument } from 'src/decorators/api-document.decorator';
 import { ManufactureLineRequestDto } from './dto/manufactureLine-request.dto';
 import { ManufactureLineDto } from './dto/manufactureLine.dto';
 import { MANUFACTURE_LINE_CONSTANTS } from './manufactureLine.constant';
+import { firstValueFrom } from 'rxjs/internal/firstValueFrom';
 
 @Controller('/manufacture-line')
 @ApiBearerAuth()
@@ -21,24 +22,23 @@ export class ManufactureLineController {
     @Param('plantId') plantId: number,
     @Body() line: ManufactureLineRequestDto,
   ) {
-    return this.generalClient.send(MANUFACTURE_LINE_CONSTANTS.CREATE_LINE, {
-      plantId: Number(plantId),
-      ...line,
-    });
+    return await firstValueFrom(this.generalClient.send(MANUFACTURE_LINE_CONSTANTS.CREATE_LINE, { plantId, line }));
   }
-
-  @Get(':companyId')
-  async getAllLinesInCompany(@Param('companyId') companyId: number) {
-    return this.generalClient.send(MANUFACTURE_LINE_CONSTANTS.GET_ALL_LINES_IN_COMPANY, {
-      companyId: Number(companyId),
-    });
-  }
+  
+  @Get('/all/:plantId')
+    async getAllPlants(@Param('plantId') plantId: number) {
+      return await firstValueFrom(
+        this.generalClient.send(MANUFACTURE_LINE_CONSTANTS.GET_ALL_PLANTS, {
+          plantId: Number(plantId),
+        }),
+      );
+    }
 
   @Get(':lineId')
   async getLineById(@Param('lineId') lineId: number) {
-    return this.generalClient.send(MANUFACTURE_LINE_CONSTANTS.GET_LINE_BY_ID, {
+    return await firstValueFrom( this.generalClient.send(MANUFACTURE_LINE_CONSTANTS.GET_LINE_BY_ID, {
       lineId: Number(lineId),
-    });
+    }));
   }
 
   @Put(':lineId')
@@ -46,9 +46,6 @@ export class ManufactureLineController {
     @Param('lineId') lineId: number,
     @Body() line: ManufactureLineRequestDto,
   ) {
-    return this.generalClient.send(MANUFACTURE_LINE_CONSTANTS.UPDATE_LINE, {
-      lineId: Number(lineId),
-      ...line,
-    });
+    return await firstValueFrom(this.generalClient.send(MANUFACTURE_LINE_CONSTANTS.UPDATE_LINE, { lineId, line }));
   }
 }

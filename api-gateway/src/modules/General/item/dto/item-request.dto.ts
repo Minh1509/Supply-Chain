@@ -2,14 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional, IsNumber, IsBoolean } from 'class-validator';
 
 export class ItemRequestDto {
-  @ApiProperty({
-    description: 'Item code',
-    example: 'LT001',
-    required: false
-  })
-  @IsString()
-  @IsOptional()
-  itemCode?: string;
 
   @ApiProperty({
     description: 'Item name',

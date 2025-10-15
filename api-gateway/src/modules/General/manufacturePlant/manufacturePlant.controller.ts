@@ -25,7 +25,7 @@ export class ManufacturePlantController {
     );
   }
 
-  @Get(':companyId')
+  @Get('/all/:companyId')
   async getAllPlants(@Param('companyId') companyId: number) {
     return await firstValueFrom(
       this.generalClient.send(MANUFACTURE_PLANT_CONSTANTS.GET_ALL_PLANTS_IN_COMPANY, {
@@ -48,7 +48,7 @@ export class ManufacturePlantController {
     @Param('plantId') plantId: number,
     @Body() plant: ManuPlantRequestDto,
   ) {
-    const payload = { plantId: Number(plantId), ...plant };
+    const payload = { plantId,plant };
     return await firstValueFrom(
       this.generalClient.send(MANUFACTURE_PLANT_CONSTANTS.UPDATE_PLANT, payload),
     );

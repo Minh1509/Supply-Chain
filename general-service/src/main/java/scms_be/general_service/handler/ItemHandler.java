@@ -28,6 +28,8 @@ public class ItemHandler {
                 return itemService.getItemById(req);
             case "item.get_all_in_company":
                 return itemService.getAllItemsInCompany(req);
+            case "item.delete":
+                return itemService.deleteItem(req);
             default:
                 throw new RpcException(400, "Unknown item event: " + event.getPattern());
         }

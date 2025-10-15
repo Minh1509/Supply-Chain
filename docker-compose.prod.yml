@@ -53,7 +53,7 @@ services:
       - supply-chain-prod
     restart: unless-stopped
 
-  general_service:
+  general-service:
     build:
       context: ./general-service
       dockerfile: Dockerfile.prod

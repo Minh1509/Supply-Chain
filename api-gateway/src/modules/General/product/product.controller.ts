@@ -27,7 +27,7 @@ export class ProductController {
     );
   }
 
-  @Get(':itemId')
+  @Get('/all/:itemId')
   async getAllProductsByItem(@Param('itemId') itemId: number) {
     return await firstValueFrom(
       this.generalClient.send(PRODUCT_CONSTANTS.GET_ALL_PRODUCTS_IN_ITEM, { itemId }),

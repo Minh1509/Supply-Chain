@@ -34,6 +34,7 @@ public class GeneralListener {
                 case "item.update":
                 case "item.get_by_id":
                 case "item.get_all_in_company":
+                case "item.delete":
                     return itemHandler.handle(event);
 
                 case "manufacture_line.create":
@@ -45,7 +46,8 @@ public class GeneralListener {
                 case "product.create":
                 case "product.update":
                 case "product.get_by_id":
-                case "product.get_all_in_company":
+                case "product.get_all_by_item":
+                case "product.delete":
                     return productHandler.handle(event);
 
                 case "manufacture_plant.create":
