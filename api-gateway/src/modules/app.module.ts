@@ -19,6 +19,11 @@ import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
 import { UserModule } from './user/user.module';
 import { getWinstonConfig } from '../common/utilities';
 import { appConfiguration, rabbitmqConfiguration } from '../config';
+import { InventoryModule } from './Inventory/inventory/inventory.module';
+import { ReceiveTicketModule } from './Inventory/receiveTicket/receive-ticket.module';
+import { IssueTicketModule } from './Inventory/issueTicket/issue-ticket.module';
+import { TransferTicketModule } from './Inventory/transferTicket/transfer-ticket.module';
+import { WarehouseModule } from './Inventory/warehouse/warehouse.module';
 
 @Global()
 @Module({
@@ -47,6 +52,11 @@ import { appConfiguration, rabbitmqConfiguration } from '../config';
     ProductModule,
     ManufacturePlantModule,
     ManufactureLineModule,
+    InventoryModule,
+    ReceiveTicketModule,
+    IssueTicketModule,
+    TransferTicketModule,
+    WarehouseModule
   ],
   controllers: [],
   providers: [

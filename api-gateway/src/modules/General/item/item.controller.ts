@@ -34,7 +34,7 @@ export class ItemController {
     );
   }
 
-  @Get(':companyId')
+  @Get('/all/:companyId')
   async getAll(@Param('companyId') companyId: number) {
     return await firstValueFrom(
       this.generalClient.send(ITEM_CONSTANTS.GET_ALL_ITEMS_IN_COMPANY, { companyId }),

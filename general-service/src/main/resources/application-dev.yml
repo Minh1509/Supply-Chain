@@ -1,6 +1,6 @@
 spring:
   application:
-    name: general_service
+    name: inventory_service
   main:
     web-application-type: none
   config:

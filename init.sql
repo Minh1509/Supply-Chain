@@ -7,3 +7,8 @@ GRANT ALL PRIVILEGES ON DATABASE auth_service TO postgres;
 CREATE DATABASE general_service;
 -- Cấp toàn quyền cho user postgres trên database general_service
 GRANT ALL PRIVILEGES ON DATABASE general_service TO postgres;
+
+
+CREATE DATABASE inventory_service;
+-- Cấp toàn quyền cho user postgres trên database inventory_service
+GRANT ALL PRIVILEGES ON DATABASE inventory_service TO postgres;

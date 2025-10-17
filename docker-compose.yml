@@ -61,6 +61,21 @@ services:
     networks:
       - supply-chain
     restart: unless-stopped
+  inventory-service:
+    build:
+      context: ./inventory-service
+    image: inventory-service:1.0.0
+    container_name: inventory-service
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    networks:
+      - supply-chain
+    restart: unless-stopped
 
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
