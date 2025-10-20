@@ -113,7 +113,7 @@ export class UserService extends BaseService {
       .createQueryBuilder('u')
       .leftJoinAndSelect('u.employee', 'e')
       .leftJoinAndSelect('e.department', 'd')
-      .leftJoinAndSelect('u.company', 'c')
+      .leftJoinAndSelect('d.company', 'c')
       .where('c.id = :companyId', { companyId });
 
     const { data, pagination } = await this.customPaginate(queryBuilder, page, pageSize);
