@@ -57,30 +57,30 @@ export class InventoryController {
   }
 
   @Post('increase-quantity')
-  async increaseQuantity(@Body() request: InventoryRequestDto) {
+  async increaseQuantity(@Body() inventory: InventoryRequestDto) {
     return await firstValueFrom(
-      this.inventoryClient.send(INVENTORY_CONSTANTS.INCREASE_QUANTITY, { request }),
+      this.inventoryClient.send(INVENTORY_CONSTANTS.INCREASE_QUANTITY, { inventory }),
     );
   }
 
   @Post('decrease-quantity')
-  async decreaseQuantity(@Body() request: InventoryRequestDto) {
+  async decreaseQuantity(@Body() inventory: InventoryRequestDto) {
     return await firstValueFrom(
-      this.inventoryClient.send(INVENTORY_CONSTANTS.DECREASE_QUANTITY, { request }),
+      this.inventoryClient.send(INVENTORY_CONSTANTS.DECREASE_QUANTITY, { inventory }),
     );
   }
 
   @Post('increase-ondemand')
-  async increaseOnDemand(@Body() request: InventoryRequestDto) {
+  async increaseOnDemand(@Body() inventory: InventoryRequestDto) {
     return await firstValueFrom(
-      this.inventoryClient.send(INVENTORY_CONSTANTS.INCREASE_ON_DEMAND, { request }),
+      this.inventoryClient.send(INVENTORY_CONSTANTS.INCREASE_ON_DEMAND, { inventory }),
     );
   }
 
   @Post('decrease-ondemand')
-  async decreaseOnDemand(@Body() request: InventoryRequestDto) {
+  async decreaseOnDemand(@Body() inventory: InventoryRequestDto) {
     return await firstValueFrom(
-      this.inventoryClient.send(INVENTORY_CONSTANTS.DECREASE_ON_DEMAND, { request }),
+      this.inventoryClient.send(INVENTORY_CONSTANTS.DECREASE_ON_DEMAND, { inventory }),
     );
   }
 

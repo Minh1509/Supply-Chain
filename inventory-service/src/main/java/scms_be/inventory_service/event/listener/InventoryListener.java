@@ -44,7 +44,7 @@ public class InventoryListener {
                 case "inventory.decrease_quantity":
                 case "inventory.increase_ondemand":
                 case "inventory.decrease_ondemand":
-                case "inventory.get_by_item_and_warehouse":
+                case "inventory.get_all_inventory":
                     return inventoryHandler.handle(event);
                 case "issue_ticket.create":
                 case "issue_ticket.get_all_in_company":

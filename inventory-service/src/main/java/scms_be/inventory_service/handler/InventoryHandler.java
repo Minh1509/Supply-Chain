@@ -46,7 +46,7 @@ public class InventoryHandler {
             case "inventory.decrease_ondemand":
                 InventoryRequest decreaseOnDemandReq = objectMapper.convertValue(event.getData(), InventoryRequest.class);
                 return inventoryService.decreaseOnDemand(decreaseOnDemandReq.getInventory());
-            case "inventory.get_by_item_and_warehouse":
+            case "inventory.get_all_inventory":
                 InventoryRequest getAllReq = objectMapper.convertValue(event.getData(), InventoryRequest.class);
                 return inventoryService.getInventoryByItemAndWarehouse(getAllReq.getCompanyId(), 
                     getAllReq.getItemId(), getAllReq.getWarehouseId());

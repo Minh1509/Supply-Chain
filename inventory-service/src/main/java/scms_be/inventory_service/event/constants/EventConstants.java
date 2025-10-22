@@ -9,7 +9,7 @@ public final class EventConstants {
     public static final String NOTIFICATION_SERVICE_QUEUE = "notification_service";
 
      // Queue của item service (để lấy thông tin hàng hóa)
-    public static final String GENERAL_SERVICE_QUEUE = "general_service";
+    public static final String GENERAL_SERVICE_QUEUE = "general_queue";
 
      // Queue của 
     public static final String OPERATION_SERVICE_QUEUE = "operation_service";

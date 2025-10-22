@@ -14,43 +14,50 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 
 @Slf4j
-@Component
 @RequiredArgsConstructor
+@Component
 public class EventPublisher {
     
     private final RabbitTemplate rabbitTemplate;
+    
+    private final ObjectMapper objectMapper;
 
     public ItemDto getItemById(Long itemId) {
         log.info("Getting item by ID: {}", itemId);
-        
-        // Tạo GenericEvent với pattern và data
+
         GenericEvent event = new GenericEvent();
         event.setPattern("item.get_by_id");
-        
-        // Tạo ItemRequest với itemId
         ItemRequest request = new ItemRequest();
         request.setItemId(itemId);
         event.setData(request);
-        
-        // Gửi và nhận response từ service khác
-        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
-        
-        if (response instanceof ItemDto) {
-            ItemDto itemDto = (ItemDto) response;
-            log.info("Received item data: {}", itemDto);
-            // Ở đây bạn có thể lưu dữ liệu vào database hoặc xử lý khác
-            return itemDto;
-        } else if (response instanceof ErrorResponse) {
-            ErrorResponse error = (ErrorResponse) response;
-            log.error("Error getting item: {}", error.getMessage());
-            throw new RpcException(error.getStatusCode(), error.getMessage());
+
+        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.GENERAL_SERVICE_QUEUE, event);
+
+        if (response == null) {
+            throw new RpcException(504, "No reply or timeout from general service");
         }
-        
-        log.info("Get item by ID completed successfully");
-        return null;
+
+        if (response instanceof ItemDto) {
+            return (ItemDto) response;
+        }
+
+        if (response instanceof ErrorResponse) {
+            ErrorResponse err = (ErrorResponse) response;
+            throw new RpcException(err.getStatusCode(), err.getMessage());
+        }
+
+        // if it's a Map/LinkedHashMap, convert to ItemDto
+        if (response instanceof Map) {
+            ItemDto dto = objectMapper.convertValue(response, ItemDto.class);
+            log.info("Converted Map to ItemDto: {}", dto);
+            return dto;
+        }
+
+        throw new RpcException(500, "Unexpected response type: " + response.getClass());
     }
 
     // Function để lấy BOM theo itemId
@@ -64,19 +71,30 @@ public class EventPublisher {
         event.setData(data);
         
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
-        
+
+        if (response == null) {
+            throw new RpcException(504, "No reply or timeout from operation service");
+        }
+
         if (response instanceof BOMDto) {
             BOMDto bomDto = (BOMDto) response;
             log.info("Received BOM data: {}", bomDto);
             return bomDto;
-        } else if (response instanceof ErrorResponse) {
+        }
+
+        if (response instanceof ErrorResponse) {
             ErrorResponse error = (ErrorResponse) response;
             log.error("Error getting BOM: {}", error.getMessage());
             throw new RpcException(error.getStatusCode(), error.getMessage());
         }
-        
-        log.info("Get BOM by item ID completed successfully");
-        return null;
+
+        if (response instanceof Map) {
+            BOMDto dto = objectMapper.convertValue(response, BOMDto.class);
+            log.info("Converted Map to BOMDto: {}", dto);
+            return dto;
+        }
+
+        throw new RpcException(500, "Unexpected response type: " + response.getClass());
     }
 
     // Function để lấy ManufactureOrder theo moCode
@@ -90,19 +108,30 @@ public class EventPublisher {
         event.setData(data);
         
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
-        
+
+        if (response == null) {
+            throw new RpcException(504, "No reply or timeout from operation service");
+        }
+
         if (response instanceof ManufactureOrderDto) {
             ManufactureOrderDto moDto = (ManufactureOrderDto) response;
             log.info("Received ManufactureOrder data: {}", moDto);
             return moDto;
-        } else if (response instanceof ErrorResponse) {
+        }
+
+        if (response instanceof ErrorResponse) {
             ErrorResponse error = (ErrorResponse) response;
             log.error("Error getting ManufactureOrder: {}", error.getMessage());
             throw new RpcException(error.getStatusCode(), error.getMessage());
         }
-        
-        log.info("Get ManufactureOrder by code completed successfully");
-        return null;
+
+        if (response instanceof Map) {
+            ManufactureOrderDto dto = objectMapper.convertValue(response, ManufactureOrderDto.class);
+            log.info("Converted Map to ManufactureOrderDto: {}", dto);
+            return dto;
+        }
+
+        throw new RpcException(500, "Unexpected response type: " + response.getClass());
     }
 
     // Function để lấy ManufactureOrder theo moId
@@ -116,19 +145,30 @@ public class EventPublisher {
         event.setData(data);
         
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
-        
+
+        if (response == null) {
+            throw new RpcException(504, "No reply or timeout from operation service");
+        }
+
         if (response instanceof ManufactureOrderDto) {
             ManufactureOrderDto moDto = (ManufactureOrderDto) response;
             log.info("Received ManufactureOrder data: {}", moDto);
             return moDto;
-        } else if (response instanceof ErrorResponse) {
+        }
+
+        if (response instanceof ErrorResponse) {
             ErrorResponse error = (ErrorResponse) response;
             log.error("Error getting ManufactureOrder: {}", error.getMessage());
             throw new RpcException(error.getStatusCode(), error.getMessage());
         }
-        
-        log.info("Get ManufactureOrder by ID completed successfully");
-        return null;
+
+        if (response instanceof Map) {
+            ManufactureOrderDto dto = objectMapper.convertValue(response, ManufactureOrderDto.class);
+            log.info("Converted Map to ManufactureOrderDto: {}", dto);
+            return dto;
+        }
+
+        throw new RpcException(500, "Unexpected response type: " + response.getClass());
     }
 
     // Function để lấy SalesOrder theo soCode
@@ -142,19 +182,30 @@ public class EventPublisher {
         event.setData(data);
         
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
-        
+
+        if (response == null) {
+            throw new RpcException(504, "No reply or timeout from operation service");
+        }
+
         if (response instanceof SalesOrderDto) {
             SalesOrderDto soDto = (SalesOrderDto) response;
             log.info("Received SalesOrder data: {}", soDto);
             return soDto;
-        } else if (response instanceof ErrorResponse) {
+        }
+
+        if (response instanceof ErrorResponse) {
             ErrorResponse error = (ErrorResponse) response;
             log.error("Error getting SalesOrder: {}", error.getMessage());
             throw new RpcException(error.getStatusCode(), error.getMessage());
         }
-        
-        log.info("Get SalesOrder by code completed successfully");
-        return null;
+
+        if (response instanceof Map) {
+            SalesOrderDto dto = objectMapper.convertValue(response, SalesOrderDto.class);
+            log.info("Converted Map to SalesOrderDto: {}", dto);
+            return dto;
+        }
+
+        throw new RpcException(500, "Unexpected response type: " + response.getClass());
     }
 
     // Function để lấy SalesOrder theo soId
@@ -168,19 +219,30 @@ public class EventPublisher {
         event.setData(data);
         
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
-        
+
+        if (response == null) {
+            throw new RpcException(504, "No reply or timeout from operation service");
+        }
+
         if (response instanceof SalesOrderDto) {
             SalesOrderDto soDto = (SalesOrderDto) response;
             log.info("Received SalesOrder data: {}", soDto);
             return soDto;
-        } else if (response instanceof ErrorResponse) {
+        }
+
+        if (response instanceof ErrorResponse) {
             ErrorResponse error = (ErrorResponse) response;
             log.error("Error getting SalesOrder: {}", error.getMessage());
             throw new RpcException(error.getStatusCode(), error.getMessage());
         }
-        
-        log.info("Get SalesOrder by ID completed successfully");
-        return null;
+
+        if (response instanceof Map) {
+            SalesOrderDto dto = objectMapper.convertValue(response, SalesOrderDto.class);
+            log.info("Converted Map to SalesOrderDto: {}", dto);
+            return dto;
+        }
+
+        throw new RpcException(500, "Unexpected response type: " + response.getClass());
     }
 
     // Function để lấy PurchaseOrder theo poCode
@@ -194,19 +256,30 @@ public class EventPublisher {
         event.setData(data);
         
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
-        
+
+        if (response == null) {
+            throw new RpcException(504, "No reply or timeout from operation service");
+        }
+
         if (response instanceof PurchaseOrderDto) {
             PurchaseOrderDto poDto = (PurchaseOrderDto) response;
             log.info("Received PurchaseOrder data: {}", poDto);
             return poDto;
-        } else if (response instanceof ErrorResponse) {
+        }
+
+        if (response instanceof ErrorResponse) {
             ErrorResponse error = (ErrorResponse) response;
             log.error("Error getting PurchaseOrder: {}", error.getMessage());
             throw new RpcException(error.getStatusCode(), error.getMessage());
         }
-        
-        log.info("Get PurchaseOrder by code completed successfully");
-        return null;
+
+        if (response instanceof Map) {
+            PurchaseOrderDto dto = objectMapper.convertValue(response, PurchaseOrderDto.class);
+            log.info("Converted Map to PurchaseOrderDto: {}", dto);
+            return dto;
+        }
+
+        throw new RpcException(500, "Unexpected response type: " + response.getClass());
     }
 
     // Function để lấy PurchaseOrder theo poId
@@ -220,18 +293,29 @@ public class EventPublisher {
         event.setData(data);
         
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
-        
+
+        if (response == null) {
+            throw new RpcException(504, "No reply or timeout from operation service");
+        }
+
         if (response instanceof PurchaseOrderDto) {
             PurchaseOrderDto poDto = (PurchaseOrderDto) response;
             log.info("Received PurchaseOrder data: {}", poDto);
             return poDto;
-        } else if (response instanceof ErrorResponse) {
+        }
+
+        if (response instanceof ErrorResponse) {
             ErrorResponse error = (ErrorResponse) response;
             log.error("Error getting PurchaseOrder: {}", error.getMessage());
             throw new RpcException(error.getStatusCode(), error.getMessage());
         }
-        
-        log.info("Get PurchaseOrder by ID completed successfully");
-        return null;
+
+        if (response instanceof Map) {
+            PurchaseOrderDto dto = objectMapper.convertValue(response, PurchaseOrderDto.class);
+            log.info("Converted Map to PurchaseOrderDto: {}", dto);
+            return dto;
+        }
+
+        throw new RpcException(500, "Unexpected response type: " + response.getClass());
     }
 }

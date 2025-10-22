@@ -7,5 +7,5 @@ export const INVENTORY_CONSTANTS = {
   DECREASE_QUANTITY: 'inventory.decrease_quantity',
   INCREASE_ON_DEMAND: 'inventory.increase_ondemand',
   DECREASE_ON_DEMAND: 'inventory.decrease_ondemand',
-  GET_ALL_BY_ITEM_AND_WAREHOUSE: 'inventory.get_all_by_item_and_warehouse',
+  GET_ALL_BY_ITEM_AND_WAREHOUSE: 'inventory.get_all_inventory',
 };
