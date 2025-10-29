@@ -24,6 +24,7 @@ public class IssueTicketRequest {
         private String file;
         private String note;
     }
-
+  
+  private IssueReportRequest issueReport;
  
 }

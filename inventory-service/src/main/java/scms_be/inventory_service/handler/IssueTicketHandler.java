@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import scms_be.inventory_service.exception.RpcException;
 import scms_be.inventory_service.model.event.GenericEvent;
 import scms_be.inventory_service.model.request.IssueTicketRequest;
-import scms_be.inventory_service.model.request.IssueReportRequest;
 import scms_be.inventory_service.service.IssueTicketService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,33 +19,25 @@ public class IssueTicketHandler {
     private ObjectMapper objectMapper;
 
     public Object handle(GenericEvent event) {
+        IssueTicketRequest request = objectMapper.convertValue(event.getData(), IssueTicketRequest.class);
         System.out.println("event: " + event);
         switch (event.getPattern()) {
             case "issue_ticket.create":
-                IssueTicketRequest createReq = objectMapper.convertValue(event.getData(), IssueTicketRequest.class);
-                return issueTicketService.createIssueTicket(createReq.getIssueTicket());
+                return issueTicketService.createIssueTicket(request.getIssueTicket());
             case "issue_ticket.get_all_in_company":
-                IssueTicketRequest getAllReq = objectMapper.convertValue(event.getData(), IssueTicketRequest.class);
-                return issueTicketService.getAllInCompany(getAllReq.getCompanyId());
+                return issueTicketService.getAllInCompany(request.getCompanyId());
             case "issue_ticket.get_by_id":
-                IssueTicketRequest getByIdReq = objectMapper.convertValue(event.getData(), IssueTicketRequest.class);
-                return issueTicketService.getById(getByIdReq.getTicketId());
+                return issueTicketService.getById(request.getTicketId());
             case "issue_ticket.update":
-                IssueTicketRequest updateReq = objectMapper.convertValue(event.getData(), IssueTicketRequest.class);
-                return issueTicketService.updateTicket(updateReq.getTicketId(), updateReq.getIssueTicket());
+                return issueTicketService.updateTicket(request.getTicketId(), request.getIssueTicket());
             case "issue_ticket.get_issue_report":
-                IssueTicketRequest issueReportReq = objectMapper.convertValue(event.getData(), IssueTicketRequest.class);
-                IssueReportRequest reportReq = new IssueReportRequest();
-                // Cần map các field từ IssueTicketRequest sang IssueReportRequest
-                return issueTicketService.getIssueReport(reportReq, issueReportReq.getCompanyId());
+                return issueTicketService.getIssueReport(request.getIssueReport(), request.getCompanyId());
             case "issue_ticket.get_monthly_issue_report":
-                IssueTicketRequest monthlyReq = objectMapper.convertValue(event.getData(), IssueTicketRequest.class);
-                return issueTicketService.getMonthlyIssueReport(monthlyReq.getCompanyId(), 
-                    monthlyReq.getIssueType(), monthlyReq.getWarehouseId());
+                return issueTicketService.getMonthlyIssueReport(request.getCompanyId(), 
+                    request.getIssueType(), request.getWarehouseId());
             case "issue_ticket.get_forecasted_issue":
-                IssueTicketRequest forecastReq = objectMapper.convertValue(event.getData(), IssueTicketRequest.class);
-                return issueTicketService.getForecastedIssue(forecastReq.getCompanyId(), 
-                    forecastReq.getIssueType(), forecastReq.getWarehouseId());
+                return issueTicketService.getForecastedIssue(request.getCompanyId(), 
+                    request.getIssueType(), request.getWarehouseId());
             default:
                 throw new RpcException(400, "Unknown issue ticket event: " + event.getPattern());
         }

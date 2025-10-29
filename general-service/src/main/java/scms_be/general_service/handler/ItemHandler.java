@@ -13,23 +13,23 @@ public class ItemHandler {
 
     @Autowired
     private ItemService itemService;
+
     @Autowired
     private ObjectMapper objectMapper;
 
     public Object handle(GenericEvent event) {
         ItemRequest req = objectMapper.convertValue(event.getData(), ItemRequest.class);
-        System.out.println("event: " + event + ", req: " + req);
         switch (event.getPattern()) {
             case "item.create":
-                return itemService.createItem(req);
+                return itemService.createItem(req.getCompanyId(), req.getItem());
             case "item.update":
-                return itemService.updateItem(req);
+                return itemService.updateItem(req.getItemId(), req.getItem());
             case "item.get_by_id":
-                return itemService.getItemById(req);
+                return itemService.getItemById(req.getItemId());
             case "item.get_all_in_company":
-                return itemService.getAllItemsInCompany(req);
+                return itemService.getAllItemsInCompany(req.getCompanyId());
             case "item.delete":
-                return itemService.deleteItem(req);
+                return itemService.deleteItem(req.getItemId());
             default:
                 throw new RpcException(400, "Unknown item event: " + event.getPattern());
         }

@@ -18,19 +18,16 @@ public class ManufacturePlantHandler {
     private ObjectMapper objectMapper; // Jackson mapper
 
     public Object handle(GenericEvent event) {
-        ManufacturePlantRequest req = objectMapper.convertValue(
-                event.getData(), ManufacturePlantRequest.class
-        );
-
+        ManufacturePlantRequest req = objectMapper.convertValue(event.getData(), ManufacturePlantRequest.class);
         switch (event.getPattern()) {
             case "manufacture_plant.create":
-                return plantService.createPlant(req);
+                return plantService.createPlant(req.getCompanyId(), req.getPlant());
             case "manufacture_plant.update":
-                return plantService.updatePlant(req);
+                return plantService.updatePlant(req.getPlantId(), req.getPlant());
             case "manufacture_plant.get_by_id":
-                return plantService.getPlantById(req);
+                return plantService.getPlantById(req.getPlantId());
             case "manufacture_plant.get_all_in_company":
-                return plantService.getAllPlantsInCompany(req);
+                return plantService.getAllPlantsInCompany(req.getCompanyId());
             default:
                 throw new RpcException(400, "Unknown manufacture plant event: " + event.getPattern());
         }

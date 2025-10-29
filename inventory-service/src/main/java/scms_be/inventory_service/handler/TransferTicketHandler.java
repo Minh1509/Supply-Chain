@@ -19,20 +19,17 @@ public class TransferTicketHandler {
     private ObjectMapper objectMapper;
 
     public Object handle(GenericEvent event) {
+        TransferTicketRequest request = objectMapper.convertValue(event.getData(), TransferTicketRequest.class);
         System.out.println("event: " + event);
         switch (event.getPattern()) {
             case "transfer_ticket.create":
-                TransferTicketRequest createReq = objectMapper.convertValue(event.getData(), TransferTicketRequest.class);
-                return transferTicketService.createTicket(createReq.getTransferTicket());
+                return transferTicketService.createTicket(request.getTransferTicket());
             case "transfer_ticket.update":
-                TransferTicketRequest updateReq = objectMapper.convertValue(event.getData(), TransferTicketRequest.class);
-                return transferTicketService.updateTicket(updateReq.getTicketId(), updateReq.getTransferTicket());
+                return transferTicketService.updateTicket(request.getTicketId(), request.getTransferTicket());
             case "transfer_ticket.get_by_id":
-                TransferTicketRequest getByIdReq = objectMapper.convertValue(event.getData(), TransferTicketRequest.class);
-                return transferTicketService.getTicketById(getByIdReq.getTicketId());
+                return transferTicketService.getTicketById(request.getTicketId());
             case "transfer_ticket.get_all_by_company":
-                TransferTicketRequest getAllReq = objectMapper.convertValue(event.getData(), TransferTicketRequest.class);
-                return transferTicketService.getAllByCompany(getAllReq.getCompanyId());
+                return transferTicketService.getAllByCompany(request.getCompanyId());
             default:
                 throw new RpcException(400, "Unknown transfer ticket event: " + event.getPattern());
         }

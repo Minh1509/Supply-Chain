@@ -18,19 +18,16 @@ public class ManufactureLineHandler {
     private ObjectMapper objectMapper; // Jackson mapper
 
     public Object handle(GenericEvent event) {
-        ManufactureLineRequest req = objectMapper.convertValue(
-                event.getData(), ManufactureLineRequest.class
-        );
-
+        ManufactureLineRequest req = objectMapper.convertValue( event.getData(), ManufactureLineRequest.class);
         switch (event.getPattern()) {
             case "manufacture_line.create":
-                return lineService.createLine(req);
+                return lineService.createLine(req.getPlantId(), req.getLine());
             case "manufacture_line.update":
-                return lineService.updateLine(req);
+                return lineService.updateLine(req.getLineId(), req.getLine());
             case "manufacture_line.get_by_id":
-                return lineService.getLineById(req);
+                return lineService.getLineById(req.getLineId());
             case "manufacture_line.get_all_in_plant":
-                return lineService.getAllLinesInPlant(req);
+                return lineService.getAllLinesInPlant(req.getPlantId());
             default:
                 throw new RpcException(400, "Unknown manufacture line event: " + event.getPattern());
         }

@@ -19,37 +19,29 @@ public class InventoryHandler {
     private ObjectMapper objectMapper;
 
     public Object handle(GenericEvent event) {
+        InventoryRequest request = objectMapper.convertValue(event.getData(), InventoryRequest.class);
         System.out.println("event: " + event);
         switch (event.getPattern()) {
             case "inventory.create":
-                InventoryRequest createReq = objectMapper.convertValue(event.getData(), InventoryRequest.class);
-                return inventoryService.createInventory(createReq.getInventory());
+                return inventoryService.createInventory(request.getInventory());
             case "inventory.update":
-                InventoryRequest updateReq = objectMapper.convertValue(event.getData(), InventoryRequest.class);
-                return inventoryService.updateInventory(updateReq.getInventoryId(), updateReq.getInventory());
+                return inventoryService.updateInventory(request.getInventoryId(), request.getInventory());
             case "inventory.get_by_id":
-                InventoryRequest getByIdReq = objectMapper.convertValue(event.getData(), InventoryRequest.class);
-                return inventoryService.getInventoryById(getByIdReq.getInventoryId());
+                return inventoryService.getInventoryById(request.getInventoryId());
             case "inventory.check":
-                InventoryRequest checkReq = objectMapper.convertValue(event.getData(), InventoryRequest.class);
-                return inventoryService.checkInventory(checkReq.getItemId(), 
-                    checkReq.getWarehouseId(), checkReq.getAmount());
+                return inventoryService.checkInventory(request.getItemId(), 
+                    request.getWarehouseId(), request.getAmount());
             case "inventory.increase_quantity":
-                InventoryRequest increaseReq = objectMapper.convertValue(event.getData(), InventoryRequest.class);
-                return inventoryService.increaseQuantity(increaseReq.getInventory());
+                return inventoryService.increaseQuantity(request.getInventory());
             case "inventory.decrease_quantity":
-                InventoryRequest decreaseReq = objectMapper.convertValue(event.getData(), InventoryRequest.class);
-                return inventoryService.decreaseQuantity(decreaseReq.getInventory());
+                return inventoryService.decreaseQuantity(request.getInventory());
             case "inventory.increase_ondemand":
-                InventoryRequest increaseOnDemandReq = objectMapper.convertValue(event.getData(), InventoryRequest.class);
-                return inventoryService.increaseOnDemand(increaseOnDemandReq.getInventory());
+                return inventoryService.increaseOnDemand(request.getInventory());
             case "inventory.decrease_ondemand":
-                InventoryRequest decreaseOnDemandReq = objectMapper.convertValue(event.getData(), InventoryRequest.class);
-                return inventoryService.decreaseOnDemand(decreaseOnDemandReq.getInventory());
+                return inventoryService.decreaseOnDemand(request.getInventory());
             case "inventory.get_all_inventory":
-                InventoryRequest getAllReq = objectMapper.convertValue(event.getData(), InventoryRequest.class);
-                return inventoryService.getInventoryByItemAndWarehouse(getAllReq.getCompanyId(), 
-                    getAllReq.getItemId(), getAllReq.getWarehouseId());
+                return inventoryService.getInventoryByItemAndWarehouse(request.getCompanyId(), 
+                    request.getItemId(), request.getWarehouseId());
             default:
                 throw new RpcException(400, "Unknown inventory event: " + event.getPattern());
         }

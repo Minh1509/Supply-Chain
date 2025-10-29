@@ -22,15 +22,15 @@ public class ProductHandler {
         System.out.println("event: " + event + ", req: " + req);
         switch (event.getPattern()) {
             case "product.create":
-                return productService.createProduct(req);
+                return productService.createProduct(req.getItemId(), req.getProduct());
             case "product.update":
-                return productService.updateProduct(req);
+                return productService.updateProduct(req.getProductId(), req.getProduct());
             case "product.get_by_id":
-                return productService.getProductById(req);
+                return productService.getProductById(req.getProductId());
             case "product.get_all_by_item":
-                return productService.getAllProductsByItem(req);
+                return productService.getAllProductsByItem(req.getItemId());
             case "product.delete":
-                return productService.deleteProduct(req);
+                return productService.deleteProduct(req.getProductId());
             default:
                 throw new RpcException(400, "Unknown product event: " + event.getPattern());
         }

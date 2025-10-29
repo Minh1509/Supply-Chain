@@ -9,7 +9,9 @@ import scms_be.inventory_service.model.dto.publisher.ManufactureOrderDto;
 import scms_be.inventory_service.model.dto.publisher.PurchaseOrderDto;
 import scms_be.inventory_service.model.dto.publisher.SalesOrderDto;
 import scms_be.inventory_service.model.event.GenericEvent;
-import scms_be.inventory_service.model.request.ItemRequest;
+import scms_be.inventory_service.model.request.publisher.BOMRequest;
+import scms_be.inventory_service.model.request.publisher.ItemRequest;
+import scms_be.inventory_service.model.request.publisher.ManuOrderRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -31,6 +33,7 @@ public class EventPublisher {
 
         GenericEvent event = new GenericEvent();
         event.setPattern("item.get_by_id");
+
         ItemRequest request = new ItemRequest();
         request.setItemId(itemId);
         event.setData(request);
@@ -67,9 +70,10 @@ public class EventPublisher {
         GenericEvent event = new GenericEvent();
         event.setPattern("bom.get_by_item_id");
         
-        Map<String, Object> data = Map.of("itemId", itemId);
-        event.setData(data);
-        
+        BOMRequest request = new BOMRequest();
+        request.setItemId(itemId);
+        event.setData(request);
+
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
 
         if (response == null) {
@@ -104,9 +108,10 @@ public class EventPublisher {
         GenericEvent event = new GenericEvent();
         event.setPattern("manufacture_order.get_by_code");
         
-        Map<String, Object> data = Map.of("moCode", moCode);
-        event.setData(data);
-        
+        ManuOrderRequest request = new ManuOrderRequest();
+        request.setMoCode(moCode);
+        event.setData(request);
+
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
 
         if (response == null) {
@@ -141,9 +146,10 @@ public class EventPublisher {
         GenericEvent event = new GenericEvent();
         event.setPattern("manufacture_order.get_by_id");
         
-        Map<String, Object> data = Map.of("moId", moId);
-        event.setData(data);
-        
+        ManuOrderRequest request = new ManuOrderRequest();
+        request.setMoId(moId);
+        event.setData(request);
+
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
 
         if (response == null) {
@@ -181,7 +187,7 @@ public class EventPublisher {
         Map<String, Object> data = Map.of("soCode", soCode);
         event.setData(data);
         
-        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
+        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.BUSINESS_SERVICE_QUEUE, event);
 
         if (response == null) {
             throw new RpcException(504, "No reply or timeout from operation service");
@@ -217,8 +223,8 @@ public class EventPublisher {
         
         Map<String, Object> data = Map.of("soId", soId);
         event.setData(data);
-        
-        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
+
+        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.BUSINESS_SERVICE_QUEUE, event);
 
         if (response == null) {
             throw new RpcException(504, "No reply or timeout from operation service");
@@ -254,8 +260,8 @@ public class EventPublisher {
         
         Map<String, Object> data = Map.of("poCode", poCode);
         event.setData(data);
-        
-        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
+
+        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.BUSINESS_SERVICE_QUEUE, event);
 
         if (response == null) {
             throw new RpcException(504, "No reply or timeout from operation service");
@@ -291,8 +297,8 @@ public class EventPublisher {
         
         Map<String, Object> data = Map.of("poId", poId);
         event.setData(data);
-        
-        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
+
+        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.BUSINESS_SERVICE_QUEUE, event);
 
         if (response == null) {
             throw new RpcException(504, "No reply or timeout from operation service");

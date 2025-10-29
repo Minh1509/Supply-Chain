@@ -24,4 +24,5 @@ public class ReceiveTicketRequest {
       private String file;
       private String note;
     }
+  private ReceiveReportRequest receiveReport;
 }

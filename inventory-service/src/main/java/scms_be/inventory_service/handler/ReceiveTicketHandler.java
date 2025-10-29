@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import scms_be.inventory_service.exception.RpcException;
 import scms_be.inventory_service.model.event.GenericEvent;
-import scms_be.inventory_service.model.request.ReceiveReportRequest;
 import scms_be.inventory_service.model.request.ReceiveTicketRequest;
 import scms_be.inventory_service.service.ReceiveTicketService;
 
@@ -20,29 +19,22 @@ public class ReceiveTicketHandler {
     private ObjectMapper objectMapper;
 
     public Object handle(GenericEvent event) {
+        ReceiveTicketRequest request = objectMapper.convertValue(event.getData(), ReceiveTicketRequest.class);
         System.out.println("event: " + event);
         switch (event.getPattern()) {
             case "receive_ticket.create":
-                ReceiveTicketRequest createReq = objectMapper.convertValue(event.getData(), ReceiveTicketRequest.class);
-                return receiveTicketService.create(createReq.getReceiveTicket());
+                return receiveTicketService.create(request.getReceiveTicket());
             case "receive_ticket.update":
-                ReceiveTicketRequest updateReq = objectMapper.convertValue(event.getData(), ReceiveTicketRequest.class);
-                return receiveTicketService.update(updateReq.getTicketId(), updateReq.getReceiveTicket());
+                return receiveTicketService.update(request.getTicketId(), request.getReceiveTicket());
             case "receive_ticket.get_by_id":
-                ReceiveTicketRequest getByIdReq = objectMapper.convertValue(event.getData(), ReceiveTicketRequest.class);
-                return receiveTicketService.getById(getByIdReq.getTicketId());
+                return receiveTicketService.getById(request.getTicketId());
             case "receive_ticket.get_all_in_company":
-                ReceiveTicketRequest getAllReq = objectMapper.convertValue(event.getData(), ReceiveTicketRequest.class);
-                return receiveTicketService.getAllInCompany(getAllReq.getCompanyId());
+                return receiveTicketService.getAllInCompany(request.getCompanyId());
             case "receive_ticket.get_receive_report":
-                // Note: This requires both ReceiveReportRequest and companyId, may need special handling
-                ReceiveTicketRequest reportReq = objectMapper.convertValue(event.getData(), ReceiveTicketRequest.class);
-                ReceiveReportRequest receiveReportReq = objectMapper.convertValue(event.getData(), ReceiveReportRequest.class);
-                return receiveTicketService.getReceiveReport(receiveReportReq, reportReq.getCompanyId());
+                return receiveTicketService.getReceiveReport(request.getReceiveReport(), request.getCompanyId());
             case "receive_ticket.get_monthly_report":
-                ReceiveTicketRequest monthlyReq = objectMapper.convertValue(event.getData(), ReceiveTicketRequest.class);
-                return receiveTicketService.getMonthlyReceiveReport(monthlyReq.getCompanyId(), 
-                    monthlyReq.getReceiveType(), monthlyReq.getWarehouseId());
+                return receiveTicketService.getMonthlyReceiveReport(request.getCompanyId(), 
+                    request.getReceiveType(), request.getWarehouseId());
             default:
                 throw new RpcException(400, "Unknown receive ticket event: " + event.getPattern());
         }
