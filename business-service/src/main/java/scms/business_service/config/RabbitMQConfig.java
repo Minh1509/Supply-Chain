@@ -22,11 +22,10 @@ public class RabbitMQConfig {
         return new Queue("business_queue", true);
     }
 
+    
     @Bean
     public Jackson2JsonMessageConverter jackson2MessageConverter() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        return new Jackson2JsonMessageConverter(objectMapper);
+        return new Jackson2JsonMessageConverter();
     }
 
     @Bean
