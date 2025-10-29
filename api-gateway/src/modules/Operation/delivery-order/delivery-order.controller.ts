@@ -15,9 +15,9 @@ export class DeliveryOrderController {
   ) {}
 
   @Post()
-  async createDeliveryOrder(@Body() request: DeliveryOrderRequestDto) {
+  async createDeliveryOrder(@Body() deliveryOrderData: DeliveryOrderRequestDto) {
     return await firstValueFrom(
-      this.operationClient.send(DELIVERY_ORDER_CONSTANTS.CREATE_DO, { deliveryOrder: request }),
+      this.operationClient.send(DELIVERY_ORDER_CONSTANTS.CREATE_DO, { deliveryOrderData }),
     );
   }
 
@@ -43,9 +43,9 @@ export class DeliveryOrderController {
   }
 
   @Put(':doId')
-  async updateDeliveryOrder(@Param('doId') doId: number, @Body() request: DeliveryOrderRequestDto) {
+  async updateDeliveryOrder(@Param('doId') doId: number, @Body() deliveryOrderData: DeliveryOrderRequestDto) {
     return await firstValueFrom(
-      this.operationClient.send(DELIVERY_ORDER_CONSTANTS.UPDATE_DO, { doId, deliveryOrder: request }),
+      this.operationClient.send(DELIVERY_ORDER_CONSTANTS.UPDATE_DO, { doId, deliveryOrderData }),
     );
   }
 }

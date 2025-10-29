@@ -14,42 +14,42 @@ export class ManufactureStageController {
     @Inject(RABBITMQ_CONSTANTS.OPERATION.name) private operationClient: ClientProxy,
   ) {}
 
-  @Post('/user/create-stage')
-  async createStage(@Body() request: ManuStageRequestDto) {
+  @Post()
+  async createStage(@Body() manuStageData: ManuStageRequestDto) {
     return await firstValueFrom(
-      this.operationClient.send(MANUFACTURE_STAGE_CONSTANTS.CREATE_STAGE, { stage: request }),
+      this.operationClient.send(MANUFACTURE_STAGE_CONSTANTS.CREATE_STAGE, { manuStageData }),
     );
   }
 
-  @Get('/user/get-stage-by-item/:itemId')
+  @Get('/item/:itemId')
   async getStagesByItemId(@Param('itemId') itemId: number) {
     return await firstValueFrom(
       this.operationClient.send(MANUFACTURE_STAGE_CONSTANTS.GET_STAGE_BY_ITEM, { itemId }),
     );
   }
 
-  @Get('/user/get-stage-by-id/:stageId')
+  @Get(':stageId')
   async getStage(@Param('stageId') stageId: number) {
     return await firstValueFrom(
       this.operationClient.send(MANUFACTURE_STAGE_CONSTANTS.GET_STAGE_BY_ID, { stageId }),
     );
   }
 
-  @Get('/user/get-all-stage-in-com/:companyId')
+  @Get('all-in-com/:companyId')
   async getAllStageInCompany(@Param('companyId') companyId: number) {
     return await firstValueFrom(
       this.operationClient.send(MANUFACTURE_STAGE_CONSTANTS.GET_ALL_STAGES_IN_COMPANY, { companyId }),
     );
   }
 
-  @Put('/user/update-stage/:stageId')
-  async updateStage(@Param('stageId') stageId: number, @Body() stage: ManuStageRequestDto) {
+  @Put('/:stageId')
+  async updateStage(@Param('stageId') stageId: number, @Body() manuStageData: ManuStageRequestDto) {
     return await firstValueFrom(
-      this.operationClient.send(MANUFACTURE_STAGE_CONSTANTS.UPDATE_STAGE, { stageId, stage }),
+      this.operationClient.send(MANUFACTURE_STAGE_CONSTANTS.UPDATE_STAGE, { stageId, manuStageData }),
     );
   }
 
-  @Delete('/user/delete-stage/:stageId')
+  @Delete('/:stageId')
   async deleteStage(@Param('stageId') stageId: number) {
     return await firstValueFrom(
       this.operationClient.send(MANUFACTURE_STAGE_CONSTANTS.DELETE_STAGE, { stageId }),

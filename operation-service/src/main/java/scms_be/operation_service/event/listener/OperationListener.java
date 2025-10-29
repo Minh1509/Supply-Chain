@@ -35,7 +35,7 @@ public class OperationListener {
     @Autowired
     private DeliveryProcessHandler deliveryProcessHandler;
 
-    @RabbitListener(queues = "inventory_queue")
+    @RabbitListener(queues = "operation_queue")
     public Object handleEvents(GenericEvent event) {
         try {
             switch (event.getPattern()) {

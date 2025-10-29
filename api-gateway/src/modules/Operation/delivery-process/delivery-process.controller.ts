@@ -15,9 +15,9 @@ export class DeliveryProcessController {
   ) {}
 
   @Post()
-  async createDeliveryProcess(@Body() request: DeliveryProcessRequestDto) {
+  async createDeliveryProcess(@Body() deliveryProcessData: DeliveryProcessRequestDto) {
     return await firstValueFrom(
-      this.operationClient.send(DELIVERY_PROCESS_CONSTANTS.CREATE_DELIVERY_PROCESS, { deliveryProcess: request }),
+      this.operationClient.send(DELIVERY_PROCESS_CONSTANTS.CREATE_DELIVERY_PROCESS, { deliveryProcessData }),
     );
   }
 
@@ -29,9 +29,9 @@ export class DeliveryProcessController {
   }
 
   @Put(':processId')
-  async updateDeliveryProcess(@Param('processId') processId: number, @Body() request: DeliveryProcessRequestDto) {
+  async updateDeliveryProcess(@Param('processId') processId: number, @Body() deliveryProcessData: DeliveryProcessRequestDto) {
     return await firstValueFrom(
-      this.operationClient.send(DELIVERY_PROCESS_CONSTANTS.UPDATE_DELIVERY_PROCESS, { processId, deliveryProcess: request }),
+      this.operationClient.send(DELIVERY_PROCESS_CONSTANTS.UPDATE_DELIVERY_PROCESS, { processId, deliveryProcessData }),
     );
   }
 }

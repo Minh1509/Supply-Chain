@@ -29,6 +29,12 @@ import { SalesOrderModule } from './Sales/sales-order/sales-order.module';
 import { UserModule } from './user/user.module';
 import { getWinstonConfig } from '../common/utilities';
 import { appConfiguration, rabbitmqConfiguration } from '../config';
+import { BOMModule } from './Operation/bom/bom.module';
+import { DeliveryOrderModule } from './Operation/delivery-order/delivery-order.module';
+import { DeliveryProcessModule } from './Operation/delivery-process/delivery-process.module';
+import { ManufactureProcessModule } from './Operation/manufacture-process/manufacture-process.module';
+import { ManufactureOrderModule } from './Operation/manufacture-order/manufacture-order.module';
+import { ManufactureStageModule } from './Operation/manufacture-stage/manufacture-stage.module';
 
 @Global()
 @Module({
@@ -67,6 +73,12 @@ import { appConfiguration, rabbitmqConfiguration } from '../config';
     InvoiceModule,
     QuotationModule,
     SalesOrderModule,
+    BOMModule,
+    DeliveryOrderModule,
+    DeliveryProcessModule,
+    ManufactureStageModule,
+    ManufactureOrderModule,
+    ManufactureProcessModule,
   ],
   controllers: [],
   providers: [

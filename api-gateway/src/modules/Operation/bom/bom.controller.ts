@@ -15,9 +15,9 @@ export class BOMController {
   ) {}
 
   @Post()
-  async createBOM(@Body() request: BOMRequestDto) {
+  async createBOM(@Body() bom: BOMRequestDto) {
     return await firstValueFrom(
-      this.operationClient.send(BOM_CONSTANTS.CREATE_BOM, { bom: request }),
+      this.operationClient.send(BOM_CONSTANTS.CREATE_BOM, { bom }),
     );
   }
 

@@ -12,34 +12,34 @@ import { ManuProcessRequestDto } from './dto/manu-process-request.dto';
 export class ManufactureProcessController {
   constructor(@Inject(RABBITMQ_CONSTANTS.OPERATION.name) private operationClient: ClientProxy) {}
 
-  @Post('/user/create-process')
-  async createProcess(@Body() process: ManuProcessRequestDto) {
+  @Post()
+  async createProcess(@Body() ManuProcessData: ManuProcessRequestDto) {
     return await firstValueFrom(
-      this.operationClient.send(MANUFACTURE_PROCESS_CONSTANTS.CREATE_PROCESS, { process }),
+      this.operationClient.send(MANUFACTURE_PROCESS_CONSTANTS.CREATE_PROCESS, { ManuProcessData }),
     );
   }
 
-  @Get('/user/get-all-process-in-mo/:moId')
+  @Get('all-in-mo/:moId')
   async getAllProcesses(@Param('moId') moId: number) {
     return await firstValueFrom(
       this.operationClient.send(MANUFACTURE_PROCESS_CONSTANTS.GET_ALL_PROCESS_IN_MO, { moId }),
     );
   }
 
-  @Get('/user/get-process/:processId')
+  @Get('/:processId')
   async getProcess(@Param('processId') processId: number) {
     return await firstValueFrom(
       this.operationClient.send(MANUFACTURE_PROCESS_CONSTANTS.GET_PROCESS_BY_ID, { processId }),
     );
   }
 
-  @Put('/user/update-process/:processId')
+  @Put('/:processId')
   async updateProcess(
     @Param('processId') processId: number,
-    @Body() process: ManuProcessRequestDto,
+    @Body() ManuProcessData: ManuProcessRequestDto,
   ) {
     return await firstValueFrom(
-      this.operationClient.send(MANUFACTURE_PROCESS_CONSTANTS.UPDATE_PROCESS, { processId, process }),
+      this.operationClient.send(MANUFACTURE_PROCESS_CONSTANTS.UPDATE_PROCESS, { processId, ManuProcessData }),
     );
   }
 }

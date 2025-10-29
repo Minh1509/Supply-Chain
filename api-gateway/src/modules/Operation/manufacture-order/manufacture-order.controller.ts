@@ -14,49 +14,49 @@ export class ManufactureOrderController {
     @Inject(RABBITMQ_CONSTANTS.OPERATION.name) private operationClient: ClientProxy,
   ) {}
 
-  @Post('/user/create-mo')
-  async createOrder(@Body() request: ManuOrderRequestDto) {
+  @Post()
+  async createOrder(@Body() manuOrderData: ManuOrderRequestDto) {
     return await firstValueFrom(
-      this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.CREATE_MO, { mo: request }),
+      this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.CREATE_MO, { manuOrderData }),
     );
   }
 
-  @Get('/user/get-all-mo-in-item/:itemId')
+  @Get('/all-by-item/:itemId')
   async getAllOrders(@Param('itemId') itemId: number) {
     return await firstValueFrom(
       this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.GET_ALL_MO_BY_ITEM, { itemId }),
     );
   }
 
-  @Get('/user/get-all-mo-in-com/:companyId')
+  @Get('/all-in-com/:companyId')
   async getAllOrdersByCompany(@Param('companyId') companyId: number) {
     return await firstValueFrom(
       this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.GET_ALL_MO_IN_COMPANY, { companyId }),
     );
   }
 
-  @Get('/user/get-mo/:moid')
+  @Get(':moid')
   async getOrder(@Param('moid') moid: number) {
     return await firstValueFrom(
-      this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.GET_MO_BY_ID, { moId: moid }),
+      this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.GET_MO_BY_ID, {  moid }),
     );
   }
 
-  @Put('/user/update-mo/:moid')
+  @Put(':moid')
   async updateOrder(@Param('moid') moid: number, @Body() order: ManuOrderRequestDto) {
     return await firstValueFrom(
-      this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.UPDATE_MO, { moId: moid, mo: order }),
+      this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.UPDATE_MO, { moid,  order }),
     );
   }
 
-  @Post('/user/manufacture-report/:companyId')
+  @Post('/report/:companyId')
   async getReceiveReport(@Body() request: ManuReportRequestDto, @Param('companyId') companyId: number) {
     return await firstValueFrom(
       this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.MANUFACTURE_REPORT, { request, companyId }),
     );
   }
 
-  @Get('/user/monthly-manufacture-report/:companyId')
+  @Get('/monthly-report/:companyId')
   async getMonthlyManuReport(@Param('companyId') companyId: number, @Query('type') type?: string) {
     return await firstValueFrom(
       this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.MONTHLY_MANU_REPORT, { companyId, type }),
