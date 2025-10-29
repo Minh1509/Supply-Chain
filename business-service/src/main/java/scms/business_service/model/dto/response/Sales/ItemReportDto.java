@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 public class ItemReportDto {
   private Long itemId;
-  private Double totalQuantity = 0.0;
-  private Double totalRevenue = 0.0;
+  private String itemCode;
+  private String itemName;
+  private Double totalQuantity;
 }

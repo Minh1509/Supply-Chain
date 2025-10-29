@@ -14,6 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import scms.business_service.entity.Purchasing.PurchaseOrder;
+import scms.business_service.event.publisher.ExternalServicePublisher;
+import scms.business_service.model.dto.response.external.CompanyDto;
+import scms.business_service.model.dto.response.external.ItemDto;
 import scms.business_service.entity.Purchasing.PurchaseOrderDetail;
 import scms.business_service.entity.Sales.Quotation;
 import scms.business_service.entity.Sales.QuotationDetail;
@@ -43,6 +46,9 @@ public class PurchaseOrderService {
 
   @Autowired
   private QuotationDetailRepository quotationDetailRepository;
+
+  @Autowired
+  private ExternalServicePublisher externalServicePublisher;
 
   public PurchaseOrderDto createPurchaseOrder(PurchaseOrderRequest request) {
     Quotation quotation = quotationRepository.findById(request.getQuotationId())
@@ -144,39 +150,40 @@ public class PurchaseOrderService {
   }
 
   public List<ItemReportDto> getPurchaseReport(PurchaseReportRequest request, Long companyId) {
-    String status = "Đã hoàn thành";
-    
-    LocalDateTime startDate = request.getStartDate().atStartOfDay();
-    LocalDateTime endDate = request.getEndDate().atTime(23, 59, 59);
+    LocalDateTime startDate = request.getStartDate();
+    LocalDateTime endDate = request.getEndDate();
 
     List<PurchaseOrder> purchaseOrders = purchaseOrderRepository.findByCompanyIdAndStatusAndLastUpdatedOnBetween(
-        companyId,
-        status,
-        startDate,
-        endDate);
+        companyId, "Đã hoàn thành", startDate, endDate);
 
-    Map<Long, ItemReportDto> itemReportMap = new HashMap<>();
+    Map<Long, Double> itemQuantityMap = new HashMap<>();
 
     for (PurchaseOrder po : purchaseOrders) {
       List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPurchaseOrderId(po.getId());
-
       for (PurchaseOrderDetail detail : details) {
         Long itemId = detail.getItemId();
-        ItemReportDto reportDto = itemReportMap.getOrDefault(itemId, new ItemReportDto());
-
-        reportDto.setItemId(itemId);
-        reportDto.setTotalQuantity(reportDto.getTotalQuantity() + detail.getQuantity());
-
-        // Tính tổng chi phí mua hàng
-        double totalPrice = detail.getQuantity() * detail.getItemPrice();
-        double discount = detail.getDiscount() != null ? detail.getDiscount() : 0.0;
-        reportDto.setTotalRevenue(reportDto.getTotalRevenue() + totalPrice - discount);
-
-        itemReportMap.put(itemId, reportDto);
+        Double quantity = detail.getQuantity() != null ? detail.getQuantity() : 0.0;
+        itemQuantityMap.put(itemId, itemQuantityMap.getOrDefault(itemId, 0.0) + quantity);
       }
     }
 
-    return new ArrayList<>(itemReportMap.values());
+    List<ItemReportDto> result = new ArrayList<>();
+    for (Map.Entry<Long, Double> entry : itemQuantityMap.entrySet()) {
+      ItemReportDto dto = new ItemReportDto();
+      dto.setItemId(entry.getKey());
+      dto.setTotalQuantity(entry.getValue());
+      
+      // Lấy thông tin item
+      ItemDto item = externalServicePublisher.getItemById(entry.getKey());
+      if (item != null) {
+        dto.setItemCode(item.getItemCode());
+        dto.setItemName(item.getItemName());
+      }
+      
+      result.add(dto);
+    }
+
+    return result;
   }
 
   public List<MonthlySPReportDto> getMonthlyPurchaseReport(Long companyId) {
@@ -252,7 +259,20 @@ public class PurchaseOrderService {
     dto.setCreatedOn(purchaseOrder.getCreatedOn());
     dto.setLastUpdatedOn(purchaseOrder.getLastUpdatedOn());
     
-    // Set thông tin từ quotation
+    // Lấy thông tin company
+    CompanyDto company = externalServicePublisher.getCompanyById(purchaseOrder.getCompanyId());
+    if (company != null) {
+      dto.setCompanyCode(company.getCompanyCode());
+      dto.setCompanyName(company.getCompanyName());
+    }
+    
+    CompanyDto supplier = externalServicePublisher.getCompanyById(purchaseOrder.getSupplierCompanyId());
+    if (supplier != null) {
+      dto.setSupplierCompanyCode(supplier.getCompanyCode());
+      dto.setSupplierCompanyName(supplier.getCompanyName());
+    }
+    
+    // Lấy thông tin từ quotation
     dto.setSubTotal(purchaseOrder.getQuotation().getSubTotal());
     dto.setTaxRate(purchaseOrder.getQuotation().getTaxRate());
     dto.setTaxAmount(purchaseOrder.getQuotation().getTaxAmount());
@@ -270,6 +290,20 @@ public class PurchaseOrderService {
           detailDto.setItemPrice(detail.getItemPrice());
           detailDto.setDiscount(detail.getDiscount());
           detailDto.setNote(detail.getNote());
+          
+          // Lấy thông tin item
+          ItemDto item = externalServicePublisher.getItemById(detail.getItemId());
+          if (item != null) {
+            detailDto.setItemCode(item.getItemCode());
+            detailDto.setItemName(item.getItemName());
+          }
+          
+          ItemDto supplierItem = externalServicePublisher.getItemById(detail.getSupplierItemId());
+          if (supplierItem != null) {
+            detailDto.setSupplierItemCode(supplierItem.getItemCode());
+            detailDto.setSupplierItemName(supplierItem.getItemName());
+          }
+          
           return detailDto;
         })
         .collect(Collectors.toList());

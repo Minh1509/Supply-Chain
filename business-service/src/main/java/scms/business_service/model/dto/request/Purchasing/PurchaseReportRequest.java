@@ -1,11 +1,11 @@
 package scms.business_service.model.dto.request.Purchasing;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import lombok.Data;
 
 @Data
 public class PurchaseReportRequest {
-  private LocalDate startDate;
-  private LocalDate endDate;
+  private LocalDateTime startDate;
+  private LocalDateTime endDate;
 }

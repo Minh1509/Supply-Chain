@@ -14,6 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import scms.business_service.entity.Purchasing.PurchaseOrder;
+import scms.business_service.event.publisher.ExternalServicePublisher;
+import scms.business_service.model.dto.response.external.CompanyDto;
+import scms.business_service.model.dto.response.external.ItemDto;
 import scms.business_service.entity.Purchasing.PurchaseOrderDetail;
 import scms.business_service.entity.Sales.SalesOrder;
 import scms.business_service.entity.Sales.SalesOrderDetail;
@@ -43,6 +46,9 @@ public class SalesOrderService {
 
   @Autowired
   private PurchaseOrderDetailRepository purchaseOrderDetailRepository;
+
+  @Autowired
+  private ExternalServicePublisher externalServicePublisher;
 
   public SalesOrderDto createSalesOrder(SalesOrderRequest request) {
     PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(request.getPoId())
@@ -134,34 +140,37 @@ public class SalesOrderService {
   }
 
   public List<ItemReportDto> getSalesReport(SalesReportRequest request, Long companyId) {
-    String status = "Đã hoàn thành";
     List<SalesOrder> salesOrders = salesOrderRepository.findByCompanyIdAndStatusAndLastUpdatedOnBetween(
-        companyId,
-        status,
-        request.getStartDate(),
-        request.getEndDate());
+        companyId, "Đã hoàn thành", request.getStartDate(), request.getEndDate());
 
-    Map<Long, ItemReportDto> itemReportMap = new HashMap<>();
+    Map<Long, Double> itemQuantityMap = new HashMap<>();
 
     for (SalesOrder so : salesOrders) {
       List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderId(so.getId());
-
       for (SalesOrderDetail detail : details) {
         Long itemId = detail.getItemId();
-        ItemReportDto reportDto = itemReportMap.getOrDefault(itemId, new ItemReportDto());
-
-        reportDto.setItemId(itemId);
-        reportDto.setTotalQuantity(reportDto.getTotalQuantity() + detail.getQuantity());
-
-        double totalPrice = detail.getQuantity() * detail.getItemPrice();
-        double discount = detail.getDiscount() != null ? detail.getDiscount() : 0.0;
-        reportDto.setTotalRevenue(reportDto.getTotalRevenue() + totalPrice - discount);
-
-        itemReportMap.put(itemId, reportDto);
+        Double quantity = detail.getQuantity() != null ? detail.getQuantity() : 0.0;
+        itemQuantityMap.put(itemId, itemQuantityMap.getOrDefault(itemId, 0.0) + quantity);
       }
     }
 
-    return new ArrayList<>(itemReportMap.values());
+    List<ItemReportDto> result = new ArrayList<>();
+    for (Map.Entry<Long, Double> entry : itemQuantityMap.entrySet()) {
+      ItemReportDto dto = new ItemReportDto();
+      dto.setItemId(entry.getKey());
+      dto.setTotalQuantity(entry.getValue());
+      
+      // Lấy thông tin item
+      ItemDto item = externalServicePublisher.getItemById(entry.getKey());
+      if (item != null) {
+        dto.setItemCode(item.getItemCode());
+        dto.setItemName(item.getItemName());
+      }
+      
+      result.add(dto);
+    }
+
+    return result;
   }
 
   public List<MonthlySPReportDto> getMonthlySalesReport(Long companyId) {
@@ -232,7 +241,20 @@ public class SalesOrderService {
     dto.setCreatedOn(salesOrder.getCreatedOn());
     dto.setLastUpdatedOn(salesOrder.getLastUpdatedOn());
     
-    // Set thông tin tài chính từ quotation qua purchase order
+    // Lấy thông tin company
+    CompanyDto company = externalServicePublisher.getCompanyById(salesOrder.getCompanyId());
+    if (company != null) {
+      dto.setCompanyCode(company.getCompanyCode());
+      dto.setCompanyName(company.getCompanyName());
+    }
+    
+    CompanyDto customer = externalServicePublisher.getCompanyById(salesOrder.getCustomerCompanyId());
+    if (customer != null) {
+      dto.setCustomerCompanyCode(customer.getCompanyCode());
+      dto.setCustomerCompanyName(customer.getCompanyName());
+    }
+    
+    // Lấy thông tin tài chính từ quotation
     if (salesOrder.getPurchaseOrder() != null && salesOrder.getPurchaseOrder().getQuotation() != null) {
       dto.setSubTotal(salesOrder.getPurchaseOrder().getQuotation().getSubTotal());
       dto.setTaxRate(salesOrder.getPurchaseOrder().getQuotation().getTaxRate());
@@ -251,6 +273,20 @@ public class SalesOrderService {
           detailDto.setItemPrice(detail.getItemPrice());
           detailDto.setDiscount(detail.getDiscount());
           detailDto.setNote(detail.getNote());
+          
+          // Lấy thông tin item
+          ItemDto item = externalServicePublisher.getItemById(detail.getItemId());
+          if (item != null) {
+            detailDto.setItemCode(item.getItemCode());
+            detailDto.setItemName(item.getItemName());
+          }
+          
+          ItemDto customerItem = externalServicePublisher.getItemById(detail.getCustomerItemId());
+          if (customerItem != null) {
+            detailDto.setCustomerItemCode(customerItem.getItemCode());
+            detailDto.setCustomerItemName(customerItem.getItemName());
+          }
+          
           return detailDto;
         })
         .collect(Collectors.toList());

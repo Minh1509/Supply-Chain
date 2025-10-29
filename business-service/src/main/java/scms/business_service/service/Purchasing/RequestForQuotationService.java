@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import scms.business_service.entity.Purchasing.RfqDetail;
+import scms.business_service.event.publisher.ExternalServicePublisher;
+import scms.business_service.model.dto.response.external.CompanyDto;
+import scms.business_service.model.dto.response.external.ItemDto;
 import scms.business_service.entity.Purchasing.RequestForQuotation;
 import scms.business_service.exception.RpcException;
 import scms.business_service.model.dto.request.Purchasing.RequestForQuotationRequest;
@@ -25,6 +28,9 @@ public class RequestForQuotationService {
 
   @Autowired
   private RfqDetailRepository rfqDetailRepository;
+
+  @Autowired
+  private ExternalServicePublisher externalServicePublisher;
 
   public RequestForQuotationDto createRFQ(RequestForQuotationRequest request) {
     // Validate input
@@ -108,7 +114,7 @@ public class RequestForQuotationService {
 
   private RequestForQuotationDto convertToDto(RequestForQuotation rfq) {
     RequestForQuotationDto dto = new RequestForQuotationDto();
-    dto.setId(rfq.getId());  // DTO giữ tên cũ
+    dto.setId(rfq.getId());
     dto.setCode(rfq.getCode());
     dto.setCompanyId(rfq.getCompanyId());
     dto.setRequestedCompanyId(rfq.getRequestedCompanyId());
@@ -117,6 +123,19 @@ public class RequestForQuotationService {
     dto.setCreatedOn(rfq.getCreatedOn());
     dto.setLastUpdatedOn(rfq.getLastUpdatedOn());
     dto.setStatus(rfq.getStatus());
+
+    // Lấy thông tin company
+    CompanyDto company = externalServicePublisher.getCompanyById(rfq.getCompanyId());
+    if (company != null) {
+      dto.setCompanyCode(company.getCompanyCode());
+      dto.setCompanyName(company.getCompanyName());
+    }
+    
+    CompanyDto requested = externalServicePublisher.getCompanyById(rfq.getRequestedCompanyId());
+    if (requested != null) {
+      dto.setRequestedCompanyCode(requested.getCompanyCode());
+      dto.setRequestedCompanyName(requested.getCompanyName());
+    }
 
     List<RfqDetailDto> rfqDetails = rfqDetailRepository
         .findByRfqId(rfq.getId())
@@ -129,13 +148,28 @@ public class RequestForQuotationService {
 
   public RfqDetailDto convertToDetailDto(RfqDetail rfqDetail) {
     RfqDetailDto dto = new RfqDetailDto();
-    dto.setId(rfqDetail.getId());  // DTO giữ tên cũ
+    dto.setId(rfqDetail.getId());
     dto.setRfqId(rfqDetail.getRfq().getId());
     dto.setRfqCode(rfqDetail.getRfq().getCode());
     dto.setItemId(rfqDetail.getItemId());
     dto.setSupplierItemId(rfqDetail.getSupplierItemId());
     dto.setQuantity(rfqDetail.getQuantity());
     dto.setNote(rfqDetail.getNote());
+    
+    // Lấy thông tin item
+    ItemDto item = externalServicePublisher.getItemById(rfqDetail.getItemId());
+    if (item != null) {
+      dto.setItemCode(item.getItemCode());
+      dto.setItemName(item.getItemName());
+    }
+    
+    ItemDto supplierItem = externalServicePublisher.getItemById(rfqDetail.getSupplierItemId());
+    if (supplierItem != null) {
+      dto.setSupplierItemCode(supplierItem.getItemCode());
+      dto.setSupplierItemName(supplierItem.getItemName());
+      dto.setSupplierItemPrice(supplierItem.getImportPrice());
+    }
+    
     return dto;
   }
 }

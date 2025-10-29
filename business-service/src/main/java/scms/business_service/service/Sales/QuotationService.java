@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import scms.business_service.entity.Purchasing.RequestForQuotation;
+import scms.business_service.event.publisher.ExternalServicePublisher;
+import scms.business_service.model.dto.response.external.CompanyDto;
+import scms.business_service.model.dto.response.external.ItemDto;
 import scms.business_service.entity.Sales.Quotation;
 import scms.business_service.entity.Sales.QuotationDetail;
 import scms.business_service.exception.RpcException;
@@ -30,6 +33,9 @@ public class QuotationService {
 
   @Autowired
   private RequestForQuotationRepository rfqRepository;
+
+  @Autowired
+  private ExternalServicePublisher externalServicePublisher;
 
   public QuotationDto createQuotation(QuotationRequest request) {
     RequestForQuotation rfq = rfqRepository.findById(request.getRfqId())
@@ -132,6 +138,19 @@ public class QuotationService {
     dto.setLastUpdatedOn(quotation.getLastUpdatedOn());
     dto.setStatus(quotation.getStatus());
 
+    // Lấy thông tin company
+    CompanyDto company = externalServicePublisher.getCompanyById(quotation.getCompanyId());
+    if (company != null) {
+      dto.setCompanyCode(company.getCompanyCode());
+      dto.setCompanyName(company.getCompanyName());
+    }
+    
+    CompanyDto requestCompany = externalServicePublisher.getCompanyById(quotation.getRequestCompanyId());
+    if (requestCompany != null) {
+      dto.setRequestCompanyCode(requestCompany.getCompanyCode());
+      dto.setRequestCompanyName(requestCompany.getCompanyName());
+    }
+
     List<QuotationDetailDto> details = quotationDetailRepository
         .findByQuotationId(quotation.getId())
         .stream()
@@ -153,6 +172,19 @@ public class QuotationService {
     dto.setItemPrice(detail.getItemPrice());
     dto.setDiscount(detail.getDiscount());
     dto.setNote(detail.getNote());
+    
+    // Lấy thông tin item
+    ItemDto item = externalServicePublisher.getItemById(detail.getItemId());
+    if (item != null) {
+      dto.setItemCode(item.getItemCode());
+      dto.setItemName(item.getItemName());
+    }
+    
+    ItemDto customerItem = externalServicePublisher.getItemById(detail.getCustomerItemId());
+    if (customerItem != null) {
+      dto.setCustomerItemName(customerItem.getItemName());
+    }
+    
     return dto;
   }
 }
