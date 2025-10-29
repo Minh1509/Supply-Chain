@@ -17,19 +17,19 @@ public class InvoiceHandler {
   public Object handleCreate(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
     Long soId = getLongValue(map, "soId");
-    return invoiceService.createInvoice(soId);
+    return invoiceService.generateInvoice(soId);
   }
 
   public Object handleGetPdfById(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
     Long id = getLongValue(map, "id");
-    return invoiceService.getInvoicePdfById(id);
+    return invoiceService.getInvoiceBySo(id);
   }
 
   public Object handleGetPdfBySoId(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
     Long soId = getLongValue(map, "soId");
-    return invoiceService.getInvoicePdfBySoId(soId);
+    return invoiceService.getInvoiceBySo(soId);
   }
 
   private Long getLongValue(Map<String, Object> map, String key) {
