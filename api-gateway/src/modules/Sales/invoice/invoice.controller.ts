@@ -6,11 +6,10 @@ import {
   Param,
   ParseIntPipe,
   Post,
-  Query,
   Res,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { firstValueFrom } from 'rxjs';
 import { RABBITMQ_CONSTANTS } from 'src/common/constants/rabbitmq.constant';
@@ -25,26 +24,25 @@ export class InvoiceController {
   ) {}
 
   @Post('sales-orders/:soId')
-  @ApiOperation({ summary: 'Create invoice' })
-  async create(@Param('soId', ParseIntPipe) soId: number) {
+  @ApiOperation({ summary: 'Create invoice from sales order' })
+  @ApiParam({ name: 'soId', type: 'number', description: 'Sales Order ID' })
+  async createInvoice(@Param('soId', ParseIntPipe) soId: number) {
     return await firstValueFrom(
       this.businessClient.send(INVOICE_CONSTANTS.CREATE, { soId }),
     );
   }
 
-  @Get('sales-orders/:soId/pdf')
-  @ApiOperation({ summary: 'Download PDF by sales order' })
+  @Get(':id/pdf')
+  @ApiOperation({ summary: 'Get invoice PDF by invoice ID' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Invoice ID' })
   @Header('Content-Type', 'application/pdf')
-  async downloadPdfBySalesOrder(
-    @Param('soId', ParseIntPipe) soId: number,
-    @Res() res: Response,
-  ) {
+  async getInvoicePdf(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
     const invoice: any = await firstValueFrom(
-      this.businessClient.send(INVOICE_CONSTANTS.GET_BY_SO_ID, { soId }),
+      this.businessClient.send(INVOICE_CONSTANTS.GET_PDF_BY_ID, { id }),
     );
 
     if (!invoice || !invoice.file) {
-      return res.status(404).json({ error: 'Invoice not found' });
+      return res.status(404).json({ error: 'Không tìm thấy hóa đơn!' });
     }
 
     const buffer = Buffer.from(invoice.file);
@@ -54,45 +52,21 @@ export class InvoiceController {
   }
 
   @Get('sales-orders/:soId')
-  @ApiOperation({ summary: 'Get by sales order' })
-  async findBySalesOrder(@Param('soId', ParseIntPipe) soId: number) {
-    return await firstValueFrom(
-      this.businessClient.send(INVOICE_CONSTANTS.GET_BY_SO_ID, { soId }),
-    );
-  }
-
-  @Get()
-  @ApiOperation({ summary: 'Get all invoices' })
-  @ApiQuery({ name: 'companyId', required: true, type: Number })
-  async findAll(@Query('companyId', ParseIntPipe) companyId: number) {
-    return await firstValueFrom(
-      this.businessClient.send(INVOICE_CONSTANTS.GET_ALL_IN_COMPANY, { companyId }),
-    );
-  }
-
-  @Get(':id/pdf')
-  @ApiOperation({ summary: 'Download PDF by ID' })
+  @ApiOperation({ summary: 'Get invoice PDF by sales order ID' })
+  @ApiParam({ name: 'soId', type: 'number', description: 'Sales Order ID' })
   @Header('Content-Type', 'application/pdf')
-  async downloadPdf(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+  async getInvoice(@Param('soId', ParseIntPipe) soId: number, @Res() res: Response) {
     const invoice: any = await firstValueFrom(
-      this.businessClient.send(INVOICE_CONSTANTS.GET_BY_ID, { id }),
+      this.businessClient.send(INVOICE_CONSTANTS.GET_PDF_BY_SO_ID, { soId }),
     );
 
     if (!invoice || !invoice.file) {
-      return res.status(404).json({ error: 'Invoice not found' });
+      return res.status(404).json({ error: 'Không tìm thấy hóa đơn!' });
     }
 
     const buffer = Buffer.from(invoice.file);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${invoice.invoiceCode}.pdf"`);
     res.send(buffer);
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Get invoice by ID' })
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    return await firstValueFrom(
-      this.businessClient.send(INVOICE_CONSTANTS.GET_BY_ID, { id }),
-    );
   }
 }

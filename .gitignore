@@ -8,3 +8,4 @@ rabbitmq-data/
 postgres-data-prod/
 redis-data-prod/
 rabbitmq-data-prod/
+/.idea/

@@ -3,16 +3,6 @@ import { Type } from 'class-transformer';
 import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class PurchaseReportRequestDto {
-  @ApiProperty({ example: 1, required: false })
-  @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  companyId?: number;
-
-  @ApiProperty({ example: 'COMPLETED', required: false })
-  @IsOptional()
-  status?: string;
-
   @ApiProperty({
     description: 'Start date',
     example: '2025-01-01',

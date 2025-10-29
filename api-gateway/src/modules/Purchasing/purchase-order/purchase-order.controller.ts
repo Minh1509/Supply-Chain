@@ -35,65 +35,71 @@ export class PurchaseOrderController {
     );
   }
 
-  @Post('reports/purchase')
-  @ApiOperation({ summary: 'Get purchase report' })
-  async getPurchaseReport(@Body() request: PurchaseReportRequestDto) {
+  @Get('company/:companyId')
+  @ApiOperation({ summary: 'Get all purchase orders in company' })
+  async getAllPoInCompany(@Param('companyId', ParseIntPipe) companyId: number) {
     return await firstValueFrom(
-      this.businessClient.send(PURCHASE_ORDER_CONSTANTS.PURCHASE_REPORT, request),
+      this.businessClient.send(PURCHASE_ORDER_CONSTANTS.GET_ALL_IN_COMPANY, {
+        companyId,
+      }),
     );
   }
 
-  @Post('reports/monthly')
-  @ApiOperation({ summary: 'Get monthly report' })
-  async getMonthlyReport(@Body() request: MonthlyReportRequestDto) {
-    return await firstValueFrom(
-      this.businessClient.send(PURCHASE_ORDER_CONSTANTS.MONTHLY_REPORT, request),
-    );
-  }
-
-  @Get()
-  @ApiOperation({ summary: 'Get all purchase orders' })
-  @ApiQuery({ name: 'companyId', required: false, type: Number })
-  @ApiQuery({ name: 'supplierCompanyId', required: false, type: Number })
-  async findAll(
-    @Query('companyId') companyId?: number,
-    @Query('supplierCompanyId') supplierCompanyId?: number,
+  @Get('supplier/:supplierCompanyId')
+  @ApiOperation({ summary: 'Get all purchase orders by supplier company' })
+  async getAllPoBySupplier(
+    @Param('supplierCompanyId', ParseIntPipe) supplierCompanyId: number,
   ) {
-    if (companyId) {
-      return await firstValueFrom(
-        this.businessClient.send(PURCHASE_ORDER_CONSTANTS.GET_ALL_IN_COMPANY, {
-          companyId: Number(companyId),
-        }),
-      );
-    }
-
-    if (supplierCompanyId) {
-      return await firstValueFrom(
-        this.businessClient.send(PURCHASE_ORDER_CONSTANTS.GET_ALL_BY_SUPPLIER, {
-          supplierCompanyId: Number(supplierCompanyId),
-        }),
-      );
-    }
+    return await firstValueFrom(
+      this.businessClient.send(PURCHASE_ORDER_CONSTANTS.GET_ALL_BY_SUPPLIER, {
+        supplierCompanyId,
+      }),
+    );
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get purchase order by ID' })
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async getPoById(@Param('id', ParseIntPipe) id: number) {
     return await firstValueFrom(
       this.businessClient.send(PURCHASE_ORDER_CONSTANTS.GET_BY_ID, { id }),
     );
   }
 
   @Put(':id/status')
-  @ApiOperation({ summary: 'Update status' })
+  @ApiOperation({ summary: 'Update purchase order status' })
+  @ApiQuery({ name: 'status', required: true, type: String })
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: UpdateStatusRequestDto,
+    @Query('status') status: string,
   ) {
     return await firstValueFrom(
       this.businessClient.send(PURCHASE_ORDER_CONSTANTS.UPDATE_STATUS, {
         id,
-        status: body.status,
+        status,
+      }),
+    );
+  }
+
+  @Post('reports/purchase/:companyId')
+  @ApiOperation({ summary: 'Get purchase report' })
+  async getPurchaseReport(
+    @Param('companyId', ParseIntPipe) companyId: number,
+    @Body() request: PurchaseReportRequestDto,
+  ) {
+    return await firstValueFrom(
+      this.businessClient.send(PURCHASE_ORDER_CONSTANTS.PURCHASE_REPORT, {
+        companyId,
+        ...request,
+      }),
+    );
+  }
+
+  @Get('reports/monthly/:companyId')
+  @ApiOperation({ summary: 'Get monthly purchase report' })
+  async getMonthlyPurchaseReport(@Param('companyId', ParseIntPipe) companyId: number) {
+    return await firstValueFrom(
+      this.businessClient.send(PURCHASE_ORDER_CONSTANTS.MONTHLY_REPORT, {
+        companyId,
       }),
     );
   }
