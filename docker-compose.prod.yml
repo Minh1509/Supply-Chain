@@ -70,8 +70,9 @@ services:
   inventory-service:
     build:
       context: ./inventory-service
-    image: inventory-service:1.0.0
-    container_name: inventory-service
+      dockerfile: Dockerfile.prod
+    image: inventory-service:1.0.5
+    container_name: inventory-service-prod
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -101,8 +102,9 @@ services:
   operation-service:
     build:
       context: ./operation-service
-    image: operation-service:1.0.0
-    container_name: operation-service
+      dockerfile: Dockerfile.prod
+    image: operation-service:1.0.5
+    container_name: operation-service-prod
     depends_on:
       rabbitmq:
         condition: service_healthy

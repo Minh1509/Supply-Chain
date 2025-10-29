@@ -59,7 +59,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=dev
     networks:
-      - supply-chain
+      - supply-chain-prod
     restart: unless-stopped
   inventory-service:
     build:
@@ -74,7 +74,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=dev
     networks:
-      - supply-chain
+      - supply-chain-prod
     restart: unless-stopped
   business-service:
     build:
@@ -104,7 +104,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=dev
     networks:
-      - supply-chain
+      - supply-chain-prod
     restart: unless-stopped
 
   rabbitmq:
