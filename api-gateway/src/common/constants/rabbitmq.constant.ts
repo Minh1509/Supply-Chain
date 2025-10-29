@@ -4,6 +4,5 @@ export const RABBITMQ_CONSTANTS = {
   GENERAL: { name: 'GENERAL_SERVICE', queue: 'general_queue' },
   INVENTORY : { name: 'INVENTORY_SERVICE', queue: 'inventory_queue' },
   OPERATION : { name: 'OPERATION_SERVICE', queue: 'operation_queue' },
-  INVENTORY: { name: 'INVENTORY_SERVICE', queue: 'inventory_queue' },
   BUSINESS: { name: 'BUSINESS_SERVICE', queue: 'business_queue' },
 };
