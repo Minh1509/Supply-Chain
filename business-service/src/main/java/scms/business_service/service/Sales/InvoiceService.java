@@ -3,6 +3,7 @@ package scms.business_service.service.Sales;
 import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -43,6 +44,17 @@ public class InvoiceService {
 
     Invoice savedInvoice = invoiceRepository.save(invoice);
     return convertToDto(savedInvoice);
+  }
+
+  public ResponseEntity<byte[]>  getInvoicePdf(Long id) {
+    Invoice invoice = invoiceRepository.findById(id)
+            .orElseThrow(() -> new RpcException(404, "Không tìm thấy hóa đơn!"));
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_PDF);
+    headers.setContentDisposition(ContentDisposition.inline().filename(invoice.getCode() + ".pdf").build());
+
+    return new ResponseEntity<>(invoice.getFile(), headers, HttpStatus.OK);
   }
 
   public InvoiceDto getInvoiceBySo(Long soId) {

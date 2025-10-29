@@ -5,9 +5,9 @@ spring:
     web-application-type: none
 
   datasource:
-    url: jdbc:postgresql://localhost:5555/business-service
+    url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
-    password: secret
+    password: password
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
