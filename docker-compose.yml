@@ -76,6 +76,21 @@ services:
     networks:
       - supply-chain
     restart: unless-stopped
+  business-service:
+    build:
+      context: ./business-service
+    image: business-service:1.0.0
+    container_name: business-service
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    networks:
+      - supply-chain-prod
+    restart: unless-stopped
 
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
