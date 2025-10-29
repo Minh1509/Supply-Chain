@@ -79,7 +79,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
     networks:
       - supply-chain-prod
     restart: unless-stopped
@@ -111,7 +111,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
     networks:
       - supply-chain-prod
     restart: unless-stopped
