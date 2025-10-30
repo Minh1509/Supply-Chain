@@ -35,7 +35,7 @@ public class BOMService {
   public BOMDto createBOM(BOMData request) {
     ItemDto item = eventPublisher.getItemById(request.getItemId());
     if (item == null) {
-      throw new RpcException(404, "Không tìm thấy hàng hóa!");
+      throw new RpcException(404, "Không tìm thấy hàng hóaaaa!");
     }
     // Company company = item.getCompany();
     // List<BOM> existingBOMs = bomRepository.findByItem_Company_CompanyId(company.getCompanyId());
@@ -198,7 +198,7 @@ public class BOMService {
 
     ItemDto item = eventPublisher.getItemById(bom.getItemId());
     if (item == null) {
-      throw new RpcException(404, "Không tìm thấy hàng hóa!");
+      throw new RpcException(404, "Không tìm thấy hàng hóas!");
     }
     dto.setItemId(item.getItemId());
     dto.setItemCode(item.getItemCode());

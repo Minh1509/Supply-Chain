@@ -16,3 +16,7 @@ GRANT ALL PRIVILEGES ON DATABASE inventory_service TO postgres;
 CREATE DATABASE business_service;
 -- Cấp toàn quyền cho user postgres trên database business_service
 GRANT ALL PRIVILEGES ON DATABASE business_service TO postgres;
+
+CREATE DATABASE operation_service;
+-- Cấp toàn quyền cho user postgres trên database operation_service
+GRANT ALL PRIVILEGES ON DATABASE operation_service TO postgres;
