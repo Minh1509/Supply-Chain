@@ -298,12 +298,11 @@ public class PurchaseOrderService {
             detailDto.setItemName(item.getItemName());
           }
 
-          // ItemDto supplierItem =
-          // externalServicePublisher.getItemById(detail.getSupplierItemId());
-          // if (supplierItem != null) {
-          // detailDto.setSupplierItemCode(supplierItem.getItemCode());
-          // detailDto.setSupplierItemName(supplierItem.getItemName());
-          // }
+          ItemDto supplierItem = externalServicePublisher.getItemById(detail.getSupplierItemId());
+          if (supplierItem != null) {
+            detailDto.setSupplierItemCode(supplierItem.getItemCode());
+            detailDto.setSupplierItemName(supplierItem.getItemName());
+          }
 
           return detailDto;
         })

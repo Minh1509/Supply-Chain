@@ -38,7 +38,7 @@ export class RequestForQuotationController {
     );
   }
 
-  @Get(':companyId')
+  @Get('company/:companyId')
   @ApiOperation({ summary: 'Get all RFQs in company' })
   @ApiParam({ name: 'companyId', type: 'number', description: 'Company ID' })
   async getAllByCompany(@Param('companyId', ParseIntPipe) companyId: number) {
@@ -49,7 +49,7 @@ export class RequestForQuotationController {
     );
   }
 
-  @Get(':requestedCompanyId')
+  @Get('request-company/:requestedCompanyId')
   @ApiOperation({ summary: 'Get all RFQs in requested company' })
   @ApiParam({
     name: 'requestedCompanyId',

@@ -9,19 +9,11 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import scms.business_service.event.constants.EventConstants;
 import scms.business_service.model.dto.response.external.CompanyDto;
 import scms.business_service.model.dto.response.external.ItemDto;
+import scms.business_service.model.event.GenericEvent;
 
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
-
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageProperties;
-
-import scms.business_service.exception.RpcException;
 
 @Slf4j
 @Component
@@ -56,16 +48,21 @@ public class ExternalServicePublisher {
 
     public ItemDto getItemById(Long itemId) {
         try {
-            var payload = Map.of(
-                    "pattern", "item.get_by_id",
-                    "data", Map.of("id", itemId));
+
+            GenericEvent event = new GenericEvent();
+            event.setPattern("item.get_by_id");
+            event.setData(Map.of("itemId", itemId));
 
             Object response = rabbitTemplate.convertSendAndReceive(
                     "amq.direct",
-                    "general_queue",
-                    payload);
+                    "item.get_by_id",
+                    event);
 
-            return response != null ? objectMapper.convertValue(response, ItemDto.class) : null;
+            if (response == null) {
+                return null;
+            }
+
+            return objectMapper.convertValue(response, ItemDto.class);
 
         } catch (Exception e) {
             return null;
