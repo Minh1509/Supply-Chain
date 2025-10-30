@@ -51,7 +51,8 @@ public class PurchaseOrderHandler {
   public Object handlePurchaseReport(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
     Long companyId = getLongValue(map, "companyId");
-    PurchaseReportRequest request = objectMapper.convertValue(map, PurchaseReportRequest.class);
+    Map<String, Object> reqMap = (Map<String, Object>) map.get("request");
+    PurchaseReportRequest request = objectMapper.convertValue(reqMap, PurchaseReportRequest.class);
     return purchaseOrderService.getPurchaseReport(request, companyId);
   }
 

@@ -51,7 +51,8 @@ public class SalesOrderHandler {
   public Object handleSalesReport(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
     Long companyId = getLongValue(map, "companyId");
-    SalesReportRequest request = objectMapper.convertValue(map, SalesReportRequest.class);
+    Map<String, Object> reqMap = (Map<String, Object>) map.get("request");
+    SalesReportRequest request = objectMapper.convertValue(reqMap, SalesReportRequest.class);
     return salesOrderService.getSalesReport(request, companyId);
   }
 
