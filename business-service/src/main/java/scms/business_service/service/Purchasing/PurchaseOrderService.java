@@ -172,14 +172,14 @@ public class PurchaseOrderService {
       ItemReportDto dto = new ItemReportDto();
       dto.setItemId(entry.getKey());
       dto.setTotalQuantity(entry.getValue());
-      
+
       // Lấy thông tin item
       ItemDto item = externalServicePublisher.getItemById(entry.getKey());
       if (item != null) {
         dto.setItemCode(item.getItemCode());
         dto.setItemName(item.getItemName());
       }
-      
+
       result.add(dto);
     }
 
@@ -188,7 +188,7 @@ public class PurchaseOrderService {
 
   public List<MonthlySPReportDto> getMonthlyPurchaseReport(Long companyId) {
     String status = "Đã hoàn thành";
-    
+
     // Lấy 12 tháng gần nhất
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime startDate = now.minusMonths(11).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
@@ -208,7 +208,7 @@ public class PurchaseOrderService {
       List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPurchaseOrderId(po.getId());
       for (PurchaseOrderDetail detail : details) {
         aggregation.totalQuantity += detail.getQuantity() != null ? detail.getQuantity() : 0.0;
-        
+
         // Tính tổng tiền
         double totalPrice = detail.getQuantity() * detail.getItemPrice();
         double discount = detail.getDiscount() != null ? detail.getDiscount() : 0.0;
@@ -223,13 +223,13 @@ public class PurchaseOrderService {
     for (int i = 0; i < 12; i++) {
       YearMonth ym = YearMonth.from(startDate.plusMonths(i));
       MonthlyAggregation aggr = monthlyMap.getOrDefault(ym, new MonthlyAggregation());
-      
+
       MonthlySPReportDto report = new MonthlySPReportDto();
       report.setMonth(ym.format(DateTimeFormatter.ofPattern("MM/yyyy")));
       report.setTotalOrder((double) aggr.totalOrder);
       report.setTotalQuantity((int) aggr.totalQuantity);
       report.setTotalAmount(aggr.totalAmount);
-      
+
       result.add(report);
     }
 
@@ -258,20 +258,20 @@ public class PurchaseOrderService {
     dto.setStatus(purchaseOrder.getStatus());
     dto.setCreatedOn(purchaseOrder.getCreatedOn());
     dto.setLastUpdatedOn(purchaseOrder.getLastUpdatedOn());
-    
+
     // Lấy thông tin company
     CompanyDto company = externalServicePublisher.getCompanyById(purchaseOrder.getCompanyId());
     if (company != null) {
       dto.setCompanyCode(company.getCompanyCode());
       dto.setCompanyName(company.getCompanyName());
     }
-    
+
     CompanyDto supplier = externalServicePublisher.getCompanyById(purchaseOrder.getSupplierCompanyId());
     if (supplier != null) {
       dto.setSupplierCompanyCode(supplier.getCompanyCode());
       dto.setSupplierCompanyName(supplier.getCompanyName());
     }
-    
+
     // Lấy thông tin từ quotation
     dto.setSubTotal(purchaseOrder.getQuotation().getSubTotal());
     dto.setTaxRate(purchaseOrder.getQuotation().getTaxRate());
@@ -290,20 +290,21 @@ public class PurchaseOrderService {
           detailDto.setItemPrice(detail.getItemPrice());
           detailDto.setDiscount(detail.getDiscount());
           detailDto.setNote(detail.getNote());
-          
+
           // Lấy thông tin item
           ItemDto item = externalServicePublisher.getItemById(detail.getItemId());
           if (item != null) {
             detailDto.setItemCode(item.getItemCode());
             detailDto.setItemName(item.getItemName());
           }
-          
-          ItemDto supplierItem = externalServicePublisher.getItemById(detail.getSupplierItemId());
-          if (supplierItem != null) {
-            detailDto.setSupplierItemCode(supplierItem.getItemCode());
-            detailDto.setSupplierItemName(supplierItem.getItemName());
-          }
-          
+
+          // ItemDto supplierItem =
+          // externalServicePublisher.getItemById(detail.getSupplierItemId());
+          // if (supplierItem != null) {
+          // detailDto.setSupplierItemCode(supplierItem.getItemCode());
+          // detailDto.setSupplierItemName(supplierItem.getItemName());
+          // }
+
           return detailDto;
         })
         .collect(Collectors.toList());

@@ -25,17 +25,19 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, 
-                                        Jackson2JsonMessageConverter messageConverter) {
-        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-        rabbitTemplate.setMessageConverter(messageConverter);
-        rabbitTemplate.setReplyTimeout(5000); // 5 seconds timeout
-        return rabbitTemplate;
-    }
-    
-    @Bean
-    public Jackson2JsonMessageConverter jackson2MessageConverter() {
+    public Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
+    }
+
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
+            Jackson2JsonMessageConverter converter) {
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        rabbitTemplate.setMessageConverter(converter);
+        rabbitTemplate.setUseDirectReplyToContainer(true);
+        rabbitTemplate.setReplyTimeout(30000);
+        rabbitTemplate.setUseTemporaryReplyQueues(false);
+        return rabbitTemplate;
     }
 
     @Bean
@@ -47,7 +49,7 @@ public class RabbitMQConfig {
 
     @Bean
     public DirectExchange exchange() {
-        return new DirectExchange("amq.direct");
+        return new DirectExchange("amq.direct", true, false);
     }
 
     // Purchase Order bindings
