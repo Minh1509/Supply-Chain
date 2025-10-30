@@ -10,10 +10,17 @@ import {
   Query,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { firstValueFrom } from 'rxjs';
 import { RABBITMQ_CONSTANTS } from 'src/common/constants/rabbitmq.constant';
 import { QuotationRequestDto } from './dto/quotation-request.dto';
+import { UpdateStatusRequestDto } from './dto/update-status-request.dto';
 import { QUOTATION_CONSTANTS } from './quotation.constant';
 
 @Controller('quotations')
@@ -63,7 +70,11 @@ export class QuotationController {
 
   @Get('request-company/:requestCompanyId')
   @ApiOperation({ summary: 'Get all quotations by request company' })
-  @ApiParam({ name: 'requestCompanyId', type: 'number', description: 'Request Company ID' })
+  @ApiParam({
+    name: 'requestCompanyId',
+    type: 'number',
+    description: 'Request Company ID',
+  })
   async getAllQuotationsByRequestCompany(
     @Param('requestCompanyId', ParseIntPipe) requestCompanyId: number,
   ) {
@@ -77,15 +88,14 @@ export class QuotationController {
   @Put(':id/status')
   @ApiOperation({ summary: 'Update quotation status' })
   @ApiParam({ name: 'id', type: 'number', description: 'Quotation ID' })
-  @ApiQuery({ name: 'status', type: 'string', description: 'New status', required: true })
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Query('status') status: string,
+    @Body() body: UpdateStatusRequestDto,
   ) {
     return await firstValueFrom(
       this.businessClient.send(QUOTATION_CONSTANTS.UPDATE_STATUS, {
         id,
-        status,
+        body,
       }),
     );
   }

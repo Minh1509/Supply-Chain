@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import scms.business_service.model.dto.request.Purchasing.RequestForQuotationRequest;
+import scms.business_service.model.dto.request.UpdateStatusRequest;
 import scms.business_service.service.Purchasing.RequestForQuotationService;
 
 import java.util.Map;
@@ -41,8 +42,9 @@ public class RequestForQuotationHandler {
   public Object handleUpdateStatus(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
     Long id = getLongValue(map, "id");
-    String status = (String) map.get("status");
-    return rfqService.updateStatus(id, status);
+    Map<String, Object> bodyMap = (Map<String, Object>) map.get("body");
+    UpdateStatusRequest body = objectMapper.convertValue(bodyMap, UpdateStatusRequest.class);
+    return rfqService.updateStatus(id, body);
   }
 
   private Long getLongValue(Map<String, Object> map, String key) {

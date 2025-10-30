@@ -33,22 +33,22 @@ public class RabbitMQConfig {
     // Inventory bindings
     @Bean
     public Binding itemCreateBinding(Queue itemQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(itemQueue).to(exchange).with("item.create");
+        return BindingBuilder.bind(itemQueue).to(exchange).with("warehouse.create");
     }
 
     @Bean
     public Binding itemGetAllBinding(Queue itemQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(itemQueue).to(exchange).with("item.get_all_in_company");
+        return BindingBuilder.bind(itemQueue).to(exchange).with("warehouse.get_all_in_company");
     }
 
     @Bean
     public Binding itemGetByIdBinding(Queue itemQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(itemQueue).to(exchange).with("item.get_by_id");
+        return BindingBuilder.bind(itemQueue).to(exchange).with("warehouse.get_by_id");
     }
 
     @Bean
     public Binding itemUpdateBinding(Queue itemQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(itemQueue).to(exchange).with("item.update");
+        return BindingBuilder.bind(itemQueue).to(exchange).with("warehouse.update");
     }
 
 }

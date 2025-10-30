@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import scms.business_service.entity.Purchasing.PurchaseOrder;
 import scms.business_service.event.publisher.ExternalServicePublisher;
+import scms.business_service.model.dto.request.UpdateStatusRequest;
 import scms.business_service.model.dto.response.external.CompanyDto;
 import scms.business_service.model.dto.response.external.ItemDto;
 import scms.business_service.entity.Purchasing.PurchaseOrderDetail;
@@ -119,7 +120,7 @@ public class SalesOrderService {
         .collect(Collectors.toList());
   }
 
-  public SalesOrderDto updateSoStatus(Long id, String status) {
+  public SalesOrderDto updateSoStatus(Long id, UpdateStatusRequest body) {
     SalesOrder salesOrder = salesOrderRepository.findById(id)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy đơn bán hàng!"));
 
@@ -131,7 +132,7 @@ public class SalesOrderService {
       throw new RpcException(400, "Không thể cập nhật đơn bán hàng đã bị hủy!");
     }
 
-    salesOrder.setStatus(status);
+    salesOrder.setStatus(body.getStatus());
     salesOrder.setLastUpdatedOn(LocalDateTime.now());
     salesOrderRepository.save(salesOrder);
 

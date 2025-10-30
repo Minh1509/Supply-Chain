@@ -10,11 +10,18 @@ import {
   Query,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { firstValueFrom } from 'rxjs';
 import { RABBITMQ_CONSTANTS } from 'src/common/constants/rabbitmq.constant';
 import { SalesOrderRequestDto } from './dto/sales-order-request.dto';
 import { SalesReportRequestDto } from './dto/sales-report-request.dto';
+import { UpdateStatusRequestDto } from './dto/update-status-request.dto';
 import { SALES_ORDER_CONSTANTS } from './sales-order.constant';
 
 @Controller('sales-orders')
@@ -63,16 +70,12 @@ export class SalesOrderController {
   @Put(':id/status')
   @ApiOperation({ summary: 'Update sales order status' })
   @ApiParam({ name: 'id', type: 'number', description: 'Sales Order ID' })
-  @ApiQuery({ name: 'status', type: 'string', description: 'New status', required: true })
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Query('status') status: string,
+    @Body() body: UpdateStatusRequestDto,
   ) {
     return await firstValueFrom(
-      this.businessClient.send(SALES_ORDER_CONSTANTS.UPDATE_STATUS, {
-        id,
-        status,
-      }),
+      this.businessClient.send(SALES_ORDER_CONSTANTS.UPDATE_STATUS, { id, body }),
     );
   }
 
@@ -86,7 +89,7 @@ export class SalesOrderController {
     return await firstValueFrom(
       this.businessClient.send(SALES_ORDER_CONSTANTS.SALES_REPORT, {
         companyId,
-        ...request,
+        request,
       }),
     );
   }

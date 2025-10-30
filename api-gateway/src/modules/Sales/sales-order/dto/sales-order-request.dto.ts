@@ -23,8 +23,6 @@ export class SalesOrderRequestDto {
 
   @ApiProperty({ example: 'BANK_TRANSFER', required: false })
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
   paymentMethod?: string;
 
   @ApiProperty({ example: '123 Warehouse St, District 1, HCMC', required: false })

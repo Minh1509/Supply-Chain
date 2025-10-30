@@ -20,6 +20,7 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { RABBITMQ_CONSTANTS } from 'src/common/constants/rabbitmq.constant';
 import { RequestForQuotationRequestDto } from './dto/request-for-quotation-request.dto';
+import { UpdateStatusRequestDto } from './dto/update-status-request.dto';
 import { REQUEST_FOR_QUOTATION_CONSTANTS } from './request-for-quotation.constant';
 
 @Controller('request-for-quotations')
@@ -78,18 +79,17 @@ export class RequestForQuotationController {
     );
   }
 
-  @Put(':id')
+  @Put(':id/status')
   @ApiOperation({ summary: 'Update RFQ status' })
   @ApiParam({ name: 'id', type: 'number', description: 'RFQ ID' })
-  @ApiQuery({ name: 'status', type: 'string', description: 'New status', required: true })
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Query('status') status: string,
+    @Body() body: UpdateStatusRequestDto,
   ) {
     return await firstValueFrom(
       this.businessClient.send(REQUEST_FOR_QUOTATION_CONSTANTS.UPDATE_STATUS, {
         id,
-        status,
+        body,
       }),
     );
   }

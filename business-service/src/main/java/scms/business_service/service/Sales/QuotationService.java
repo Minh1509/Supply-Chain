@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import scms.business_service.entity.Purchasing.RequestForQuotation;
 import scms.business_service.event.publisher.ExternalServicePublisher;
+import scms.business_service.model.dto.request.UpdateStatusRequest;
 import scms.business_service.model.dto.response.external.CompanyDto;
 import scms.business_service.model.dto.response.external.ItemDto;
 import scms.business_service.entity.Sales.Quotation;
@@ -104,11 +105,11 @@ public class QuotationService {
         .collect(Collectors.toList());
   }
 
-  public QuotationDto updateQuotationStatus(Long id, String status) {
+  public QuotationDto updateQuotationStatus(Long id, UpdateStatusRequest body) {
     Quotation quotation = quotationRepository.findById(id)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy báo giá!"));
     
-    quotation.setStatus(status);
+    quotation.setStatus(body.getStatus());
     quotation.setLastUpdatedOn(LocalDateTime.now());
     
     return convertToDto(quotationRepository.save(quotation));

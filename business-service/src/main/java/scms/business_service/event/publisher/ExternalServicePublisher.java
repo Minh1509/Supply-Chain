@@ -2,7 +2,6 @@ package scms.business_service.event.publisher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -11,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import scms.business_service.model.dto.response.external.CompanyDto;
 import scms.business_service.model.dto.response.external.ItemDto;
+import scms.business_service.model.dto.response.external.WarehouseDto;
 import scms.business_service.model.event.GenericEvent;
 
 import java.util.Map;
@@ -57,13 +57,31 @@ public class ExternalServicePublisher {
                     "amq.direct",
                     "item.get_by_id",
                     event);
+            if (response == null) {
+                return null;
+            }
+            return objectMapper.convertValue(response, ItemDto.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
+    public WarehouseDto getWarehouseById(Long warehouseId) {
+        try {
+
+            GenericEvent event = new GenericEvent();
+            event.setPattern("warehouse.get_by_id");
+            event.setData(Map.of("warehouseId", warehouseId));
+
+            Object response = rabbitTemplate.convertSendAndReceive(
+                    "amq.direct",
+                    "warehouse.get_by_id",
+                    event);
             if (response == null) {
                 return null;
             }
 
-            return objectMapper.convertValue(response, ItemDto.class);
-
+            return objectMapper.convertValue(response, WarehouseDto.class);
         } catch (Exception e) {
             return null;
         }

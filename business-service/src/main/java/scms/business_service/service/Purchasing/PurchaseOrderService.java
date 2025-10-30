@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import scms.business_service.entity.Purchasing.PurchaseOrder;
 import scms.business_service.event.publisher.ExternalServicePublisher;
+import scms.business_service.model.dto.request.UpdateStatusRequest;
 import scms.business_service.model.dto.response.external.CompanyDto;
 import scms.business_service.model.dto.response.external.ItemDto;
 import scms.business_service.entity.Purchasing.PurchaseOrderDetail;
@@ -27,6 +28,7 @@ import scms.business_service.model.dto.response.Purchasing.MonthlySPReportDto;
 import scms.business_service.model.dto.response.Purchasing.PurchaseOrderDetailDto;
 import scms.business_service.model.dto.response.Purchasing.PurchaseOrderDto;
 import scms.business_service.model.dto.response.Sales.ItemReportDto;
+import scms.business_service.model.dto.response.external.WarehouseDto;
 import scms.business_service.repository.Purchasing.PurchaseOrderDetailRepository;
 import scms.business_service.repository.Purchasing.PurchaseOrderRepository;
 import scms.business_service.repository.Sales.QuotationDetailRepository;
@@ -129,7 +131,7 @@ public class PurchaseOrderService {
         .collect(Collectors.toList());
   }
 
-  public PurchaseOrderDto updatePoStatus(Long id, String status) {
+  public PurchaseOrderDto updatePoStatus(Long id, UpdateStatusRequest body) {
     PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(id)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy đơn mua hàng!"));
 
@@ -141,7 +143,7 @@ public class PurchaseOrderService {
       throw new RpcException(400, "Không thể cập nhật đơn mua hàng đã bị hủy");
     }
 
-    purchaseOrder.setStatus(status);
+    purchaseOrder.setStatus(body.getStatus());
     purchaseOrder.setLastUpdatedOn(LocalDateTime.now());
     purchaseOrderRepository.save(purchaseOrder);
 
@@ -270,6 +272,12 @@ public class PurchaseOrderService {
     if (supplier != null) {
       dto.setSupplierCompanyCode(supplier.getCompanyCode());
       dto.setSupplierCompanyName(supplier.getCompanyName());
+    }
+
+    // Lâấy thông tin warehouse
+    WarehouseDto warehouse = externalServicePublisher.getWarehouseById(purchaseOrder.getReceiveWarehouseId());
+    if(warehouse != null) {
+      dto.setReceiveWarehouseCode(warehouse.getWarehouseCode());
     }
 
     // Lấy thông tin từ quotation

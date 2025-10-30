@@ -13,11 +13,10 @@ import { ClientProxy } from '@nestjs/microservices';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { firstValueFrom } from 'rxjs';
 import { RABBITMQ_CONSTANTS } from 'src/common/constants/rabbitmq.constant';
-import { MonthlyReportRequestDto } from './dto/monthly-report-request.dto';
 import { PurchaseOrderRequestDto } from './dto/purchase-order-request.dto';
 import { PurchaseReportRequestDto } from './dto/purchase-report-request.dto';
-import { UpdateStatusRequestDto } from './dto/update-status-request.dto';
 import { PURCHASE_ORDER_CONSTANTS } from './purchase-order.constant';
+import { UpdateStatusRequestDto } from '../request-for-quotation/dto/update-status-request.dto';
 
 @Controller('purchase-orders')
 @ApiBearerAuth()
@@ -67,15 +66,14 @@ export class PurchaseOrderController {
 
   @Put(':id/status')
   @ApiOperation({ summary: 'Update purchase order status' })
-  @ApiQuery({ name: 'status', required: true, type: String })
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Query('status') status: string,
+    @Body() body: UpdateStatusRequestDto,
   ) {
     return await firstValueFrom(
       this.businessClient.send(PURCHASE_ORDER_CONSTANTS.UPDATE_STATUS, {
         id,
-        status,
+        body,
       }),
     );
   }
@@ -89,7 +87,7 @@ export class PurchaseOrderController {
     return await firstValueFrom(
       this.businessClient.send(PURCHASE_ORDER_CONSTANTS.PURCHASE_REPORT, {
         companyId,
-        ...request,
+        request,
       }),
     );
   }
