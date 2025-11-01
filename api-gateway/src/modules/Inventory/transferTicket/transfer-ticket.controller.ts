@@ -15,9 +15,9 @@ export class TransferTicketController {
   ) {}
 
   @Post()
-  async createTicket(@Body() request: TransferTicketRequestDto) {
+  async createTicket(@Body() transferTicket: TransferTicketRequestDto) {
     return await firstValueFrom(
-      this.inventoryClient.send(TRANSFER_TICKET_CONSTANTS.CREATE_TRANSFER_TICKET, { request }),
+      this.inventoryClient.send(TRANSFER_TICKET_CONSTANTS.CREATE_TRANSFER_TICKET, { transferTicket }),
     );
   }
 
@@ -40,12 +40,12 @@ export class TransferTicketController {
   @Put(':ticketId')
   async updateTicket(
     @Param('ticketId') ticketId: number,
-    @Body() request: TransferTicketRequestDto,
+    @Body() transferTicket: TransferTicketRequestDto,
   ) {
     return await firstValueFrom(
       this.inventoryClient.send(TRANSFER_TICKET_CONSTANTS.UPDATE_TRANSFER_TICKET, {
         ticketId,
-        request,
+        transferTicket,
       }),
     );
   }

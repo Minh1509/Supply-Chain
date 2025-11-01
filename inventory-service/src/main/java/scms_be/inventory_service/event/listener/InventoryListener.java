@@ -35,6 +35,7 @@ public class InventoryListener {
     @RabbitListener(queues = "inventory_queue")
     public Object handleEvents(GenericEvent event) {
         try {
+            System.out.println("InventoryListener received event: " + event.getPattern());
             switch (event.getPattern()) {
                 case "inventory.create":
                 case "inventory.update":
@@ -64,7 +65,7 @@ public class InventoryListener {
                 case "transfer_ticket.create":
                 case "transfer_ticket.update":
                 case "transfer_ticket.get_by_id":
-                case "transfer_ticket.get_all_by_company":
+                case "transfer_ticket.get_all_in_company":
                     return transferTicketHandler.handle(event);
                 case "warehouse.create":
                 case "warehouse.update":

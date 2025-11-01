@@ -35,24 +35,24 @@ export class ManufactureOrderController {
     );
   }
 
-  @Get(':moid')
-  async getOrder(@Param('moid') moid: number) {
+  @Get(':moId')
+  async getOrder(@Param('moId') moId: number) {
     return await firstValueFrom(
-      this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.GET_MO_BY_ID, {  moid }),
+      this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.GET_MO_BY_ID, {  moId }),
     );
   }
 
-  @Put(':moid')
-  async updateOrder(@Param('moid') moid: number, @Body() order: ManuOrderRequestDto) {
+  @Put(':moId')
+  async updateOrder(@Param('moId') moId: number, @Body() manuOrderData: ManuOrderRequestDto) {
     return await firstValueFrom(
-      this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.UPDATE_MO, { moid,  order }),
+      this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.UPDATE_MO, { moId,  manuOrderData }),
     );
   }
 
   @Post('/report/:companyId')
-  async getReceiveReport(@Body() request: ManuReportRequestDto, @Param('companyId') companyId: number) {
+  async getReceiveReport(@Body() manuReportRequest: ManuReportRequestDto, @Param('companyId') companyId: number) {
     return await firstValueFrom(
-      this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.MANUFACTURE_REPORT, { request, companyId }),
+      this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.MANUFACTURE_REPORT, { manuReportRequest, companyId }),
     );
   }
 

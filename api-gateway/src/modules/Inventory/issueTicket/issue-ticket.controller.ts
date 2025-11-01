@@ -16,9 +16,9 @@ export class IssueTicketController {
   ) {}
 
   @Post()
-  async createIssueTicket(@Body() request: IssueTicketRequestDto) {
+  async createIssueTicket(@Body() issueTicket: IssueTicketRequestDto) {
     return await firstValueFrom(
-      this.inventoryClient.send(ISSUE_TICKET_CONSTANTS.CREATE_ISSUE_TICKET, { request }),
+      this.inventoryClient.send(ISSUE_TICKET_CONSTANTS.CREATE_ISSUE_TICKET, { issueTicket }),
     );
   }
 
@@ -41,24 +41,24 @@ export class IssueTicketController {
   @Put(':ticketId')
   async updateIssueTicket(
     @Param('ticketId') ticketId: number,
-    @Body() request: IssueTicketRequestDto,
+    @Body() issueTicket: IssueTicketRequestDto,
   ) {
     return await firstValueFrom(
       this.inventoryClient.send(ISSUE_TICKET_CONSTANTS.UPDATE_ISSUE_TICKET, {
         ticketId,
-        request,
+        issueTicket,
       }),
     );
   }
 
   @Post('report/:companyId')
   async getIssueReport(
-    @Body() request: IssueReportRequestDto,
+    @Body() issueReport: IssueReportRequestDto,
     @Param('companyId') companyId: number,
   ) {
     return await firstValueFrom(
       this.inventoryClient.send(ISSUE_TICKET_CONSTANTS.GET_ISSUE_REPORT, {
-        request,
+        issueReport,
         companyId,
       }),
     );

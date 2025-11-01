@@ -23,21 +23,21 @@ public class ManufactureOrderHandler {
         ManuOrderRequest request = objectMapper.convertValue(event.getData(), ManuOrderRequest.class);
         System.out.println("manufacture event: " + event);
         switch (event.getPattern()) {
-            case "manufacture.create":
+            case "manufacture_order.create":
                 return manufactureOrderService.createOrder(request.getManuOrderData());
-            case "manufacture.get_by_item_id":
+            case "manufacture_order.get_all_by_item":
                 return manufactureOrderService.getAllManufactureOrdersbyItemId(request.getItemId());
-            case "manufacture.get_all_in_company":
+            case "manufacture_order.get_all_in_company":
                 return manufactureOrderService.getAllManufactureOrdersByCompanyId(request.getCompanyId());
-            case "manufacture.get_by_id":
+            case "manufacture_order.get_by_id":
                 return manufactureOrderService.getById(request.getMoId());
-            case "manufacture.get_by_code":
+            case "manufacture_order.get_by_code":
                 return manufactureOrderService.getByCode(request.getMoCode());
-            case "manufacture.update":
+            case "manufacture_order.update":
                 return manufactureOrderService.update(request.getMoId(), request.getManuOrderData());
-            case "manufacture.manufacture_report":
+            case "manufacture_order.report":
                 return manufactureOrderService.getManuReport(request.getManuReportRequest(), request.getCompanyId());
-            case "manufacture.monthly_manufacture_report":
+            case "manufacture_order.monthly_report":
                 return manufactureOrderService.getMonthlyManuReport(request.getCompanyId(), request.getType());
             default:
                 throw new RpcException(400, "Unknown manufacture event: " + event.getPattern());

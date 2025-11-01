@@ -9,7 +9,7 @@ public class ManuProcessRequest {
   private Long companyId;
   private Long moId;
   private Long processId;
-  private ManuProcessData process;
+  private ManuProcessData manuProcess;
 
   @Data
   public static class ManuProcessData {

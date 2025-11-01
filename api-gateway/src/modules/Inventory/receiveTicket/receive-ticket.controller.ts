@@ -16,9 +16,9 @@ export class ReceiveTicketController {
   ) {}
 
   @Post()
-  async createReceiveTicket(@Body() request: ReceiveTicketRequestDto) {
+  async createReceiveTicket(@Body() receiveTicket: ReceiveTicketRequestDto) {
     return await firstValueFrom(
-      this.inventoryClient.send(RECEIVE_TICKET_CONSTANTS.CREATE_RECEIVE_TICKET, { request }),
+      this.inventoryClient.send(RECEIVE_TICKET_CONSTANTS.CREATE_RECEIVE_TICKET, { receiveTicket }),
     );
   }
 
@@ -41,24 +41,24 @@ export class ReceiveTicketController {
   @Put(':ticketId')
   async updateReceiveTicket(
     @Param('ticketId') ticketId: number,
-    @Body() request: ReceiveTicketRequestDto,
+    @Body() receiveTicket: ReceiveTicketRequestDto,
   ) {
     return await firstValueFrom(
       this.inventoryClient.send(RECEIVE_TICKET_CONSTANTS.UPDATE_RECEIVE_TICKET, {
         ticketId,
-        request,
+        receiveTicket,
       }),
     );
   }
 
   @Post('report/:companyId')
   async getReceiveReport(
-    @Body() request: ReceiveReportRequestDto,
+    @Body() receiveReport: ReceiveReportRequestDto,
     @Param('companyId') companyId: number,
   ) {
     return await firstValueFrom(
       this.inventoryClient.send(RECEIVE_TICKET_CONSTANTS.GET_RECEIVE_REPORT, {
-        request,
+        receiveReport,
         companyId,
       }),
     );

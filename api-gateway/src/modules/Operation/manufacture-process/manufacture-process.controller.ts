@@ -13,9 +13,9 @@ export class ManufactureProcessController {
   constructor(@Inject(RABBITMQ_CONSTANTS.OPERATION.name) private operationClient: ClientProxy) {}
 
   @Post()
-  async createProcess(@Body() ManuProcessData: ManuProcessRequestDto) {
+  async createProcess(@Body() manuProcess: ManuProcessRequestDto) {
     return await firstValueFrom(
-      this.operationClient.send(MANUFACTURE_PROCESS_CONSTANTS.CREATE_PROCESS, { ManuProcessData }),
+      this.operationClient.send(MANUFACTURE_PROCESS_CONSTANTS.CREATE_PROCESS, { manuProcess }),
     );
   }
 
@@ -36,10 +36,10 @@ export class ManufactureProcessController {
   @Put('/:processId')
   async updateProcess(
     @Param('processId') processId: number,
-    @Body() ManuProcessData: ManuProcessRequestDto,
+    @Body() manuProcess: ManuProcessRequestDto,
   ) {
     return await firstValueFrom(
-      this.operationClient.send(MANUFACTURE_PROCESS_CONSTANTS.UPDATE_PROCESS, { processId, ManuProcessData }),
+      this.operationClient.send(MANUFACTURE_PROCESS_CONSTANTS.UPDATE_PROCESS, { processId, manuProcess }),
     );
   }
 }

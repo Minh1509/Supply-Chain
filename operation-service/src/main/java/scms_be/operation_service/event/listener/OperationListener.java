@@ -47,13 +47,13 @@ public class OperationListener {
                 case "bom.delete":
                     return bomHandler.handle(event);
                 // Manufacture order handlers
-                case "manufacture.create":
-                case "manufacture.get_by_item_id":
-                case "manufacture.get_all_in_company":
-                case "manufacture.get_by_id":
-                case "manufacture.update":
-                case "manufacture.manufacture_report":
-                case "manufacture.monthly_manufacture_report":
+                case "manufacture_order.create":
+                case "manufacture_order.get_all_by_item":
+                case "manufacture_order.get_all_in_company":
+                case "manufacture_order.get_by_id":
+                case "manufacture_order.update":
+                case "manufacture_order.report":
+                case "manufacture_order.monthly_report":
                     return manufactureOrderHandler.handle(event);
                 // Manufacture process handlers
                 case "manufacture_process.create":

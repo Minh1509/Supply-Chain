@@ -28,7 +28,7 @@ public class TransferTicketHandler {
                 return transferTicketService.updateTicket(request.getTicketId(), request.getTransferTicket());
             case "transfer_ticket.get_by_id":
                 return transferTicketService.getTicketById(request.getTicketId());
-            case "transfer_ticket.get_all_by_company":
+            case "transfer_ticket.get_all_in_company":
                 return transferTicketService.getAllByCompany(request.getCompanyId());
             default:
                 throw new RpcException(400, "Unknown transfer ticket event: " + event.getPattern());

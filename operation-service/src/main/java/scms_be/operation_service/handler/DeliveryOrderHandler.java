@@ -20,12 +20,16 @@ public class DeliveryOrderHandler {
     private ObjectMapper objectMapper;
 
     public Object handle(GenericEvent event) {
-        DeliveryOrderRequest request = objectMapper.convertValue(event.getData(), DeliveryOrderRequest.class);
-        System.out.println("delivery event: " + event);
-        switch (event.getPattern()) {
-            case "delivery_order.create": {
-                return deliveryOrderService.createDeliveryOrder(request.getDeliveryOrderData());
-            }
+        try {
+            System.out.println("DeliveryOrder raw event data: " + event.getData());
+            DeliveryOrderRequest request = objectMapper.convertValue(event.getData(), DeliveryOrderRequest.class);
+            System.out.println("DeliveryOrder converted request: " + request);
+            System.out.println("DeliveryOrder data: " + request.getDeliveryOrderData());
+            
+            switch (event.getPattern()) {
+                case "delivery_order.create": {
+                    return deliveryOrderService.createDeliveryOrder(request.getDeliveryOrderData());
+                }
             case "delivery_order.get_by_id": {
                 return deliveryOrderService.getDoById(request.getDoId());
             }
@@ -40,6 +44,11 @@ public class DeliveryOrderHandler {
             }
             default:
                 throw new RpcException(400, "Unknown delivery event: " + event.getPattern());
+        }
+        } catch (Exception e) {
+            System.err.println("Error in DeliveryOrderHandler: " + e.getMessage());
+            e.printStackTrace();
+            throw new RpcException(500, "Internal error: " + e.getMessage());
         }
     }
 }
