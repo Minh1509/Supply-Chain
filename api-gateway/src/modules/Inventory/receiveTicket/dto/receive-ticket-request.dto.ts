@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString, IsDateString, ValidateNested, IsArray } from 'class-validator';
-import { ReceiveTicketDetailRequestDto } from './receive-ticket-detail-request.dto';
+
 
 export class ReceiveTicketRequestDto {
   @ApiProperty({
@@ -42,7 +42,7 @@ export class ReceiveTicketRequestDto {
 
   @ApiProperty({
     description: 'Loại phiếu nhập (mo/po/tt)',
-    example: 'po',
+    example: 'Mua hàng',
     required: true,
   })
   @IsNotEmpty()
@@ -94,14 +94,4 @@ export class ReceiveTicketRequestDto {
   @IsString()
   note?: string;
 
-  @ApiProperty({
-    description: 'Chi tiết phiếu nhập',
-    type: [ReceiveTicketDetailRequestDto],
-    required: false,
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ReceiveTicketDetailRequestDto)
-  receiveTicketDetails?: ReceiveTicketDetailRequestDto[];
 }

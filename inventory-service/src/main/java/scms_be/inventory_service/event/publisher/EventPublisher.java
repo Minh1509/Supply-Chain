@@ -182,9 +182,9 @@ public class EventPublisher {
         log.info("Getting SalesOrder by code: {}", soCode);
         
         GenericEvent event = new GenericEvent();
-        event.setPattern("sales_order.get_by_code");
-        
-        Map<String, Object> data = Map.of("soCode", soCode);
+        event.setPattern("so.get_by_code");
+
+        Map<String, Object> data = Map.of("code", soCode);
         event.setData(data);
         
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.BUSINESS_SERVICE_QUEUE, event);
@@ -219,9 +219,9 @@ public class EventPublisher {
         log.info("Getting SalesOrder by ID: {}", soId);
         
         GenericEvent event = new GenericEvent();
-        event.setPattern("sales_order.get_by_id");
-        
-        Map<String, Object> data = Map.of("soId", soId);
+        event.setPattern("so.get_by_id");
+
+        Map<String, Object> data = Map.of("id", soId);
         event.setData(data);
 
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.BUSINESS_SERVICE_QUEUE, event);
@@ -256,9 +256,9 @@ public class EventPublisher {
         log.info("Getting PurchaseOrder by code: {}", poCode);
         
         GenericEvent event = new GenericEvent();
-        event.setPattern("purchase_order.get_by_code");
+        event.setPattern("po.get_by_code");
         
-        Map<String, Object> data = Map.of("poCode", poCode);
+        Map<String, Object> data = Map.of("code", poCode);
         event.setData(data);
 
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.BUSINESS_SERVICE_QUEUE, event);
@@ -293,9 +293,9 @@ public class EventPublisher {
         log.info("Getting PurchaseOrder by ID: {}", poId);
         
         GenericEvent event = new GenericEvent();
-        event.setPattern("purchase_order.get_by_id");
-        
-        Map<String, Object> data = Map.of("poId", poId);
+        event.setPattern("po.get_by_id");
+
+        Map<String, Object> data = Map.of("id", poId);
         event.setData(data);
 
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.BUSINESS_SERVICE_QUEUE, event);

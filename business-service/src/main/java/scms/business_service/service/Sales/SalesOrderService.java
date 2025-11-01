@@ -100,6 +100,27 @@ public class SalesOrderService {
     return convertToDto(salesOrder, details);
   }
 
+  public SalesOrderDto getSalesOrderByCode(String code) {
+    SalesOrder salesOrder = salesOrderRepository.findByCode(code);
+    if (salesOrder == null) {
+      throw new RpcException(404, "Không tìm thấy đơn bán hàng!");
+    }
+    SalesOrderDto salesOrderDto = new SalesOrderDto();
+    salesOrderDto.setId(salesOrder.getId());
+
+    List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderId(salesOrder.getId());
+    List<SalesOrderDetailDto> detailDtos = new ArrayList<>();
+     details.stream().forEach(detail -> {
+      SalesOrderDetailDto detailDto = new SalesOrderDetailDto();
+      detailDto.setId(detail.getId());
+      detailDto.setItemId(detail.getItemId());
+      detailDto.setQuantity(detail.getQuantity());
+      detailDtos.add(detailDto);
+    });
+    salesOrderDto.setSalesOrderDetails(detailDtos);
+    return salesOrderDto;
+  }
+
   public SalesOrderDto getSalesOrderByPoId(Long poId) {
     SalesOrder salesOrder = salesOrderRepository.findByPurchaseOrderId(poId);
     if (salesOrder == null) {

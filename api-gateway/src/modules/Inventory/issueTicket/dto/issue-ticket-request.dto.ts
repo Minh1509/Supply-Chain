@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString, IsDateString, ValidateNested, IsArray } from 'class-validator';
-import { IssueTicketDetailRequestDto } from './issue-ticket-detail-request.dto';
+
 
 export class IssueTicketRequestDto {
   @ApiProperty({
@@ -94,14 +94,4 @@ export class IssueTicketRequestDto {
   @IsString()
   note?: string;
 
-  @ApiProperty({
-    description: 'Chi tiết phiếu xuất',
-    type: [IssueTicketDetailRequestDto],
-    required: false,
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => IssueTicketDetailRequestDto)
-  issueTicketDetails?: IssueTicketDetailRequestDto[];
 }

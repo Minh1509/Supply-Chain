@@ -33,6 +33,7 @@ public class BusinessListener {
                 // Purchase Order patterns
                 case "po.create" -> purchaseOrderHandler.handleCreate(event.getData());
                 case "po.get_by_id" -> purchaseOrderHandler.handleGetById(event.getData());
+                case "po.get_by_code" -> purchaseOrderHandler.handleGetByCode(event.getData());
                 case "po.get_all_in_company" -> purchaseOrderHandler.handleGetAllInCompany(event.getData());
                 case "po.get_all_by_supplier" -> purchaseOrderHandler.handleGetAllBySupplier(event.getData());
                 case "po.update_status" -> purchaseOrderHandler.handleUpdateStatus(event.getData());
@@ -49,6 +50,7 @@ public class BusinessListener {
                 // Sales Order patterns
                 case "so.create" -> salesOrderHandler.handleCreate(event.getData());
                 case "so.get_by_id" -> salesOrderHandler.handleGetById(event.getData());
+                case "so.get_by_code" -> salesOrderHandler.handleGetByCode(event.getData());
                 case "so.get_by_po_id" -> salesOrderHandler.handleGetByPoId(event.getData());
                 case "so.get_all_in_company" -> salesOrderHandler.handleGetAllInCompany(event.getData());
                 case "so.update_status" -> salesOrderHandler.handleUpdateStatus(event.getData());

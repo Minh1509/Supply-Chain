@@ -282,11 +282,19 @@ public class ReceiveTicketService {
     dto.setReferenceId(ticket.getReferenceId());
 
     if (ticket.getReceiveType().equals("Sản xuất")) {
-      ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
-      dto.setReferenceCode(manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A");
+      if (ticket.getReferenceId() != null) {
+        ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
+        dto.setReferenceCode(manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A");
+      } else {
+        dto.setReferenceCode("N/A");
+      }
     } else if (ticket.getReceiveType().equals("Mua hàng")) {
-      PurchaseOrderDto purchaseOrder = eventPublisher.getPurchaseOrderById(ticket.getReferenceId());
-      dto.setReferenceCode(purchaseOrder != null ? purchaseOrder.getPoCode() : "N/A");
+      if (ticket.getReferenceId() != null) {
+        PurchaseOrderDto purchaseOrder = eventPublisher.getPurchaseOrderById(ticket.getReferenceId());
+        dto.setReferenceCode(purchaseOrder != null ? purchaseOrder.getPoCode() : "N/A");
+      } else {
+        dto.setReferenceCode("N/A");
+      }
     } else if (ticket.getReceiveType().equals("Chuyển kho")) {
       TransferTicket transferTicket = transferTicketRepository.findByTicketId(ticket.getReferenceId());
       dto.setReferenceCode(transferTicket != null ? transferTicket.getTicketCode() : "N/A");

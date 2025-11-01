@@ -101,6 +101,27 @@ public class PurchaseOrderService {
     return convertToDto(purchaseOrder, details);
   }
 
+  public PurchaseOrderDto getPurchaseOrderByCode(String poCode) {
+    PurchaseOrder purchaseOrder = purchaseOrderRepository.findByCode(poCode);
+    if (purchaseOrder == null) {
+      throw new RpcException(404, "Không tìm thấy đơn mua hàng!");
+    }
+    PurchaseOrderDto dto = new PurchaseOrderDto();
+    dto.setId(purchaseOrder.getId());
+
+    List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPurchaseOrderId(purchaseOrder.getId());
+    List<PurchaseOrderDetailDto> detailDtos = new ArrayList<>();
+    details.stream().forEach(detail -> {
+      PurchaseOrderDetailDto detailDto = new PurchaseOrderDetailDto();
+      detailDto.setPurchaseOrderDetailId(detail.getId());
+      detailDto.setItemId(detail.getItemId());
+      detailDto.setQuantity(detail.getQuantity());
+      detailDtos.add(detailDto);
+    });
+    dto.setPurchaseOrderDetails(detailDtos);
+    return dto;
+  }
+
   public PurchaseOrderDto getPurchaseOrderByQuotationId(Long quotationId) {
     PurchaseOrder purchaseOrder = purchaseOrderRepository.findByQuotationId(quotationId);
     if (purchaseOrder == null) {
