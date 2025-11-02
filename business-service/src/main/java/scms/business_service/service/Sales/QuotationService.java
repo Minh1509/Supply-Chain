@@ -23,6 +23,12 @@ import scms.business_service.repository.Purchasing.RequestForQuotationRepository
 import scms.business_service.repository.Sales.QuotationDetailRepository;
 import scms.business_service.repository.Sales.QuotationRepository;
 
+import java.util.concurrent.*;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+
 @Service
 public class QuotationService {
 
@@ -44,6 +50,11 @@ public class QuotationService {
 
     if (request.getQuotationDetails() == null || request.getQuotationDetails().isEmpty()) {
       throw new RpcException(400, "Danh sách hàng hóa không được để trống!");
+    }
+
+    Quotation existingQuotation = quotationRepository.findByRfqRfqId(request.getRfqId());
+    if (existingQuotation != null) {
+      throw new RpcException(400, "Yêu cầu báo giá này đã có báo giá. Không thể tạo mới!");
     }
 
     Quotation quotation = new Quotation();
@@ -139,52 +150,74 @@ public class QuotationService {
     dto.setLastUpdatedOn(quotation.getLastUpdatedOn());
     dto.setStatus(quotation.getStatus());
 
-    // Lấy thông tin company
-    CompanyDto company = externalServicePublisher.getCompanyById(quotation.getCompanyId());
+    // Tạo thread pool riêng (giới hạn 5 luồng để tránh quá tải)
+    ExecutorService executor = Executors.newFixedThreadPool(10);
+
+    CompletableFuture<CompanyDto> companyFuture = CompletableFuture.supplyAsync(
+            () -> externalServicePublisher.getCompanyById(quotation.getCompanyId()), executor);
+
+    CompletableFuture<CompanyDto> requestCompanyFuture = CompletableFuture.supplyAsync(
+            () -> externalServicePublisher.getCompanyById(quotation.getRequestCompanyId()), executor);
+
+    List<QuotationDetail> detailList = quotationDetailRepository.findByQuotationQuotationId(quotation.getQuotationId());
+
+    Set<Long> itemIds = detailList.stream()
+            .flatMap(d -> Stream.of(d.getItemId(), d.getCustomerItemId()))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+    Map<Long, CompletableFuture<ItemDto>> itemFutures = itemIds.stream()
+            .collect(Collectors.toMap(
+                    id -> id,
+                    id -> CompletableFuture.supplyAsync(() -> externalServicePublisher.getItemById(id), executor)
+            ));
+
+    CompanyDto company = companyFuture.join();
+    CompanyDto requestCompany = requestCompanyFuture.join();
+
     if (company != null) {
       dto.setCompanyCode(company.getCompanyCode());
       dto.setCompanyName(company.getCompanyName());
     }
-    
-    CompanyDto requestCompany = externalServicePublisher.getCompanyById(quotation.getRequestCompanyId());
+
     if (requestCompany != null) {
       dto.setRequestCompanyCode(requestCompany.getCompanyCode());
       dto.setRequestCompanyName(requestCompany.getCompanyName());
     }
 
-    List<QuotationDetailDto> details = quotationDetailRepository
-        .findByQuotationQuotationId(quotation.getQuotationId())
-        .stream()
-        .map(this::convertToDetailDto)
-        .collect(Collectors.toList());
-    dto.setQuotationDetails(details);
+    List<QuotationDetailDto> detailDtos = detailList.parallelStream()
+            .map(detail -> {
+              QuotationDetailDto d = new QuotationDetailDto();
+              d.setQuotationDetailId(detail.getQuotationDetailId());
+              d.setQuotationId(quotation.getQuotationId());
+              d.setItemId(detail.getItemId());
+              d.setCustomerItemId(detail.getCustomerItemId());
+              d.setQuantity(detail.getQuantity());
+              d.setItemPrice(detail.getItemPrice());
+              d.setDiscount(detail.getDiscount());
+              d.setNote(detail.getNote());
 
+              // Lấy item từ cache future
+              ItemDto item = itemFutures.get(detail.getItemId()).join();
+              if (item != null) {
+                d.setItemCode(item.getItemCode());
+                d.setItemName(item.getItemName());
+              }
+
+              ItemDto customerItem = itemFutures.get(detail.getCustomerItemId()).join();
+              if (customerItem != null) {
+                d.setCustomerItemCode(customerItem.getItemCode());
+                d.setCustomerItemName(customerItem.getItemName());
+              }
+
+              return d;
+            })
+            .collect(Collectors.toList());
+
+    dto.setQuotationDetails(detailDtos);
+
+    executor.shutdown();
     return dto;
   }
 
-  private QuotationDetailDto convertToDetailDto(QuotationDetail detail) {
-    QuotationDetailDto dto = new QuotationDetailDto();
-    dto.setQuotationDetailId(detail.getQuotationDetailId());
-    dto.setQuotationId(detail.getQuotation().getQuotationId());
-    dto.setItemId(detail.getItemId());
-    dto.setCustomerItemId(detail.getCustomerItemId());
-    dto.setQuantity(detail.getQuantity());
-    dto.setItemPrice(detail.getItemPrice());
-    dto.setDiscount(detail.getDiscount());
-    dto.setNote(detail.getNote());
-    
-    // Lấy thông tin item
-    ItemDto item = externalServicePublisher.getItemById(detail.getItemId());
-    if (item != null) {
-      dto.setItemCode(item.getItemCode());
-      dto.setItemName(item.getItemName());
-    }
-    
-    ItemDto customerItem = externalServicePublisher.getItemById(detail.getCustomerItemId());
-    if (customerItem != null) {
-      dto.setCustomerItemName(customerItem.getItemName());
-    }
-    
-    return dto;
-  }
 }

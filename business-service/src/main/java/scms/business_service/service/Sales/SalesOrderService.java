@@ -33,6 +33,12 @@ import scms.business_service.repository.Purchasing.PurchaseOrderRepository;
 import scms.business_service.repository.Sales.SalesOrderDetailRepository;
 import scms.business_service.repository.Sales.SalesOrderRepository;
 
+import java.util.concurrent.*;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+
 @Service
 public class SalesOrderService {
 
@@ -263,58 +269,75 @@ public class SalesOrderService {
     dto.setStatus(salesOrder.getStatus());
     dto.setCreatedOn(salesOrder.getCreatedOn());
     dto.setLastUpdatedOn(salesOrder.getLastUpdatedOn());
-    
-    // Lấy thông tin company
-    CompanyDto company = externalServicePublisher.getCompanyById(salesOrder.getCompanyId());
-    if (company != null) {
-      dto.setCompanyCode(company.getCompanyCode());
-      dto.setCompanyName(company.getCompanyName());
-    }
-    
-    CompanyDto customer = externalServicePublisher.getCompanyById(salesOrder.getCustomerCompanyId());
-    if (customer != null) {
-      dto.setCustomerCompanyCode(customer.getCompanyCode());
-      dto.setCustomerCompanyName(customer.getCompanyName());
-    }
-    
-    // Lấy thông tin tài chính từ quotation
-    if (salesOrder.getPurchaseOrder() != null && salesOrder.getPurchaseOrder().getQuotation() != null) {
-      dto.setSubTotal(salesOrder.getPurchaseOrder().getQuotation().getSubTotal());
-      dto.setTaxRate(salesOrder.getPurchaseOrder().getQuotation().getTaxRate());
-      dto.setTaxAmount(salesOrder.getPurchaseOrder().getQuotation().getTaxAmount());
-      dto.setTotalAmount(salesOrder.getPurchaseOrder().getQuotation().getTotalAmount());
+
+    ExecutorService executor = Executors.newFixedThreadPool(10);
+
+    try {
+      CompletableFuture<CompanyDto> companyFuture = CompletableFuture.supplyAsync(
+              () -> externalServicePublisher.getCompanyById(salesOrder.getCompanyId()), executor);
+      CompletableFuture<CompanyDto> customerFuture = CompletableFuture.supplyAsync(
+              () -> externalServicePublisher.getCompanyById(salesOrder.getCustomerCompanyId()), executor);
+
+      CompanyDto company = companyFuture.get();
+      CompanyDto customer = customerFuture.get();
+
+      if (company != null) {
+        dto.setCompanyCode(company.getCompanyCode());
+        dto.setCompanyName(company.getCompanyName());
+      }
+
+      if (customer != null) {
+        dto.setCustomerCompanyCode(customer.getCompanyCode());
+        dto.setCustomerCompanyName(customer.getCompanyName());
+      }
+
+      if (salesOrder.getPurchaseOrder() != null && salesOrder.getPurchaseOrder().getQuotation() != null) {
+        dto.setSubTotal(salesOrder.getPurchaseOrder().getQuotation().getSubTotal());
+        dto.setTaxRate(salesOrder.getPurchaseOrder().getQuotation().getTaxRate());
+        dto.setTaxAmount(salesOrder.getPurchaseOrder().getQuotation().getTaxAmount());
+        dto.setTotalAmount(salesOrder.getPurchaseOrder().getQuotation().getTotalAmount());
+      }
+
+      List<CompletableFuture<SalesOrderDetailDto>> futures = details.stream()
+              .map(detail -> CompletableFuture.supplyAsync(() -> {
+                SalesOrderDetailDto detailDto = new SalesOrderDetailDto();
+                detailDto.setSoDetailId(detail.getSoDetailId());
+                detailDto.setSoId(salesOrder.getSoId());
+                detailDto.setItemId(detail.getItemId());
+                detailDto.setCustomerItemId(detail.getCustomerItemId());
+                detailDto.setQuantity(detail.getQuantity());
+                detailDto.setItemPrice(detail.getItemPrice());
+                detailDto.setDiscount(detail.getDiscount());
+                detailDto.setNote(detail.getNote());
+
+                ItemDto item = externalServicePublisher.getItemById(detail.getItemId());
+                if (item != null) {
+                  detailDto.setItemCode(item.getItemCode());
+                  detailDto.setItemName(item.getItemName());
+                }
+
+                ItemDto customerItem = externalServicePublisher.getItemById(detail.getCustomerItemId());
+                if (customerItem != null) {
+                  detailDto.setCustomerItemCode(customerItem.getItemCode());
+                  detailDto.setCustomerItemName(customerItem.getItemName());
+                }
+
+                return detailDto;
+              }, executor))
+              .collect(Collectors.toList());
+
+      List<SalesOrderDetailDto> detailDtos = futures.stream()
+              .map(CompletableFuture::join)
+              .collect(Collectors.toList());
+
+      dto.setSalesOrderDetails(detailDtos);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      executor.shutdown();
     }
 
-    List<SalesOrderDetailDto> detailDtos = details.stream()
-        .map(detail -> {
-          SalesOrderDetailDto detailDto = new SalesOrderDetailDto();
-          detailDto.setSoDetailId(detail.getSoDetailId());
-          detailDto.setSoId(salesOrder.getSoId());
-          detailDto.setItemId(detail.getItemId());
-          detailDto.setCustomerItemId(detail.getCustomerItemId());
-          detailDto.setQuantity(detail.getQuantity());
-          detailDto.setItemPrice(detail.getItemPrice());
-          detailDto.setDiscount(detail.getDiscount());
-          detailDto.setNote(detail.getNote());
-          
-          // Lấy thông tin item
-          ItemDto item = externalServicePublisher.getItemById(detail.getItemId());
-          if (item != null) {
-            detailDto.setItemCode(item.getItemCode());
-            detailDto.setItemName(item.getItemName());
-          }
-          
-          ItemDto customerItem = externalServicePublisher.getItemById(detail.getCustomerItemId());
-          if (customerItem != null) {
-            detailDto.setCustomerItemCode(customerItem.getItemCode());
-            detailDto.setCustomerItemName(customerItem.getItemName());
-          }
-          
-          return detailDto;
-        })
-        .collect(Collectors.toList());
-
-    dto.setSalesOrderDetails(detailDtos);
     return dto;
   }
 
