@@ -37,18 +37,18 @@ export class InvoiceController {
   @ApiParam({ name: 'invoiceId', type: 'number', description: 'Invoice ID' })
   @Header('Content-Type', 'application/pdf')
   async getInvoicePdf(@Param('invoiceId', ParseIntPipe) invoiceId: number, @Res() res: Response) {
-    const invoice: any = await firstValueFrom(
+    return await firstValueFrom(
       this.businessClient.send(INVOICE_CONSTANTS.GET_PDF_BY_ID, { invoiceId }),
     );
 
-    if (!invoice || !invoice.file) {
-      return res.status(404).json({ error: 'Không tìm thấy hóa đơn!' });
-    }
-
-    const buffer = Buffer.from(invoice.file);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${invoice.invoiceCode}.pdf"`);
-    res.send(buffer);
+    // if (!invoice || !invoice.file) {
+    //   return res.status(404).json({ error: 'Không tìm thấy hóa đơn!' });
+    // }
+    //
+    // const buffer = Buffer.from(invoice.file);
+    // res.setHeader('Content-Type', 'application/pdf');
+    // res.setHeader('Content-Disposition', `inline; filename="${invoice.invoiceCode}.pdf"`);
+    // res.send(buffer);
   }
 
   @Get('sales-orders/:soId')

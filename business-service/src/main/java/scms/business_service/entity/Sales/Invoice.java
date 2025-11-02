@@ -1,15 +1,8 @@
 package scms.business_service.entity.Sales;
 
 import java.time.LocalDateTime;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+
+import jakarta.persistence.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -45,6 +38,7 @@ public class Invoice {
   private LocalDateTime createdOn;
 
   @Lob
-  @Column(name = "invoice_file", columnDefinition = "bytea")
+  @Basic(fetch = FetchType.EAGER)
+  @Column(name = "invoice_file")
   private byte[] file;
 }
