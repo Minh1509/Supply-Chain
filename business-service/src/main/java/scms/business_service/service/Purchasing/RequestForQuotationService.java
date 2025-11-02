@@ -43,7 +43,7 @@ public class RequestForQuotationService {
     RequestForQuotation rfq = new RequestForQuotation();
     rfq.setCompanyId(request.getCompanyId());
     rfq.setRequestedCompanyId(request.getRequestedCompanyId());
-    rfq.setCode(generateRFQCode(request.getCompanyId(), request.getRequestedCompanyId()));
+    rfq.setRfqCode(generateRFQCode(request.getCompanyId(), request.getRequestedCompanyId()));
     rfq.setNeedByDate(request.getNeedByDate());
     rfq.setCreatedBy(request.getCreatedBy());
     rfq.setCreatedOn(LocalDateTime.now());
@@ -109,14 +109,14 @@ public class RequestForQuotationService {
   private String generateRFQCode(Long companyId, Long requestedCompanyId) {
     String prefix = "RFQ" + companyId + requestedCompanyId;
     String year = String.valueOf(LocalDateTime.now().getYear()).substring(2);
-    int count = rfqRepository.countByCodeStartingWith(prefix);
+    int count = rfqRepository.countByRfqCodeStartingWith(prefix);
     return prefix + year + String.format("%04d", count + 1);
   }
 
   private RequestForQuotationDto convertToDto(RequestForQuotation rfq) {
     RequestForQuotationDto dto = new RequestForQuotationDto();
-    dto.setId(rfq.getId());
-    dto.setCode(rfq.getCode());
+    dto.setRfqId(rfq.getRfqId());
+    dto.setRfqCode(rfq.getRfqCode());
     dto.setCompanyId(rfq.getCompanyId());
     dto.setRequestedCompanyId(rfq.getRequestedCompanyId());
     dto.setNeedByDate(rfq.getNeedByDate());
@@ -139,7 +139,7 @@ public class RequestForQuotationService {
     }
 
     List<RfqDetailDto> rfqDetails = rfqDetailRepository
-        .findByRfqId(rfq.getId())
+        .findByRfqRfqId(rfq.getRfqId())
         .stream()
         .map(this::convertToDetailDto)
         .collect(Collectors.toList());
@@ -149,9 +149,9 @@ public class RequestForQuotationService {
 
   public RfqDetailDto convertToDetailDto(RfqDetail rfqDetail) {
     RfqDetailDto dto = new RfqDetailDto();
-    dto.setId(rfqDetail.getId());
-    dto.setRfqId(rfqDetail.getRfq().getId());
-    dto.setRfqCode(rfqDetail.getRfq().getCode());
+    dto.setRfqDetailId(rfqDetail.getRfqDetailId());
+    dto.setRfqId(rfqDetail.getRfq().getRfqId());
+    dto.setRfqCode(rfqDetail.getRfq().getRfqCode());
     dto.setItemId(rfqDetail.getItemId());
     dto.setSupplierItemId(rfqDetail.getSupplierItemId());
     dto.setQuantity(rfqDetail.getQuantity());

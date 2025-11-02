@@ -23,8 +23,8 @@ public class QuotationHandler {
 
   public Object handleGetById(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
-    Long id = getLongValue(map, "id");
-    return quotationService.getQuotationById(id);
+    Long quotationId = getLongValue(map, "quotationId");
+    return quotationService.getQuotationById(quotationId);
   }
 
   public Object handleGetByRfqId(Object data) {
@@ -47,10 +47,10 @@ public class QuotationHandler {
 
   public Object handleUpdateStatus(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
-    Long id = getLongValue(map, "id");
+    Long quotationId = getLongValue(map, "quotationId");
     Map<String, Object> bodyMap = (Map<String, Object>) map.get("body");
     UpdateStatusRequest body = objectMapper.convertValue(bodyMap, UpdateStatusRequest.class);
-    return quotationService.updateQuotationStatus(id, body);
+    return quotationService.updateQuotationStatus(quotationId, body);
   }
 
   private Long getLongValue(Map<String, Object> map, String key) {

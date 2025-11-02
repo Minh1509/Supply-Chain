@@ -40,12 +40,12 @@ export class SalesOrderController {
     );
   }
 
-  @Get(':id')
+  @Get(':soId')
   @ApiOperation({ summary: 'Get sales order by ID' })
-  @ApiParam({ name: 'id', type: 'number', description: 'Sales Order ID' })
-  async getSalesOrderById(@Param('id', ParseIntPipe) id: number) {
+  @ApiParam({ name: 'soId', type: 'number', description: 'Sales Order ID' })
+  async getSalesOrderById(@Param('soId', ParseIntPipe) soId: number) {
     return await firstValueFrom(
-      this.businessClient.send(SALES_ORDER_CONSTANTS.GET_BY_ID, { id }),
+      this.businessClient.send(SALES_ORDER_CONSTANTS.GET_BY_ID, { soId }),
     );
   }
 
@@ -67,15 +67,15 @@ export class SalesOrderController {
     );
   }
 
-  @Put(':id/status')
+  @Put(':soId/status')
   @ApiOperation({ summary: 'Update sales order status' })
-  @ApiParam({ name: 'id', type: 'number', description: 'Sales Order ID' })
+  @ApiParam({ name: 'soId', type: 'number', description: 'Sales Order ID' })
   async updateStatus(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('soId', ParseIntPipe) soId: number,
     @Body() body: UpdateStatusRequestDto,
   ) {
     return await firstValueFrom(
-      this.businessClient.send(SALES_ORDER_CONSTANTS.UPDATE_STATUS, { id, body }),
+      this.businessClient.send(SALES_ORDER_CONSTANTS.UPDATE_STATUS, { soId, body }),
     );
   }
 

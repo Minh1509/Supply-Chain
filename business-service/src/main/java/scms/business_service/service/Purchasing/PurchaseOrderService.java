@@ -56,13 +56,13 @@ public class PurchaseOrderService {
     Quotation quotation = quotationRepository.findById(request.getQuotationId())
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy báo giá!"));
 
-    PurchaseOrder existingPo = purchaseOrderRepository.findByQuotationId(quotation.getId());
+    PurchaseOrder existingPo = purchaseOrderRepository.findByQuotationQuotationId(quotation.getQuotationId());
     if (existingPo != null) {
       throw new RpcException(400, "Đơn mua hàng cho báo giá này đã tồn tại!");
     }
 
     PurchaseOrder purchaseOrder = new PurchaseOrder();
-    purchaseOrder.setCode(generatePurchaseOrderCode(request.getCompanyId(), request.getSupplierCompanyId()));
+    purchaseOrder.setPoCode(generatePurchaseOrderCode(request.getCompanyId(), request.getSupplierCompanyId()));
     purchaseOrder.setCompanyId(request.getCompanyId());
     purchaseOrder.setSupplierCompanyId(request.getSupplierCompanyId());
     purchaseOrder.setReceiveWarehouseId(request.getReceiveWarehouseId());
@@ -77,10 +77,10 @@ public class PurchaseOrderService {
     PurchaseOrder savedPurchaseOrder = purchaseOrderRepository.save(purchaseOrder);
 
     // Lấy quotation details và tạo purchase order details từ quotation
-    List<QuotationDetail> quotationDetails = quotationDetailRepository.findByQuotationId(quotation.getId());
+    List<QuotationDetail> quotationDetails = quotationDetailRepository.findByQuotationQuotationId(quotation.getQuotationId());
     for (QuotationDetail quotationDetail : quotationDetails) {
       PurchaseOrderDetail detail = new PurchaseOrderDetail();
-      detail.setPurchaseOrder(savedPurchaseOrder);
+      detail.setPo(savedPurchaseOrder);
       detail.setItemId(quotationDetail.getCustomerItemId()); // Item của công ty mua
       detail.setSupplierItemId(quotationDetail.getItemId()); // Item của công ty bán
       detail.setQuantity(quotationDetail.getQuantity());
@@ -90,45 +90,46 @@ public class PurchaseOrderService {
       purchaseOrderDetailRepository.save(detail);
     }
 
-    return getPurchaseOrderById(savedPurchaseOrder.getId());
+    return getPurchaseOrderById(savedPurchaseOrder.getPoId());
   }
 
   public PurchaseOrderDto getPurchaseOrderById(Long id) {
     PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(id)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy đơn mua hàng!"));
 
-    List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPurchaseOrderId(purchaseOrder.getId());
+    List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPoPoId(purchaseOrder.getPoId());
     return convertToDto(purchaseOrder, details);
   }
 
   public PurchaseOrderDto getPurchaseOrderByCode(String poCode) {
-    PurchaseOrder purchaseOrder = purchaseOrderRepository.findByCode(poCode);
+    PurchaseOrder purchaseOrder = purchaseOrderRepository.findByPoCode(poCode);
     if (purchaseOrder == null) {
       throw new RpcException(404, "Không tìm thấy đơn mua hàng!");
     }
     PurchaseOrderDto dto = new PurchaseOrderDto();
-    dto.setId(purchaseOrder.getId());
+    dto.setPoId(purchaseOrder.getPoId());
 
-    List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPurchaseOrderId(purchaseOrder.getId());
-    List<PurchaseOrderDetailDto> detailDtos = new ArrayList<>();
-    details.stream().forEach(detail -> {
-      PurchaseOrderDetailDto detailDto = new PurchaseOrderDetailDto();
-      detailDto.setPurchaseOrderDetailId(detail.getId());
-      detailDto.setItemId(detail.getItemId());
-      detailDto.setQuantity(detail.getQuantity());
-      detailDtos.add(detailDto);
-    });
+    List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPoPoId(purchaseOrder.getPoId());
+    List<PurchaseOrderDetailDto> detailDtos = details.stream()
+        .map(detail -> {
+          PurchaseOrderDetailDto detailDto = new PurchaseOrderDetailDto();
+          detailDto.setPurchaseOrderDetailId(detail.getPurchaseOrderDetailId());
+          detailDto.setItemId(detail.getItemId());
+          detailDto.setQuantity(detail.getQuantity());
+          return detailDto; // Add return statement
+        })
+        .collect(Collectors.toList());
     dto.setPurchaseOrderDetails(detailDtos);
     return dto;
   }
 
   public PurchaseOrderDto getPurchaseOrderByQuotationId(Long quotationId) {
-    PurchaseOrder purchaseOrder = purchaseOrderRepository.findByQuotationId(quotationId);
+    PurchaseOrder purchaseOrder = purchaseOrderRepository.findByQuotationQuotationId(quotationId);
     if (purchaseOrder == null) {
       throw new RpcException(404, "Không tìm thấy đơn mua hàng cho báo giá này!");
     }
 
-    List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPurchaseOrderId(purchaseOrder.getId());
+    List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPoPoId(purchaseOrder.getPoId());
     return convertToDto(purchaseOrder, details);
   }
 
@@ -136,7 +137,7 @@ public class PurchaseOrderService {
     List<PurchaseOrder> purchaseOrders = purchaseOrderRepository.findByCompanyId(companyId);
     return purchaseOrders.stream()
         .map(po -> {
-          List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPurchaseOrderId(po.getId());
+          List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPoPoId(po.getPoId());
           return convertToDto(po, details);
         })
         .collect(Collectors.toList());
@@ -146,7 +147,7 @@ public class PurchaseOrderService {
     List<PurchaseOrder> purchaseOrders = purchaseOrderRepository.findBySupplierCompanyId(supplierCompanyId);
     return purchaseOrders.stream()
         .map(po -> {
-          List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPurchaseOrderId(po.getId());
+          List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPoPoId(po.getPoId());
           return convertToDto(po, details);
         })
         .collect(Collectors.toList());
@@ -168,7 +169,7 @@ public class PurchaseOrderService {
     purchaseOrder.setLastUpdatedOn(LocalDateTime.now());
     purchaseOrderRepository.save(purchaseOrder);
 
-    List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPurchaseOrderId(purchaseOrder.getId());
+    List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPoPoId(purchaseOrder.getPoId());
     return convertToDto(purchaseOrder, details);
   }
 
@@ -182,7 +183,7 @@ public class PurchaseOrderService {
     Map<Long, Double> itemQuantityMap = new HashMap<>();
 
     for (PurchaseOrder po : purchaseOrders) {
-      List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPurchaseOrderId(po.getId());
+      List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPoPoId(po.getPoId());
       for (PurchaseOrderDetail detail : details) {
         Long itemId = detail.getItemId();
         Double quantity = detail.getQuantity() != null ? detail.getQuantity() : 0.0;
@@ -228,7 +229,7 @@ public class PurchaseOrderService {
       MonthlyAggregation aggregation = monthlyMap.getOrDefault(month, new MonthlyAggregation());
       aggregation.totalOrder++;
 
-      List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPurchaseOrderId(po.getId());
+      List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPoPoId(po.getPoId());
       for (PurchaseOrderDetail detail : details) {
         aggregation.totalQuantity += detail.getQuantity() != null ? detail.getQuantity() : 0.0;
 
@@ -262,19 +263,19 @@ public class PurchaseOrderService {
   private String generatePurchaseOrderCode(Long companyId, Long supplierCompanyId) {
     String prefix = "PO" + companyId + supplierCompanyId;
     String year = String.valueOf(LocalDateTime.now().getYear()).substring(2);
-    int count = purchaseOrderRepository.countByCodeStartingWith(prefix);
+    int count = purchaseOrderRepository.countByPoCodeStartingWith(prefix);
     return prefix + year + String.format("%04d", count + 1);
   }
 
   private PurchaseOrderDto convertToDto(PurchaseOrder purchaseOrder, List<PurchaseOrderDetail> details) {
     PurchaseOrderDto dto = new PurchaseOrderDto();
-    dto.setId(purchaseOrder.getId());
-    dto.setCode(purchaseOrder.getCode());
+    dto.setPoId(purchaseOrder.getPoId());
+    dto.setPoCode(purchaseOrder.getPoCode());
     dto.setCompanyId(purchaseOrder.getCompanyId());
     dto.setSupplierCompanyId(purchaseOrder.getSupplierCompanyId());
     dto.setReceiveWarehouseId(purchaseOrder.getReceiveWarehouseId());
-    dto.setQuotationId(purchaseOrder.getQuotation().getId());
-    dto.setQuotationCode(purchaseOrder.getQuotation().getCode());
+    dto.setQuotationId(purchaseOrder.getQuotation().getQuotationId());
+    dto.setQuotationCode(purchaseOrder.getQuotation().getQuotationCode());
     dto.setPaymentMethod(purchaseOrder.getPaymentMethod());
     dto.setDeliveryToAddress(purchaseOrder.getDeliveryToAddress());
     dto.setCreatedBy(purchaseOrder.getCreatedBy());
@@ -310,9 +311,9 @@ public class PurchaseOrderService {
     List<PurchaseOrderDetailDto> detailDtos = details.stream()
         .map(detail -> {
           PurchaseOrderDetailDto detailDto = new PurchaseOrderDetailDto();
-          detailDto.setPurchaseOrderDetailId(detail.getId());
-          detailDto.setId(purchaseOrder.getId());
-          detailDto.setCode(purchaseOrder.getCode());
+          detailDto.setPurchaseOrderDetailId(detail.getPurchaseOrderDetailId());
+          detailDto.setPoId(purchaseOrder.getPoId());
+          detailDto.setPoCode(purchaseOrder.getPoCode());
           detailDto.setItemId(detail.getItemId());
           detailDto.setSupplierItemId(detail.getSupplierItemId());
           detailDto.setQuantity(detail.getQuantity());

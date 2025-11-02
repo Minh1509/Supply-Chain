@@ -7,8 +7,8 @@ import lombok.Data;
 
 @Data
 public class QuotationDto {
-  private Long id;
-  private String code;
+  private Long quotationId;
+  private String quotationCode;
   private Long companyId;
   private String companyCode;
   private String companyName;

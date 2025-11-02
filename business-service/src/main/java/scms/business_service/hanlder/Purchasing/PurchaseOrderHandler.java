@@ -24,14 +24,14 @@ public class PurchaseOrderHandler {
 
   public Object handleGetById(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
-    Long id = getLongValue(map, "id");
-    return purchaseOrderService.getPurchaseOrderById(id);
+    Long poId = getLongValue(map, "poId");
+    return purchaseOrderService.getPurchaseOrderById(poId);
   }
 
   public Object handleGetByCode(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
-    String code = (String) map.get("code");
-    return purchaseOrderService.getPurchaseOrderByCode(code);
+    String poCode = (String) map.get("poCode");
+    return purchaseOrderService.getPurchaseOrderByCode(poCode);
   }
 
   public Object handleGetAllInCompany(Object data) {
@@ -48,10 +48,10 @@ public class PurchaseOrderHandler {
 
   public Object handleUpdateStatus(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
-    Long id = getLongValue(map, "id");
+    Long poId = getLongValue(map, "poId");
     Map<String, Object> bodyMap = (Map<String, Object>) map.get("body");
     UpdateStatusRequest body = objectMapper.convertValue(bodyMap, UpdateStatusRequest.class);
-    return purchaseOrderService.updatePoStatus(id, body);
+    return purchaseOrderService.updatePoStatus(poId, body);
   }
 
   public Object handlePurchaseReport(Object data) {

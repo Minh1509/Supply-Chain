@@ -10,5 +10,5 @@ import scms.business_service.entity.Sales.SalesOrderDetail;
 @Repository
 public interface SalesOrderDetailRepository extends JpaRepository<SalesOrderDetail, Long> {
 
-  List<SalesOrderDetail> findBySalesOrderId(Long salesOrderId);
+  List<SalesOrderDetail> findBySalesOrderSoId(Long soId);
 }

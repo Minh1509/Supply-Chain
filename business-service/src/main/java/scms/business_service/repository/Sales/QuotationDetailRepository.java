@@ -10,5 +10,5 @@ import scms.business_service.entity.Sales.QuotationDetail;
 @Repository
 public interface QuotationDetailRepository extends JpaRepository<QuotationDetail, Long> {
 
-  List<QuotationDetail> findByQuotationId(Long quotationId);
+  List<QuotationDetail> findByQuotationQuotationId(Long quotationId);
 }

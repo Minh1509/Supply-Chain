@@ -28,8 +28,7 @@ import lombok.NoArgsConstructor;
 public class Quotation {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "id")
-  private Long id;
+  private Long quotationId;
 
   @Column(name = "company_id")
   private Long companyId;
@@ -41,8 +40,8 @@ public class Quotation {
   @JoinColumn(name = "rfq_id")
   private RequestForQuotation rfq;
 
-  @Column(name = "code", unique = true, nullable = false)
-  private String code;
+  @Column( unique = true, nullable = false)
+  private String quotationCode;
 
   @Column(name = "sub_total")
   private Double subTotal;
@@ -69,5 +68,5 @@ public class Quotation {
   private String status;
 
   @OneToMany(mappedBy = "quotation", orphanRemoval = true, cascade = CascadeType.ALL)
-  private List<QuotationDetail> details;
+  private List<QuotationDetail> quotationDetails;
 }

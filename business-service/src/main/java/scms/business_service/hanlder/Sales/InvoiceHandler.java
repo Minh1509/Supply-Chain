@@ -22,8 +22,8 @@ public class InvoiceHandler {
 
   public Object handleGetPdfById(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
-    Long id = getLongValue(map, "id");
-    return invoiceService.getInvoiceBySo(id);
+    Long invoiceId = getLongValue(map, "invoiceId");
+    return invoiceService.getInvoiceBySo(invoiceId);
   }
 
   public Object handleGetPdfBySoId(Object data) {

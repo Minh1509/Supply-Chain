@@ -32,13 +32,13 @@ export class InvoiceController {
     );
   }
 
-  @Get(':id/pdf')
+  @Get(':invoiceId/pdf')
   @ApiOperation({ summary: 'Get invoice PDF by invoice ID' })
-  @ApiParam({ name: 'id', type: 'number', description: 'Invoice ID' })
+  @ApiParam({ name: 'invoiceId', type: 'number', description: 'Invoice ID' })
   @Header('Content-Type', 'application/pdf')
-  async getInvoicePdf(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+  async getInvoicePdf(@Param('invoiceId', ParseIntPipe) invoiceId: number, @Res() res: Response) {
     const invoice: any = await firstValueFrom(
-      this.businessClient.send(INVOICE_CONSTANTS.GET_PDF_BY_ID, { id }),
+      this.businessClient.send(INVOICE_CONSTANTS.GET_PDF_BY_ID, { invoiceId }),
     );
 
     if (!invoice || !invoice.file) {

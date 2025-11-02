@@ -50,7 +50,7 @@ public class QuotationService {
     quotation.setCompanyId(request.getCompanyId());
     quotation.setRequestCompanyId(request.getRequestCompanyId());
     quotation.setRfq(rfq);
-    quotation.setCode(generateQuotationCode(request.getCompanyId(), request.getRequestCompanyId()));
+    quotation.setQuotationCode(generateQuotationCode(request.getCompanyId(), request.getRequestCompanyId()));
     quotation.setSubTotal(request.getSubTotal());
     quotation.setTaxRate(request.getTaxRate());
     quotation.setTaxAmount(request.getTaxAmount());
@@ -84,7 +84,7 @@ public class QuotationService {
   }
 
   public QuotationDto getQuotationByRfqId(Long rfqId) {
-    Quotation quotation = quotationRepository.findByRfqId(rfqId);
+    Quotation quotation = quotationRepository.findByRfqRfqId(rfqId);
     if (quotation == null) {
       throw new RpcException(404, "Không tìm thấy báo giá cho RFQ này!");
     }
@@ -118,18 +118,18 @@ public class QuotationService {
   private String generateQuotationCode(Long companyId, Long requestCompanyId) {
     String prefix = "QT" + companyId + requestCompanyId;
     String year = String.valueOf(LocalDateTime.now().getYear()).substring(2);
-    int count = quotationRepository.countByCodeStartingWith(prefix);
+    int count = quotationRepository.countByQuotationCodeStartingWith(prefix);
     return prefix + year + String.format("%04d", count + 1);
   }
 
   private QuotationDto convertToDto(Quotation quotation) {
     QuotationDto dto = new QuotationDto();
-    dto.setId(quotation.getId());
-    dto.setCode(quotation.getCode());
+    dto.setQuotationId(quotation.getQuotationId());
+    dto.setQuotationCode(quotation.getQuotationCode());
     dto.setCompanyId(quotation.getCompanyId());
     dto.setRequestCompanyId(quotation.getRequestCompanyId());
-    dto.setRfqId(quotation.getRfq().getId());
-    dto.setRfqCode(quotation.getRfq().getCode());
+    dto.setRfqId(quotation.getRfq().getRfqId());
+    dto.setRfqCode(quotation.getRfq().getRfqCode());
     dto.setSubTotal(quotation.getSubTotal());
     dto.setTaxRate(quotation.getTaxRate());
     dto.setTaxAmount(quotation.getTaxAmount());
@@ -153,7 +153,7 @@ public class QuotationService {
     }
 
     List<QuotationDetailDto> details = quotationDetailRepository
-        .findByQuotationId(quotation.getId())
+        .findByQuotationQuotationId(quotation.getQuotationId())
         .stream()
         .map(this::convertToDetailDto)
         .collect(Collectors.toList());
@@ -164,9 +164,8 @@ public class QuotationService {
 
   private QuotationDetailDto convertToDetailDto(QuotationDetail detail) {
     QuotationDetailDto dto = new QuotationDetailDto();
-    dto.setId(detail.getId());
-    dto.setQuotationId(detail.getQuotation().getId());
-    dto.setQuotationCode(detail.getQuotation().getCode());
+    dto.setQuotationDetailId(detail.getQuotationDetailId());
+    dto.setQuotationId(detail.getQuotation().getQuotationId());
     dto.setItemId(detail.getItemId());
     dto.setCustomerItemId(detail.getCustomerItemId());
     dto.setQuantity(detail.getQuantity());

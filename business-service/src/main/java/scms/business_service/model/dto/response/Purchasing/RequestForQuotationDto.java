@@ -7,8 +7,8 @@ import lombok.Data;
 
 @Data
 public class RequestForQuotationDto {
-  private Long id;
-  private String code;
+  private Long rfqId;
+  private String rfqCode;
   private Long companyId;
   private String companyCode;
   private String companyName;

@@ -10,5 +10,5 @@ import scms.business_service.entity.Purchasing.PurchaseOrderDetail;
 @Repository
 public interface PurchaseOrderDetailRepository extends JpaRepository<PurchaseOrderDetail, Long> {
 
-  List<PurchaseOrderDetail> findByPurchaseOrderId(Long purchaseOrderId);
+  List<PurchaseOrderDetail> findByPoPoId(Long poId);
 }

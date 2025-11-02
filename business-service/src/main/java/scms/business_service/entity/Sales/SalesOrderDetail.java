@@ -21,11 +21,10 @@ import lombok.NoArgsConstructor;
 public class SalesOrderDetail {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "id")
-  private Long id;
+  private Long soDetailId;
 
   @ManyToOne
-  @JoinColumn(name = "sales_order_id")
+  @JoinColumn(name = "so_id")
   private SalesOrder salesOrder;
 
   @Column(name = "item_id")

@@ -10,9 +10,9 @@ import scms.business_service.entity.Purchasing.RequestForQuotation;
 @Repository
 public interface RequestForQuotationRepository extends JpaRepository<RequestForQuotation, Long> {
 
-  RequestForQuotation findByCode(String code);
+  RequestForQuotation findByRfqCode(String code);
 
-  int countByCodeStartingWith(String prefix);
+  int countByRfqCodeStartingWith(String prefix);
 
   List<RequestForQuotation> findByCompanyId(Long companyId);
 

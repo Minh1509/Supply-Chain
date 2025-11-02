@@ -23,8 +23,7 @@ import lombok.NoArgsConstructor;
 public class Invoice {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "id")
-  private Long id;
+  private Long invoiceId;
 
   @Column(name = "sales_company_id")
   private Long salesCompanyId;
@@ -33,11 +32,11 @@ public class Invoice {
   private Long purchaseCompanyId;
 
   @OneToOne
-  @JoinColumn(name = "sales_order_id")
+  @JoinColumn(name = "so_id")
   private SalesOrder salesOrder;
 
-  @Column(name = "code", unique = true, nullable = false)
-  private String code;
+  @Column(unique = true, nullable = false)
+  private String invoiceCode;
 
   @Column(name = "payment_method")
   private String paymentMethod;

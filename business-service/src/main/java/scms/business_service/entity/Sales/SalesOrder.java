@@ -28,8 +28,7 @@ import lombok.NoArgsConstructor;
 public class SalesOrder {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "id")
-  private Long id;
+  private Long soId;
 
   @Column(name = "company_id")
   private Long companyId;
@@ -38,11 +37,11 @@ public class SalesOrder {
   private Long customerCompanyId;
 
   @OneToOne
-  @JoinColumn(name = "purchase_order_id")
+  @JoinColumn(name = "po_id")
   private PurchaseOrder purchaseOrder;
 
-  @Column(name = "code", unique = true, nullable = false)
-  private String code;
+  @Column(unique = true, nullable = false)
+  private String soCode;
 
   @Column(name = "payment_method")
   private String paymentMethod;
@@ -66,5 +65,5 @@ public class SalesOrder {
   private String status;
 
   @OneToMany(mappedBy = "salesOrder", orphanRemoval = true, cascade = CascadeType.ALL)
-  private List<SalesOrderDetail> details;
+  private List<SalesOrderDetail> salesOrderDetails;
 }

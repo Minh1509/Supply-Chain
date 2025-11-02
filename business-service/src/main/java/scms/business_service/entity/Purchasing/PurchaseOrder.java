@@ -28,14 +28,13 @@ import lombok.NoArgsConstructor;
 public class PurchaseOrder {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "id")
-  private Long id;
+  private Long poId;
 
   @Column(name = "company_id", nullable = false)
   private Long companyId;
 
-  @Column(name = "code", nullable = false, unique = true)
-  private String code;
+  @Column(nullable = false, unique = true)
+  private String poCode;
 
   @Column(name = "supplier_company_id", nullable = false)
   private Long supplierCompanyId;
@@ -65,6 +64,6 @@ public class PurchaseOrder {
   @Column(name = "status")
   private String status;
 
-  @OneToMany(mappedBy = "purchaseOrder", orphanRemoval = true, cascade = CascadeType.ALL)
-  private List<PurchaseOrderDetail> details;
+  @OneToMany(mappedBy = "po", orphanRemoval = true, cascade = CascadeType.ALL)
+  private List<PurchaseOrderDetail> purchaseOrderDetails;
 }

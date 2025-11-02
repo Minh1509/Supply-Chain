@@ -25,14 +25,13 @@ public class RequestForQuotation {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "id")
-  private Long id;
+  private Long rfqId;
 
   @Column(name = "company_id", nullable = false)
   private Long companyId;
 
-  @Column(name = "code", nullable = false, unique = true)
-  private String code;
+  @Column(nullable = false, unique = true)
+  private String rfqCode;
 
   @Column(name = "requested_company_id", nullable = false)
   private Long requestedCompanyId;
@@ -53,5 +52,5 @@ public class RequestForQuotation {
   private String status;
 
   @OneToMany(mappedBy = "rfq", orphanRemoval = true, cascade = CascadeType.ALL)
-  private List<RfqDetail> details;
+  private List<RfqDetail> rfqDetails;
 }

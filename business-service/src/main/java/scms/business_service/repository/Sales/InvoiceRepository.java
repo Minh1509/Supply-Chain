@@ -10,11 +10,11 @@ import scms.business_service.entity.Sales.Invoice;
 @Repository
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
-  Invoice findByCode(String code);
+  Invoice findByInvoiceCode(String code);
 
-  int countByCodeStartingWith(String prefix);
+  int countByInvoiceCodeStartingWith(String prefix);
 
-  Invoice findBySalesOrderId(Long salesOrderId);
+  Invoice findBySalesOrderSoId(Long salesOrderId);
 
   List<Invoice> findBySalesCompanyId(Long salesCompanyId);
 }

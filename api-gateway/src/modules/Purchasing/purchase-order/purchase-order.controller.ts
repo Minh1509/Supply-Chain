@@ -56,23 +56,23 @@ export class PurchaseOrderController {
     );
   }
 
-  @Get(':id')
+  @Get(':poId')
   @ApiOperation({ summary: 'Get purchase order by ID' })
-  async getPoById(@Param('id', ParseIntPipe) id: number) {
+  async getPoById(@Param('poId', ParseIntPipe) poId: number) {
     return await firstValueFrom(
-      this.businessClient.send(PURCHASE_ORDER_CONSTANTS.GET_BY_ID, { id }),
+      this.businessClient.send(PURCHASE_ORDER_CONSTANTS.GET_BY_ID, { poId }),
     );
   }
 
-  @Put(':id/status')
+  @Put(':poId/status')
   @ApiOperation({ summary: 'Update purchase order status' })
   async updateStatus(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('poId', ParseIntPipe) poId: number,
     @Body() body: UpdateStatusRequestDto,
   ) {
     return await firstValueFrom(
       this.businessClient.send(PURCHASE_ORDER_CONSTANTS.UPDATE_STATUS, {
-        id,
+        poId,
         body,
       }),
     );

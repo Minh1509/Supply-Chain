@@ -85,7 +85,7 @@ public class InvoicePdfGenerator {
       document.add(invoiceTitle);
 
       // Info - Since we only have IDs, show them
-      document.add(createLabelValueParagraph("Mã đơn hàng: ", salesOrder.getCode(), labelFont, valueFont));
+      document.add(createLabelValueParagraph("Mã đơn hàng: ", salesOrder.getSoCode(), labelFont, valueFont));
       document.add(createLabelValueParagraph("Công ty bán: ", "ID: " + salesOrder.getCompanyId(), labelFont, valueFont));
       document.add(createLabelValueParagraph("Công ty mua: ", "ID: " + salesOrder.getCustomerCompanyId(), labelFont, valueFont));
       document.add(createLabelValueParagraph("Phương thức thanh toán: ", 
@@ -104,11 +104,11 @@ public class InvoicePdfGenerator {
       }
 
       // Load details and calculate totals
-      var details = salesOrderDetailRepository.findBySalesOrderId(salesOrder.getId());
+      var details = salesOrderDetailRepository.findBySalesOrderSoId(salesOrder.getSoId());
       double subTotal = 0.0;
       
       for (SalesOrderDetail detail : details) {
-        addCell(table, String.valueOf(detail.getId()), valueFont, Element.ALIGN_LEFT);
+        addCell(table, String.valueOf(detail.getSoDetailId()), valueFont, Element.ALIGN_LEFT);
         addCell(table, "Item ID: " + detail.getItemId(), valueFont, Element.ALIGN_LEFT);
         addCell(table, String.valueOf(detail.getQuantity()), valueFont, Element.ALIGN_RIGHT);
         addCell(table, String.format("%,.2f", detail.getItemPrice()), valueFont, Element.ALIGN_RIGHT);

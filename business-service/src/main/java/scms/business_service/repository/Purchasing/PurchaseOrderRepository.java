@@ -11,15 +11,15 @@ import scms.business_service.entity.Purchasing.PurchaseOrder;
 @Repository
 public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Long> {
 
-  PurchaseOrder findByCode(String code);
+  PurchaseOrder findByPoCode(String code);
 
-  int countByCodeStartingWith(String prefix);
+  int countByPoCodeStartingWith(String prefix);
 
   List<PurchaseOrder> findByCompanyId(Long companyId);
 
   List<PurchaseOrder> findBySupplierCompanyId(Long supplierCompanyId);
 
-  PurchaseOrder findByQuotationId(Long quotationId);
+  PurchaseOrder findByQuotationQuotationId(Long quotationId);
 
   List<PurchaseOrder> findByCompanyIdAndStatusAndLastUpdatedOnBetween(
       Long companyId, String status, LocalDateTime startDate, LocalDateTime endDate);

@@ -21,8 +21,7 @@ import lombok.NoArgsConstructor;
 public class QuotationDetail {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "id")
-  private Long id;
+  private Long quotationDetailId;
 
   @ManyToOne
   @JoinColumn(name = "quotation_id")

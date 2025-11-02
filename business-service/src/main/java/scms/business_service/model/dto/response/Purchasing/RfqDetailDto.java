@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class RfqDetailDto {
-  private Long id;
+  private Long RfqDetailId;
   private Long rfqId;
   private String rfqCode;
   private Long itemId;

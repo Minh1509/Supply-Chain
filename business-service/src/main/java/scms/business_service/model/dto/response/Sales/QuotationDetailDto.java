@@ -4,13 +4,13 @@ import lombok.Data;
 
 @Data
 public class QuotationDetailDto {
-  private Long id;
+  private Long quotationDetailId;
   private Long quotationId;
-  private String quotationCode;
   private Long itemId;
   private String itemCode;
   private String itemName;
   private Long customerItemId;
+  private String customerItemCode;
   private String customerItemName;
   private Double quantity;
   private Double itemPrice;

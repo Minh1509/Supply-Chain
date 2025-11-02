@@ -10,11 +10,11 @@ import scms.business_service.entity.Sales.Quotation;
 @Repository
 public interface QuotationRepository extends JpaRepository<Quotation, Long> {
 
-  Quotation findByCode(String code);
+  Quotation findByQuotationCode(String code);
 
-  int countByCodeStartingWith(String prefix);
+  int countByQuotationCodeStartingWith(String prefix);
 
-  Quotation findByRfqId(Long rfqId);
+  Quotation findByRfqRfqId(Long rfqId);
 
   List<Quotation> findByCompanyId(Long companyId);
 

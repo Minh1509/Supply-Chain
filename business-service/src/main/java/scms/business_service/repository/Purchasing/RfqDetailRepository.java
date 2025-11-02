@@ -10,5 +10,5 @@ import scms.business_service.entity.Purchasing.RfqDetail;
 @Repository
 public interface RfqDetailRepository extends JpaRepository<RfqDetail, Long> {
 
-  List<RfqDetail> findByRfqId(Long rfqId);
+  List<RfqDetail> findByRfqRfqId(Long rfqId);
 }

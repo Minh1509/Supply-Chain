@@ -24,8 +24,8 @@ public class SalesOrderHandler {
 
   public Object handleGetById(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
-    Long id = getLongValue(map, "id");
-    return salesOrderService.getSalesOrderById(id);
+    Long soId = getLongValue(map, "soId");
+    return salesOrderService.getSalesOrderById(soId);
   }
 
   public Object handleGetByPoId(Object data) {
@@ -36,8 +36,8 @@ public class SalesOrderHandler {
 
   public Object handleGetByCode(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
-    String code = (String) map.get("code");
-    return salesOrderService.getSalesOrderByCode(code);
+    String soCode = (String) map.get("soCode");
+    return salesOrderService.getSalesOrderByCode(soCode);
   }
 
   public Object handleGetAllInCompany(Object data) {
@@ -48,10 +48,10 @@ public class SalesOrderHandler {
 
   public Object handleUpdateStatus(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
-    Long id = getLongValue(map, "id");
+    Long soId = getLongValue(map, "soId");
     Map<String, Object> bodyMap = (Map<String, Object>) map.get("body");
     UpdateStatusRequest body = objectMapper.convertValue(bodyMap, UpdateStatusRequest.class);
-    return salesOrderService.updateSoStatus(id, body);
+    return salesOrderService.updateSoStatus(soId, body);
   }
 
   public Object handleSalesReport(Object data) {

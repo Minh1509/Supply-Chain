@@ -55,13 +55,13 @@ public class SalesOrderService {
     PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(request.getPoId())
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy đơn mua hàng!"));
 
-    SalesOrder existingSo = salesOrderRepository.findByPurchaseOrderId(purchaseOrder.getId());
+    SalesOrder existingSo = salesOrderRepository.findByPurchaseOrderPoId(purchaseOrder.getPoId());
     if (existingSo != null) {
       throw new RpcException(400, "Đơn bán hàng cho đơn mua hàng này đã tồn tại!");
     }
 
     SalesOrder salesOrder = new SalesOrder();
-    salesOrder.setCode(generateSalesOrderCode(request.getPoId()));
+    salesOrder.setSoCode(generateSalesOrderCode(request.getPoId()));
     salesOrder.setCompanyId(request.getCompanyId());
     salesOrder.setCustomerCompanyId(request.getCustomerCompanyId());
     salesOrder.setPurchaseOrder(purchaseOrder);
@@ -76,7 +76,7 @@ public class SalesOrderService {
     SalesOrder savedSalesOrder = salesOrderRepository.save(salesOrder);
     
     // Lấy purchase order details và tạo sales order details
-    List<PurchaseOrderDetail> purchaseOrderDetails = purchaseOrderDetailRepository.findByPurchaseOrderId(purchaseOrder.getId());
+    List<PurchaseOrderDetail> purchaseOrderDetails = purchaseOrderDetailRepository.findByPoPoId(purchaseOrder.getPoId());
     for (PurchaseOrderDetail purchaseOrderDetail : purchaseOrderDetails) {
       SalesOrderDetail detail = new SalesOrderDetail();
       detail.setSalesOrder(savedSalesOrder);
@@ -89,30 +89,30 @@ public class SalesOrderService {
       salesOrderDetailRepository.save(detail);
     }
 
-    return getSalesOrderById(savedSalesOrder.getId());
+    return getSalesOrderById(savedSalesOrder.getSoId());
   }
 
   public SalesOrderDto getSalesOrderById(Long id) {
     SalesOrder salesOrder = salesOrderRepository.findById(id)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy đơn bán hàng!"));
 
-    List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderId(salesOrder.getId());
+    List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderSoId(salesOrder.getSoId());
     return convertToDto(salesOrder, details);
   }
 
   public SalesOrderDto getSalesOrderByCode(String code) {
-    SalesOrder salesOrder = salesOrderRepository.findByCode(code);
+    SalesOrder salesOrder = salesOrderRepository.findBySoCode(code);
     if (salesOrder == null) {
       throw new RpcException(404, "Không tìm thấy đơn bán hàng!");
     }
     SalesOrderDto salesOrderDto = new SalesOrderDto();
-    salesOrderDto.setId(salesOrder.getId());
+    salesOrderDto.setSoId(salesOrder.getSoId());
 
-    List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderId(salesOrder.getId());
+    List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderSoId(salesOrder.getSoId());
     List<SalesOrderDetailDto> detailDtos = new ArrayList<>();
      details.stream().forEach(detail -> {
       SalesOrderDetailDto detailDto = new SalesOrderDetailDto();
-      detailDto.setId(detail.getId());
+      detailDto.setSoDetailId(detail.getSoDetailId());
       detailDto.setItemId(detail.getItemId());
       detailDto.setQuantity(detail.getQuantity());
       detailDtos.add(detailDto);
@@ -122,12 +122,12 @@ public class SalesOrderService {
   }
 
   public SalesOrderDto getSalesOrderByPoId(Long poId) {
-    SalesOrder salesOrder = salesOrderRepository.findByPurchaseOrderId(poId);
+    SalesOrder salesOrder = salesOrderRepository.findByPurchaseOrderPoId(poId);
     if (salesOrder == null) {
       throw new RpcException(404, "Không tìm thấy đơn bán hàng cho đơn mua hàng này!");
     }
 
-    List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderId(salesOrder.getId());
+    List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderSoId(salesOrder.getSoId());
     return convertToDto(salesOrder, details);
   }
 
@@ -135,7 +135,7 @@ public class SalesOrderService {
     List<SalesOrder> salesOrders = salesOrderRepository.findByCompanyId(companyId);
     return salesOrders.stream()
         .map(so -> {
-          List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderId(so.getId());
+          List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderSoId(so.getSoId());
           return convertToDto(so, details);
         })
         .collect(Collectors.toList());
@@ -157,7 +157,7 @@ public class SalesOrderService {
     salesOrder.setLastUpdatedOn(LocalDateTime.now());
     salesOrderRepository.save(salesOrder);
 
-    List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderId(salesOrder.getId());
+    List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderSoId(salesOrder.getSoId());
     return convertToDto(salesOrder, details);
   }
 
@@ -168,7 +168,7 @@ public class SalesOrderService {
     Map<Long, Double> itemQuantityMap = new HashMap<>();
 
     for (SalesOrder so : salesOrders) {
-      List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderId(so.getId());
+      List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderSoId(so.getSoId());
       for (SalesOrderDetail detail : details) {
         Long itemId = detail.getItemId();
         Double quantity = detail.getQuantity() != null ? detail.getQuantity() : 0.0;
@@ -215,7 +215,7 @@ public class SalesOrderService {
       aggregation.totalAmount += so.getPurchaseOrder().getQuotation().getTotalAmount() != null 
           ? so.getPurchaseOrder().getQuotation().getTotalAmount() : 0.0;
 
-      List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderId(so.getId());
+      List<SalesOrderDetail> details = salesOrderDetailRepository.findBySalesOrderSoId(so.getSoId());
       for (SalesOrderDetail detail : details) {
         aggregation.totalQuantity += detail.getQuantity() != null ? detail.getQuantity() : 0.0;
       }
@@ -243,18 +243,18 @@ public class SalesOrderService {
   private String generateSalesOrderCode(Long poId) {
     String prefix = "SO" + String.valueOf(poId).substring(1);
     String year = String.valueOf(LocalDateTime.now().getYear()).substring(2);
-    int count = salesOrderRepository.countByCodeStartingWith(prefix);
+    int count = salesOrderRepository.countBySoCodeStartingWith(prefix);
     return prefix + year + String.format("%04d", count + 1);
   }
 
   private SalesOrderDto convertToDto(SalesOrder salesOrder, List<SalesOrderDetail> details) {
     SalesOrderDto dto = new SalesOrderDto();
-    dto.setId(salesOrder.getId());
-    dto.setCode(salesOrder.getCode());
+    dto.setSoId(salesOrder.getSoId());
+    dto.setSoCode(salesOrder.getSoCode());
     dto.setCompanyId(salesOrder.getCompanyId());
     dto.setCustomerCompanyId(salesOrder.getCustomerCompanyId());
-    dto.setPoId(salesOrder.getPurchaseOrder().getId());
-    dto.setPoCode(salesOrder.getPurchaseOrder().getCode());
+    dto.setPoId(salesOrder.getPurchaseOrder().getPoId());
+    dto.setPoCode(salesOrder.getPurchaseOrder().getPoCode());
     dto.setPaymentMethod(salesOrder.getPaymentMethod());
     dto.setDeliveryFromAddress(salesOrder.getDeliveryFromAddress());
     dto.setDeliveryToAddress(salesOrder.getDeliveryToAddress());
@@ -287,8 +287,8 @@ public class SalesOrderService {
     List<SalesOrderDetailDto> detailDtos = details.stream()
         .map(detail -> {
           SalesOrderDetailDto detailDto = new SalesOrderDetailDto();
-          detailDto.setId(detail.getId());
-          detailDto.setSoId(salesOrder.getId());
+          detailDto.setSoDetailId(detail.getSoDetailId());
+          detailDto.setSoId(salesOrder.getSoId());
           detailDto.setItemId(detail.getItemId());
           detailDto.setCustomerItemId(detail.getCustomerItemId());
           detailDto.setQuantity(detail.getQuantity());

@@ -70,25 +70,25 @@ export class RequestForQuotationController {
     );
   }
 
-  @Get(':id')
+  @Get(':rfqId')
   @ApiOperation({ summary: 'Get RFQ by ID' })
-  @ApiParam({ name: 'id', type: 'number', description: 'RFQ ID' })
-  async getById(@Param('id', ParseIntPipe) id: number) {
+  @ApiParam({ name: 'rfqId', type: 'number', description: 'RFQ ID' })
+  async getById(@Param('rfqId', ParseIntPipe) rfqId: number) {
     return await firstValueFrom(
-      this.businessClient.send(REQUEST_FOR_QUOTATION_CONSTANTS.GET_BY_ID, { id }),
+      this.businessClient.send(REQUEST_FOR_QUOTATION_CONSTANTS.GET_BY_ID, { rfqId }),
     );
   }
 
-  @Put(':id/status')
+  @Put(':rfqId/status')
   @ApiOperation({ summary: 'Update RFQ status' })
-  @ApiParam({ name: 'id', type: 'number', description: 'RFQ ID' })
+  @ApiParam({ name: 'rfqId', type: 'number', description: 'RFQ ID' })
   async updateStatus(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('rfqId', ParseIntPipe) rfqId: number,
     @Body() body: UpdateStatusRequestDto,
   ) {
     return await firstValueFrom(
       this.businessClient.send(REQUEST_FOR_QUOTATION_CONSTANTS.UPDATE_STATUS, {
-        id,
+        rfqId,
         body,
       }),
     );

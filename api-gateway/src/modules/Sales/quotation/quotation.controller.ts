@@ -39,12 +39,12 @@ export class QuotationController {
     );
   }
 
-  @Get(':id')
+  @Get(':quotationId')
   @ApiOperation({ summary: 'Get quotation by ID' })
-  @ApiParam({ name: 'id', type: 'number', description: 'Quotation ID' })
-  async getQuotationById(@Param('id', ParseIntPipe) id: number) {
+  @ApiParam({ name: 'quotationId', type: 'number', description: 'Quotation ID' })
+  async getQuotationById(@Param('quotationId', ParseIntPipe) quotationId: number) {
     return await firstValueFrom(
-      this.businessClient.send(QUOTATION_CONSTANTS.GET_BY_ID, { id }),
+      this.businessClient.send(QUOTATION_CONSTANTS.GET_BY_ID, { quotationId }),
     );
   }
 
@@ -85,16 +85,16 @@ export class QuotationController {
     );
   }
 
-  @Put(':id/status')
+  @Put(':quotationId/status')
   @ApiOperation({ summary: 'Update quotation status' })
-  @ApiParam({ name: 'id', type: 'number', description: 'Quotation ID' })
+  @ApiParam({ name: 'quotationId', type: 'number', description: 'Quotation ID' })
   async updateStatus(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('quotationId', ParseIntPipe) quotationId: number,
     @Body() body: UpdateStatusRequestDto,
   ) {
     return await firstValueFrom(
       this.businessClient.send(QUOTATION_CONSTANTS.UPDATE_STATUS, {
-        id,
+        quotationId,
         body,
       }),
     );

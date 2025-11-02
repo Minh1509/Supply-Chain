@@ -35,7 +35,7 @@ public class InvoiceService {
     invoice.setSalesCompanyId(salesOrder.getCompanyId());
     invoice.setPurchaseCompanyId(salesOrder.getCustomerCompanyId());
     invoice.setSalesOrder(salesOrder);
-    invoice.setCode(generateInvoiceCode(salesOrder.getCompanyId()));
+    invoice.setInvoiceCode(generateInvoiceCode(salesOrder.getCompanyId()));
     invoice.setPaymentMethod(salesOrder.getPaymentMethod());
     invoice.setCreatedOn(LocalDateTime.now());
 
@@ -52,13 +52,13 @@ public class InvoiceService {
 
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_PDF);
-    headers.setContentDisposition(ContentDisposition.inline().filename(invoice.getCode() + ".pdf").build());
+    headers.setContentDisposition(ContentDisposition.inline().filename(invoice.getInvoiceCode() + ".pdf").build());
 
     return new ResponseEntity<>(invoice.getFile(), headers, HttpStatus.OK);
   }
 
   public InvoiceDto getInvoiceBySo(Long soId) {
-    Invoice invoice = invoiceRepository.findBySalesOrderId(soId);
+    Invoice invoice = invoiceRepository.findBySalesOrderSoId(soId);
     if (invoice == null) {
       return generateInvoice(soId);
     }
@@ -68,14 +68,14 @@ public class InvoiceService {
   private String generateInvoiceCode(Long companyId) {
     String prefix = "I" + String.format("%04d", companyId);
     String year = String.valueOf(LocalDateTime.now().getYear()).substring(2);
-    int count = invoiceRepository.countByCodeStartingWith(prefix);
+    int count = invoiceRepository.countByInvoiceCodeStartingWith(prefix);
     return prefix + year + String.format("%03d", count + 1);
   }
 
   private InvoiceDto convertToDto(Invoice invoice) {
     InvoiceDto dto = new InvoiceDto();
-    dto.setId(invoice.getId());
-    dto.setCode(invoice.getCode());
+    dto.setInvoiceId(invoice.getInvoiceId());
+    dto.setInvoiceCode(invoice.getInvoiceCode());
     dto.setFile(invoice.getFile());
     return dto;
   }

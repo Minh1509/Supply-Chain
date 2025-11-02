@@ -11,11 +11,11 @@ import scms.business_service.entity.Sales.SalesOrder;
 @Repository
 public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long> {
 
-  SalesOrder findByCode(String code);
+  SalesOrder findBySoCode(String code);
 
-  int countByCodeStartingWith(String prefix);
+  int countBySoCodeStartingWith(String prefix);
 
-  SalesOrder findByPurchaseOrderId(Long purchaseOrderId);
+  SalesOrder findByPurchaseOrderPoId(Long poId);
 
   List<SalesOrder> findByCompanyId(Long companyId);
 

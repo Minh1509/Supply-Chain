@@ -7,8 +7,8 @@ import lombok.Data;
 
 @Data
 public class PurchaseOrderDto {
-  private Long id;
-  private String code;
+  private Long poId;
+  private String poCode;
   private Long companyId;
   private String companyCode;
   private String companyName;
