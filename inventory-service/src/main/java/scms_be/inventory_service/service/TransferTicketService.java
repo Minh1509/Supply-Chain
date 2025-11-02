@@ -88,6 +88,12 @@ public class TransferTicketService {
     return convertToDto(ticket);
   }
 
+  public TransferTicketDto getTicketByCode(String code) {
+    TransferTicket ticket = transferTicketRepository.findByTicketCode(code);
+    
+    return convertToDto(ticket);
+  }
+
   public List<TransferTicketDto> getAllByCompany(Long companyId) {
     return transferTicketRepository.findByCompanyId(companyId)
         .stream()

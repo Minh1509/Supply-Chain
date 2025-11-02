@@ -87,7 +87,7 @@ public class IssueTicketService {
         }
         detail.setItemId(item.getItemId());
         detail.setQuantity(bomDetail.getQuantity() * manufactureOrder.getQuantity());
-        detail.setNote(request.getNote());
+        detail.setNote(bomDetail.getNote());
         details.add(detail);
       }
 
@@ -107,12 +107,12 @@ public class IssueTicketService {
         }
         detail.setItemId(item.getItemId());
         detail.setQuantity(salesOrderDetail.getQuantity());
-        detail.setNote(request.getNote());
+        detail.setNote(salesOrderDetail.getNote());
         details.add(detail);
       }
 
     } else if (request.getIssueType().equals("Chuyển kho")) {
-      TransferTicket transferTicket = transferTicketRepository.findByTicketCode(request.getReferenceCode());
+      TransferTicket transferTicket = transferTicketRepository.findByTicketCodeWithDetails(request.getReferenceCode());
       if (transferTicket == null) {
         throw new RpcException(404, "Không tìm thấy đơn chuyển kho!");
       }
@@ -127,7 +127,7 @@ public class IssueTicketService {
         }
         detail.setItemId(item.getItemId());
         detail.setQuantity(transferTicketDetail.getQuantity());
-        detail.setNote(request.getNote());
+        detail.setNote(transferTicketDetail.getNote());
         details.add(detail);
       }
     } else {

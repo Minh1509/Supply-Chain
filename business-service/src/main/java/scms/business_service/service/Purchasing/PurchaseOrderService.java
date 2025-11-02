@@ -28,6 +28,7 @@ import scms.business_service.model.dto.response.Purchasing.MonthlySPReportDto;
 import scms.business_service.model.dto.response.Purchasing.PurchaseOrderDetailDto;
 import scms.business_service.model.dto.response.Purchasing.PurchaseOrderDto;
 import scms.business_service.model.dto.response.Sales.ItemReportDto;
+import scms.business_service.model.dto.response.Sales.SalesOrderDetailDto;
 import scms.business_service.model.dto.response.external.WarehouseDto;
 import scms.business_service.repository.Purchasing.PurchaseOrderDetailRepository;
 import scms.business_service.repository.Purchasing.PurchaseOrderRepository;
@@ -110,15 +111,15 @@ public class PurchaseOrderService {
     dto.setPoId(purchaseOrder.getPoId());
 
     List<PurchaseOrderDetail> details = purchaseOrderDetailRepository.findByPoPoId(purchaseOrder.getPoId());
-    List<PurchaseOrderDetailDto> detailDtos = details.stream()
-        .map(detail -> {
-          PurchaseOrderDetailDto detailDto = new PurchaseOrderDetailDto();
-          detailDto.setPurchaseOrderDetailId(detail.getPurchaseOrderDetailId());
-          detailDto.setItemId(detail.getItemId());
-          detailDto.setQuantity(detail.getQuantity());
-          return detailDto; // Add return statement
-        })
-        .collect(Collectors.toList());
+    List<PurchaseOrderDetailDto> detailDtos = new ArrayList<>();
+    details.stream().forEach(detail -> {
+      PurchaseOrderDetailDto detailDto = new PurchaseOrderDetailDto();
+      detailDto.setPurchaseOrderDetailId(detail.getPurchaseOrderDetailId());
+      detailDto.setItemId(detail.getItemId());
+      detailDto.setQuantity(detail.getQuantity());
+      detailDto.setNote(detail.getNote());
+      detailDtos.add(detailDto);
+    });
     dto.setPurchaseOrderDetails(detailDtos);
     return dto;
   }

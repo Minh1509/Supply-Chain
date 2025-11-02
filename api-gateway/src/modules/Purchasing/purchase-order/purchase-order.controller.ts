@@ -64,6 +64,14 @@ export class PurchaseOrderController {
     );
   }
 
+  @Get('/code/:poCode')
+  @ApiOperation({ summary: 'Get purchase order by code' })
+  async getPoByCode(@Param('poCode') poCode: string) {
+    return await firstValueFrom(
+      this.businessClient.send(PURCHASE_ORDER_CONSTANTS.GET_BY_CODE, { poCode }),
+    );
+  }
+
   @Put(':poId/status')
   @ApiOperation({ summary: 'Update purchase order status' })
   async updateStatus(

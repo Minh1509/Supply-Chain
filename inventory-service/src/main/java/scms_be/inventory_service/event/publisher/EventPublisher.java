@@ -184,7 +184,7 @@ public class EventPublisher {
         GenericEvent event = new GenericEvent();
         event.setPattern("so.get_by_code");
 
-        Map<String, Object> data = Map.of("code", soCode);
+        Map<String, Object> data = Map.of("soCode", soCode);
         event.setData(data);
         
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.BUSINESS_SERVICE_QUEUE, event);
@@ -221,7 +221,7 @@ public class EventPublisher {
         GenericEvent event = new GenericEvent();
         event.setPattern("so.get_by_id");
 
-        Map<String, Object> data = Map.of("id", soId);
+        Map<String, Object> data = Map.of("soId", soId);
         event.setData(data);
 
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.BUSINESS_SERVICE_QUEUE, event);
@@ -258,7 +258,7 @@ public class EventPublisher {
         GenericEvent event = new GenericEvent();
         event.setPattern("po.get_by_code");
         
-        Map<String, Object> data = Map.of("code", poCode);
+        Map<String, Object> data = Map.of("poCode", poCode);
         event.setData(data);
 
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.BUSINESS_SERVICE_QUEUE, event);
@@ -295,7 +295,7 @@ public class EventPublisher {
         GenericEvent event = new GenericEvent();
         event.setPattern("po.get_by_id");
 
-        Map<String, Object> data = Map.of("id", poId);
+        Map<String, Object> data = Map.of("poId", poId);
         event.setData(data);
 
         Object response = rabbitTemplate.convertSendAndReceive(EventConstants.BUSINESS_SERVICE_QUEUE, event);

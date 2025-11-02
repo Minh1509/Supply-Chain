@@ -8,6 +8,7 @@ import lombok.Data;
 public class TransferTicketRequest {
     private Long ticketId;
     private Long companyId; 
+    private String ticketCode;
     private TransferTicketData transferTicket;
 
     @Data

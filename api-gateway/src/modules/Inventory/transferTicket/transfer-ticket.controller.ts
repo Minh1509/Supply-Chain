@@ -28,6 +28,13 @@ export class TransferTicketController {
     );
   }
 
+  @Get('code/:ticketCode')
+  async getTicketByCode(@Param('ticketCode') ticketCode: string) {
+    return await firstValueFrom(
+      this.inventoryClient.send(TRANSFER_TICKET_CONSTANTS.GET_TRANSFER_TICKET_BY_CODE, { ticketCode }),
+    );
+  }
+
   @Get('company/:companyId')
   async getAllByCompany(@Param('companyId') companyId: number) {
     return await firstValueFrom(

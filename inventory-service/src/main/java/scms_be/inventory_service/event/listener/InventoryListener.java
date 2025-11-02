@@ -65,6 +65,7 @@ public class InventoryListener {
                 case "transfer_ticket.create":
                 case "transfer_ticket.update":
                 case "transfer_ticket.get_by_id":
+                case "transfer_ticket.get_by_code":
                 case "transfer_ticket.get_all_in_company":
                     return transferTicketHandler.handle(event);
                 case "warehouse.create":

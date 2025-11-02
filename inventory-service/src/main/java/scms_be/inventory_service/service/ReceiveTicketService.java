@@ -19,6 +19,8 @@ import scms_be.inventory_service.model.dto.ItemReportDto;
 import scms_be.inventory_service.model.dto.MonthlyInventoryReportDto;
 import scms_be.inventory_service.model.dto.ReceiveTickeDto;
 import scms_be.inventory_service.model.dto.ReceiveTicketDetailDto;
+import scms_be.inventory_service.model.dto.publisher.BOMDetailDto;
+import scms_be.inventory_service.model.dto.publisher.BOMDto;
 import scms_be.inventory_service.model.dto.publisher.ItemDto;
 import scms_be.inventory_service.model.dto.publisher.ManufactureOrderDto;
 import scms_be.inventory_service.model.dto.publisher.PurchaseOrderDetailDto;
@@ -73,15 +75,20 @@ public class ReceiveTicketService {
         throw new RpcException(404, "Không tìm thấy công lệnh sản xuất!");
       }
       ticket.setReferenceId(manufactureOrder.getMoId());
-      ReceiveTicketDetail detail = new ReceiveTicketDetail();
-      detail.setTicket(ticket);
-      ItemDto item = eventPublisher.getItemById(manufactureOrder.getItemId());
-      if(item == null) {
-        throw new RpcException(404, "Không tìm thấy hàng hóa!");
+
+      BOMDto bom = eventPublisher.getBOMByItemId(manufactureOrder.getItemId());
+      List<BOMDetailDto> bomDetails = bom.getBomDetails();
+      for (BOMDetailDto bomDetail : bomDetails) {
+        ReceiveTicketDetail detail = new ReceiveTicketDetail();
+        detail.setTicket(ticket);
+        ItemDto item = eventPublisher.getItemById(bomDetail.getItemId());
+        if(item == null) {
+          throw new RpcException(404, "Không tìm thấy hàng hóa!");
+        }
+        detail.setItemId(item.getItemId());
+        detail.setQuantity(bomDetail.getQuantity() * manufactureOrder.getQuantity());
+        details.add(detail);
       }
-      detail.setItemId(item.getItemId());
-      detail.setQuantity(manufactureOrder.getQuantity());
-      details.add(detail);
     } else if (request.getReceiveType().equals("Mua hàng")) {
       PurchaseOrderDto purchaseOrder = eventPublisher.getPurchaseOrderByCode(request.getReferenceCode());
       if (purchaseOrder == null) {
@@ -97,11 +104,11 @@ public class ReceiveTicketService {
         }
         detail.setItemId(item.getItemId());
         detail.setQuantity(purchaseOrderDetail.getQuantity());
-        detail.setNote(request.getNote());
+        detail.setNote(purchaseOrderDetail.getNote());
         details.add(detail);
       }
     } else if (request.getReceiveType().equals("Chuyển kho")) {
-      TransferTicket transferTicket = transferTicketRepository.findByTicketCode(request.getReferenceCode());
+      TransferTicket transferTicket = transferTicketRepository.findByTicketCodeWithDetails(request.getReferenceCode());
       if (transferTicket == null) {
         throw new RpcException(404, "Không tìm thấy đơn chuyển kho!");
       }
@@ -115,7 +122,7 @@ public class ReceiveTicketService {
         }
         detail.setItemId(item.getItemId());
         detail.setQuantity(transferTicketDetail.getQuantity());
-        detail.setNote(request.getNote());
+        detail.setNote(transferTicketDetail.getNote());
         details.add(detail);
       }
     } else {
@@ -296,7 +303,7 @@ public class ReceiveTicketService {
         dto.setReferenceCode("N/A");
       }
     } else if (ticket.getReceiveType().equals("Chuyển kho")) {
-      TransferTicket transferTicket = transferTicketRepository.findByTicketId(ticket.getReferenceId());
+      TransferTicket transferTicket = transferTicketRepository.findByTicketIdWithDetails(ticket.getReferenceId());
       dto.setReferenceCode(transferTicket != null ? transferTicket.getTicketCode() : "N/A");
     } else {
       dto.setReferenceCode("N/A");

@@ -115,6 +115,7 @@ public class SalesOrderService {
       detailDto.setSoDetailId(detail.getSoDetailId());
       detailDto.setItemId(detail.getItemId());
       detailDto.setQuantity(detail.getQuantity());
+      detailDto.setNote(detail.getNote());
       detailDtos.add(detailDto);
     });
     salesOrderDto.setSalesOrderDetails(detailDtos);

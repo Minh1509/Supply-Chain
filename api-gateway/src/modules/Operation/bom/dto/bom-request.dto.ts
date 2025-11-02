@@ -3,7 +3,7 @@ import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { BOMDetailRequestDto } from './bom-detail-request.dto';
 
 export class BOMRequestDto {
-  @ApiProperty({ description: 'Item id for which BOM is created', example: 123 })
+  @ApiProperty({ description: 'Item id for which BOM is created', example: 1 })
   @IsNotEmpty()
   @IsNumber()
   itemId: number;

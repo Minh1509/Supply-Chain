@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class BOMDetailRequestDto {
-  @ApiProperty({ description: 'Item id of material', example: 456 })
+  @ApiProperty({ description: 'Item id of material', example: 2 })
   @IsNotEmpty()
   @IsNumber()
   itemId: number;

@@ -49,6 +49,15 @@ export class SalesOrderController {
     );
   }
 
+  @Get('/code/:soCode')
+  @ApiOperation({ summary: 'Get sales order by code' })
+  @ApiParam({ name: 'soCode', type: 'string', description: 'Sales Order Code' })
+  async getSalesOrderByCode(@Param('soCode') soCode: string) {
+    return await firstValueFrom(
+      this.businessClient.send(SALES_ORDER_CONSTANTS.GET_BY_CODE, { soCode }),
+    );
+  }
+
   @Get('purchase-orders/:poId')
   @ApiOperation({ summary: 'Get sales order by purchase order ID' })
   @ApiParam({ name: 'poId', type: 'number', description: 'Purchase Order ID' })

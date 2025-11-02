@@ -51,6 +51,7 @@ public class OperationListener {
                 case "manufacture_order.get_all_by_item":
                 case "manufacture_order.get_all_in_company":
                 case "manufacture_order.get_by_id":
+                case "manufacture_order.get_by_code":
                 case "manufacture_order.update":
                 case "manufacture_order.report":
                 case "manufacture_order.monthly_report":

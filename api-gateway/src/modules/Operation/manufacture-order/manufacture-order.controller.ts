@@ -42,6 +42,13 @@ export class ManufactureOrderController {
     );
   }
 
+  @Get('/code/:moCode')
+  async getOrderByCode(@Param('moCode') moCode: string) {
+    return await firstValueFrom(
+      this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.GET_MO_BY_CODE, { moCode }),
+    );
+  }
+
   @Put(':moId')
   async updateOrder(@Param('moId') moId: number, @Body() manuOrderData: ManuOrderRequestDto) {
     return await firstValueFrom(
