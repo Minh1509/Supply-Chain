@@ -36,19 +36,32 @@ export class InvoiceController {
   @ApiOperation({ summary: 'Get invoice PDF by invoice ID' })
   @ApiParam({ name: 'invoiceId', type: 'number', description: 'Invoice ID' })
   @Header('Content-Type', 'application/pdf')
-  async getInvoicePdf(@Param('invoiceId', ParseIntPipe) invoiceId: number, @Res() res: Response) {
-    return await firstValueFrom(
-      this.businessClient.send(INVOICE_CONSTANTS.GET_PDF_BY_ID, { invoiceId }),
-    );
+  async getInvoicePdf(
+    @Param('invoiceId', ParseIntPipe) invoiceId: number,
+    @Res() res: Response,
+  ) {
+    try {
+      const invoice: any = await firstValueFrom(
+        this.businessClient.send(INVOICE_CONSTANTS.GET_PDF_BY_ID, { invoiceId }),
+      );
 
-    // if (!invoice || !invoice.file) {
-    //   return res.status(404).json({ error: 'Không tìm thấy hóa đơn!' });
-    // }
-    //
-    // const buffer = Buffer.from(invoice.file);
-    // res.setHeader('Content-Type', 'application/pdf');
-    // res.setHeader('Content-Disposition', `inline; filename="${invoice.invoiceCode}.pdf"`);
-    // res.send(buffer);
+      if (!invoice || !invoice.file) {
+        return res.status(404).json({ error: 'Không tìm thấy hóa đơn!' });
+      }
+
+      const buffer = Buffer.isBuffer(invoice.file)
+        ? invoice.file
+        : Buffer.from(invoice.file as string, 'base64');
+
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `inline; filename="${invoice.invoiceCode}.pdf"`,
+      });
+      return res.send(buffer);
+    } catch (err) {
+      console.error('Error getInvoicePdf:', err);
+      return res.status(500).json({ error: 'Không thể lấy PDF hóa đơn!' });
+    }
   }
 
   @Get('sales-orders/:soId')
@@ -56,17 +69,26 @@ export class InvoiceController {
   @ApiParam({ name: 'soId', type: 'number', description: 'Sales Order ID' })
   @Header('Content-Type', 'application/pdf')
   async getInvoice(@Param('soId', ParseIntPipe) soId: number, @Res() res: Response) {
-    const invoice: any = await firstValueFrom(
-      this.businessClient.send(INVOICE_CONSTANTS.GET_PDF_BY_SO_ID, { soId }),
-    );
+    try {
+      const invoice: any = await firstValueFrom(
+        this.businessClient.send(INVOICE_CONSTANTS.GET_PDF_BY_SO_ID, { soId }),
+      );
 
-    if (!invoice || !invoice.file) {
-      return res.status(404).json({ error: 'Không tìm thấy hóa đơn!' });
+      if (!invoice || !invoice.file) {
+        return res.status(404).json({ error: 'Không tìm thấy hóa đơn!' });
+      }
+      const buffer = Buffer.isBuffer(invoice.file)
+        ? invoice.file
+        : Buffer.from(invoice.file as string, 'base64');
+
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `inline; filename="${invoice.invoiceCode}.pdf"`,
+      });
+      return res.send(buffer);
+    } catch (err) {
+      console.error('Error getInvoicePdf:', err);
+      return res.status(500).json({ error: 'Không thể lấy PDF hóa đơn!' });
     }
-
-    const buffer = Buffer.from(invoice.file);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${invoice.invoiceCode}.pdf"`);
-    res.send(buffer);
   }
 }

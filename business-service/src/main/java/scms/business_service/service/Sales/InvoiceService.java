@@ -1,6 +1,7 @@
 package scms.business_service.service.Sales;
 
 import java.time.LocalDateTime;
+import java.util.Base64;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -31,6 +32,11 @@ public class InvoiceService {
     SalesOrder salesOrder = salesOrderRepository.findById(soId)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy đơn bán hàng!"));
 
+    boolean existsInvoice = invoiceRepository.existsBySalesOrderId(soId);
+    if (existsInvoice) {
+      throw new RpcException(400, "Đơn hàng này đã được tạo hóa đơn!");
+    }
+
     Invoice invoice = new Invoice();
     invoice.setSalesCompanyId(salesOrder.getCompanyId());
     invoice.setPurchaseCompanyId(salesOrder.getCustomerCompanyId());
@@ -46,15 +52,19 @@ public class InvoiceService {
     return convertToDto(savedInvoice);
   }
 
-  public ResponseEntity<byte[]>  getInvoicePdf(Long id) {
+  public InvoiceDto getInvoicePdf(Long id) {
     Invoice invoice = invoiceRepository.findById(id)
-            .orElseThrow(() -> new RpcException(404, "Không tìm thấy hóa đơn!"));
+        .orElseThrow(() -> new RpcException(404, "Không tìm thấy hóa đơn!"));
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_PDF);
-    headers.setContentDisposition(ContentDisposition.inline().filename(invoice.getInvoiceCode() + ".pdf").build());
+    if (invoice.getFile() == null || invoice.getFile().length == 0) {
+      throw new RpcException(404, "Hóa đơn chưa có file PDF!");
+    }
 
-    return new ResponseEntity<>(invoice.getFile(), headers, HttpStatus.OK);
+    InvoiceDto dto = new InvoiceDto();
+    dto.setInvoiceId(invoice.getInvoiceId());
+    dto.setInvoiceCode(invoice.getInvoiceCode());
+    dto.setFile(Base64.getEncoder().encodeToString(invoice.getFile()));
+    return dto;
   }
 
   public InvoiceDto getInvoiceBySo(Long soId) {
