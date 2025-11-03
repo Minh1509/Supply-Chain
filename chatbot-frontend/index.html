@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Supply Chain Chatbot</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Chat Container -->
+      <div class="chat-container">
+        <!-- Header -->
+        <div class="chat-header">
+          <div class="header-content">
+            <div class="bot-icon">🤖</div>
+            <div class="header-info">
+              <h1>Supply Chain Assistant</h1>
+              <p class="status">
+                <span class="status-dot" id="status-dot"></span>
+                <span id="connection-status">Đang kết nối...</span>
+              </p>
+            </div>
+          </div>
+          <button class="btn-clear" id="btn-clear" title="Xóa lịch sử chat">
+            🗑️
+          </button>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="messages" id="messages">
+          <div class="message bot-message">
+            <div class="message-avatar">🤖</div>
+            <div class="message-content">
+              <div class="message-text">
+                <strong>Xin chào! 👋</strong><br /><br />
+                Tôi là trợ lý AI của hệ thống Supply Chain Management.<br /><br />
+                <strong>Tôi có thể giúp bạn:</strong>
+                <ul>
+                  <li>📦 Kiểm tra tồn kho sản phẩm</li>
+                  <li>🛒 Tạo và quản lý đơn hàng</li>
+                  <li>📋 Xem thông tin đơn hàng</li>
+                  <li>👥 Quản lý nhà cung cấp và khách hàng</li>
+                  <li>📊 Xem báo cáo và thống kê</li>
+                  <li>❓ Trả lời các câu hỏi về hệ thống</li>
+                </ul>
+                Hãy hỏi tôi bất cứ điều gì! 😊
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div
+          class="typing-indicator"
+          id="typing-indicator"
+          style="display: none"
+        >
+          <div class="message-avatar">🤖</div>
+          <div class="typing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <button
+            class="quick-btn"
+            onclick="sendQuickMessage('Kiểm tra tồn kho sản phẩm')"
+          >
+            📦 Kiểm tra tồn kho
+          </button>
+          <button
+            class="quick-btn"
+            onclick="sendQuickMessage('Tạo đơn hàng mới')"
+          >
+            🛒 Tạo đơn hàng
+          </button>
+          <button
+            class="quick-btn"
+            onclick="sendQuickMessage('Xem danh sách nhà cung cấp')"
+          >
+            👥 Nhà cung cấp
+          </button>
+          <button
+            class="quick-btn"
+            onclick="sendQuickMessage('Báo cáo doanh số')"
+          >
+            📊 Báo cáo
+          </button>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+          <textarea
+            id="message-input"
+            placeholder="Nhập tin nhắn của bạn..."
+            rows="1"
+          ></textarea>
+          <button id="btn-send" class="btn-send" disabled>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M22 2L11 13M22 2L15 22L11 13M22 2L2 8L11 13"
+                stroke="currentColor"
+                stroke-width="2"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Settings Panel -->
+      <div class="settings-panel">
+        <h3>⚙️ Cài đặt</h3>
+
+        <div class="setting-item">
+          <label>API URL:</label>
+          <input type="text" id="api-url" value="http://localhost:3006" />
+        </div>
+
+        <div class="setting-item">
+          <label>Session ID:</label>
+          <input type="text" id="session-id" readonly />
+          <button id="btn-new-session" class="btn-secondary">
+            Tạo Session Mới
+          </button>
+        </div>
+
+        <div class="setting-item">
+          <label>
+            <input type="checkbox" id="use-websocket" checked />
+            Sử dụng WebSocket
+          </label>
+        </div>
+
+        <hr />
+
+        <h4>📊 Thống kê</h4>
+        <div class="stats">
+          <div class="stat-row">
+            <span>Tin nhắn gửi:</span>
+            <strong id="stat-sent">0</strong>
+          </div>
+          <div class="stat-row">
+            <span>Tin nhắn nhận:</span>
+            <strong id="stat-received">0</strong>
+          </div>
+          <div class="stat-row">
+            <span>Kết nối:</span>
+            <strong id="stat-connection">-</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
