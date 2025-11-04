@@ -86,7 +86,9 @@ public class InvoiceService {
     InvoiceDto dto = new InvoiceDto();
     dto.setInvoiceId(invoice.getInvoiceId());
     dto.setInvoiceCode(invoice.getInvoiceCode());
-    dto.setFile(invoice.getFile());
+    if (invoice.getFile() != null) {
+      dto.setFile(Base64.getEncoder().encodeToString(invoice.getFile()));
+    }
     return dto;
   }
 }

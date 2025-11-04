@@ -7,6 +7,6 @@ import lombok.Data;
 public class InvoiceDto {
   private Long invoiceId;
   private String invoiceCode;
-  private byte[] file;
+  private String file;
 }
 
