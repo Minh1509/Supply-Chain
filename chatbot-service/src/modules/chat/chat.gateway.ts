@@ -28,15 +28,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(private readonly chatService: ChatService) {}
 
   handleConnection(client: Socket) {
-    this.logger.log(`Client connected: ${client.id}`);
+    this.logger.log(`Client kết nối: ${client.id}`);
     client.emit(CHAT_CONSTANTS.EVENTS.CONNECTED, {
-      message: 'Connected to chatbot service',
+      message: 'Xin chào! Tôi là trợ lý AI chuỗi cung ứng. Tôi có thể giúp gì cho bạn?',
       clientId: client.id,
     });
   }
 
   handleDisconnect(client: Socket) {
-    this.logger.log(`Client disconnected: ${client.id}`);
+    this.logger.log(`Client ngắt kết nối: ${client.id}`);
   }
 
   @SubscribeMessage(CHAT_CONSTANTS.EVENTS.MESSAGE)
@@ -45,23 +45,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      this.logger.debug(`Received message from ${client.id}: ${data.message}`);
+      this.logger.debug(`Nhận tin nhắn từ ${client.id}: ${data.message}`);
 
-      // Send typing indicator
+      // Gửi trạng thái đang nhập
       client.emit(CHAT_CONSTANTS.EVENTS.TYPING, { isTyping: true });
 
-      // Process message
+      // Xử lý mọi câu hỏi của user
       const response = await this.chatService.processMessage(data);
 
-      // Send response
+      // Gửi phản hồi
       client.emit(CHAT_CONSTANTS.EVENTS.TYPING, { isTyping: false });
       client.emit(CHAT_CONSTANTS.EVENTS.MESSAGE, response);
 
       return response;
     } catch (error) {
-      this.logger.error(`Error handling message: ${error.message}`, error.stack);
+      this.logger.error(`Lỗi xử lý tin nhắn: ${error.message}`, error.stack);
       client.emit(CHAT_CONSTANTS.EVENTS.ERROR, {
-        message: 'Failed to process message',
+        message: 'Xin lỗi, tôi không thể xử lý câu hỏi này. Vui lòng thử lại.',
         error: error.message,
       });
     }
@@ -76,9 +76,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const history = await this.chatService.getHistory(data.sessionId, data.limit);
       return { success: true, data: history };
     } catch (error) {
-      this.logger.error(`Error getting history: ${error.message}`);
+      this.logger.error(`Lỗi lấy lịch sử: ${error.message}`);
       client.emit(CHAT_CONSTANTS.EVENTS.ERROR, {
-        message: 'Failed to get history',
+        message: 'Không thể lấy lịch sử trò chuyện',
         error: error.message,
       });
     }
@@ -91,11 +91,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     try {
       await this.chatService.clearHistory(data.sessionId);
-      return { success: true, message: 'History cleared' };
+      return { success: true, message: 'Đã xóa lịch sử trò chuyện' };
     } catch (error) {
-      this.logger.error(`Error clearing history: ${error.message}`);
+      this.logger.error(`Lỗi xóa lịch sử: ${error.message}`);
       client.emit(CHAT_CONSTANTS.EVENTS.ERROR, {
-        message: 'Failed to clear history',
+        message: 'Không thể xóa lịch sử trò chuyện',
         error: error.message,
       });
     }

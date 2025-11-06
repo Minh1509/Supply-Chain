@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { ChatOpenAI } from '@langchain/openai';
 import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages';
 import { ConversationMessage } from 'src/common/interfaces/chat.interface';
+import { PromptService } from './prompt.service';
 
 @Injectable()
 export class OpenAIService {
@@ -25,7 +26,14 @@ export class OpenAIService {
     const langchainMessages = this.convertToLangChainMessages(messages, systemPrompt);
 
     const response = await this.model.invoke(langchainMessages);
-    return response.content.toString();
+    const responseText = response.content.toString();
+    
+    // Đảm bảo response luôn bằng tiếng Việt
+    if (this.containsVietnamese(messages) && !this.isVietnameseResponse(responseText)) {
+      return await this.translateToVietnamese(responseText);
+    }
+    
+    return responseText;
   }
 
   async generateWithFunctions(
@@ -66,25 +74,50 @@ export class OpenAIService {
     return langchainMessages;
   }
 
-  async analyzeIntent(message: string): Promise<any> {
-    const prompt = `Analyze this message and return JSON with intent and entities:
-Message: "${message}"
-
-Return format:
-{
-  "intent": "intent_name",
-  "confidence": 0.0-1.0,
-  "entities": {
-    "entity_name": "value"
+  private containsVietnamese(messages: ConversationMessage[]): boolean {
+    const vietnamesePattern = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+    return messages.some(msg => vietnamesePattern.test(msg.content));
   }
-}`;
+
+  private isVietnameseResponse(text: string): boolean {
+    const vietnamesePattern = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+    return vietnamesePattern.test(text);
+  }
+
+  private async translateToVietnamese(text: string): Promise<string> {
+    try {
+      const translationPrompt = `Dịch đoạn văn sau sang tiếng Việt tự nhiên, giữ nguyên ý nghĩa:
+"${text}"`;
+      
+      const response = await this.model.invoke([new HumanMessage(translationPrompt)]);
+      return response.content.toString();
+    } catch (error) {
+      console.error(`Lỗi dịch sang tiếng Việt: ${error.message}`);
+      return text; // Trả về bản gốc nếu lỗi dịch
+    }
+  }
+
+  async analyzeIntent(message: string, conversationHistory: ConversationMessage[] = []): Promise<any> {
+    const promptService = new PromptService();
+    const prompt = promptService.getIntentRecognitionPrompt(message, conversationHistory);
 
     const response = await this.model.invoke([new HumanMessage(prompt)]);
     try {
-      return JSON.parse(response.content.toString());
+      const result = JSON.parse(response.content.toString());
+      
+      // Validate confidence threshold
+      if (result.confidence < 0.7) {
+        return {
+          intent: 'general.chat',
+          confidence: result.confidence || 0,
+          entities: result.entities || {},
+        };
+      }
+      
+      return result;
     } catch (e) {
       return {
-        intent: 'unknown',
+        intent: 'general.chat',
         confidence: 0,
         entities: {},
       };

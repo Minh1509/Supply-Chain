@@ -34,25 +34,30 @@ export class ChatService {
       const history = await this.conversationService.getHistory(dto.sessionId);
 
       // 3. Analyze intent
-      const intent = await this.analyzeIntent(dto.message);
+      const intent = await this.analyzeIntent(dto.message, history);
       this.logger.debug(`Detected intent: ${intent.intent}`);
 
       // 4. Handle based on intent
       let response: string;
       let additionalData: any = null;
 
-      if (this.isQueryIntent(intent.intent)) {
-        // Query information
-        const actionResult = await this.handleQuery(intent, dto);
-        response = this.formatQueryResponse(actionResult);
-        additionalData = actionResult.data;
-      } else if (this.isActionIntent(intent.intent)) {
-        // Execute action
-        const actionResult = await this.handleAction(intent, dto);
-        response = actionResult.message || 'Action completed';
-        additionalData = actionResult.data;
+      if (intent.confidence >= 0.7) {
+        if (this.isQueryIntent(intent.intent)) {
+          // Query information
+          const actionResult = await this.handleQuery(intent, dto);
+          response = this.formatQueryResponse(actionResult, intent.intent);
+          additionalData = actionResult.data;
+        } else if (this.isActionIntent(intent.intent)) {
+          // Execute action
+          const actionResult = await this.handleAction(intent, dto);
+          response = actionResult.message;
+          additionalData = actionResult.data;
+        } else {
+          // General conversation with high confidence
+          response = await this.handleGeneralConversation(dto.message, history, dto);
+        }
       } else {
-        // General conversation
+        // Low confidence - use general conversation with context
         response = await this.handleGeneralConversation(dto.message, history, dto);
       }
 
@@ -76,17 +81,17 @@ export class ChatService {
         timestamp: new Date(),
       };
     } catch (error) {
-      this.logger.error(`Error processing message: ${error.message}`, error.stack);
+      this.logger.error(`Lỗi xử lý tin nhắn: ${error.message}`, error.stack);
       return {
-        message: 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại.',
+        message: 'Xin lỗi, tôi gặp sự cố khi xử lý câu hỏi này. Bạn có thể thử lại hoặc hỏi theo cách khác được không?',
         timestamp: new Date(),
       };
     }
   }
 
-  private async analyzeIntent(message: string): Promise<IntentResult> {
+  private async analyzeIntent(message: string, history: ConversationMessage[] = []): Promise<IntentResult> {
     try {
-      const result = await this.openAIService.analyzeIntent(message);
+      const result = await this.openAIService.analyzeIntent(message, history);
       return result;
     } catch (error) {
       this.logger.error(`Error analyzing intent: ${error.message}`);
@@ -135,17 +140,29 @@ export class ChatService {
   }
 
   private async handleAction(intent: IntentResult, dto: ChatMessageDto): Promise<any> {
-    // For actions, we might need confirmation first
-    // This is a simplified version
     const actionType = this.mapIntentToAction(intent.intent);
     const params = this.extractParams(intent.entities, dto);
 
-    return await this.actionExecutor.executeAction({
+    const result = await this.actionExecutor.executeAction({
       type: actionType,
       params,
       userId: dto.userId,
       companyId: dto.companyId,
     });
+
+    if (result.success) {
+      return {
+        success: true,
+        message: this.promptService.formatSuccessMessage(intent.intent, result.data),
+        data: result.data,
+      };
+    } else {
+      return {
+        success: false,
+        message: this.promptService.formatErrorMessage(result.error || 'Action failed'),
+        error: result.error,
+      };
+    }
   }
 
   private async handleGeneralConversation(
@@ -153,10 +170,22 @@ export class ChatService {
     history: ConversationMessage[],
     dto: ChatMessageDto,
   ): Promise<string> {
+    // Enhanced system prompt for handling any question
     const systemPrompt = this.promptService.getSystemPrompt({
-      companyId: dto.companyId,
-      userId: dto.userId,
-    });
+      companyId: dto.companyId?.toString(),
+      userId: dto.userId?.toString(),
+    }) + `
+
+**Hướng dẫn xử lý câu hỏi:**
+1. Nếu là câu hỏi về chuỗi cung ứng: Trả lời dựa trên dữ liệu hệ thống
+2. Nếu là câu hỏi chung: Trả lời một cách hữu ích và thân thiện
+3. Nếu là câu chào, cảm ơn: Phản hồi lịch sự, tự nhiên
+4. Nếu không hiểu: Hỏi lại để làm rõ
+
+**Luôn nhớ:**
+- Trả lời bằng tiếng Việt tự nhiên
+- Giữ thái độ chuyên nghiệp nhưng thân thiện
+- Cung cấp thông tin hữu ích nhất có thể`;
 
     const messages: ConversationMessage[] = [
       ...history,
@@ -203,17 +232,12 @@ export class ChatService {
     return params;
   }
 
-  private formatQueryResponse(result: any): string {
-    if (!result.success) {
-      return this.promptService.formatErrorMessage(result.error || 'Query failed');
+  private formatQueryResponse(result: any, intent?: string): string {
+    if (result.success && result.data) {
+      return this.promptService.formatResponseTemplate(result.data, intent || 'general');
+    } else {
+      return 'Mình chưa tìm thấy thông tin bạn cần. Bạn có thể cung cấp thêm chi tiết hoặc thử hỏi theo cách khác được không?';
     }
-
-    // Format based on data type
-    if (Array.isArray(result.data)) {
-      return `Tìm thấy ${result.data.length} kết quả:\n${this.formatListData(result.data)}`;
-    }
-
-    return this.formatObjectData(result.data);
   }
 
   private formatListData(data: any[]): string {
