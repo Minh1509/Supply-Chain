@@ -33,8 +33,10 @@ async function bootstrap() {
 
   // CORS
   app.enableCors({
-    origin: '*', // Cho phép tất cả
-    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    origin: true, // tự động phản hồi lại đúng Origin của request (tốt hơn '*')
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: true, // cho phép gửi cookie / Authorization header
   });
 
   app.setGlobalPrefix('api/v1');
