@@ -18,7 +18,7 @@ async function bootstrap() {
     rawBody: true,
   });
 
-  app.use(helmet());
+  // app.use(helmet());
   app.use(morgan('dev'));
 
   app.getHttpAdapter().getInstance().set('trust proxy', trustProxy);
