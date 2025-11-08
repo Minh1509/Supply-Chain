@@ -18,5 +18,5 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
   List<Invoice> findBySalesCompanyId(Long salesCompanyId);
 
-  boolean existsBySalesOrderId(Long salesOrderId);
+  boolean existsBySalesOrderSoId(Long salesOrderId);
 }
