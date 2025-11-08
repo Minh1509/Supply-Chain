@@ -32,7 +32,7 @@ public class InvoiceService {
     SalesOrder salesOrder = salesOrderRepository.findById(soId)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy đơn bán hàng!"));
 
-    boolean existsInvoice = invoiceRepository.existsBySalesOrderId(soId);
+    boolean existsInvoice = invoiceRepository.existsBySalesOrderSoId(soId);
     if (existsInvoice) {
       throw new RpcException(400, "Đơn hàng này đã được tạo hóa đơn!");
     }
