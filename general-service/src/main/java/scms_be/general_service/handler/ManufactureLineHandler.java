@@ -26,8 +26,8 @@ public class ManufactureLineHandler {
                 return lineService.updateLine(req.getLineId(), req.getLine());
             case "manufacture_line.get_by_id":
                 return lineService.getLineById(req.getLineId());
-            case "manufacture_line.get_all_in_plant":
-                return lineService.getAllLinesInPlant(req.getPlantId());
+            case "manufacture_line.get_all_in_company":
+                return lineService.getAllLinesInCompany(req.getCompanyId());
             default:
                 throw new RpcException(400, "Unknown manufacture line event: " + event.getPattern());
         }

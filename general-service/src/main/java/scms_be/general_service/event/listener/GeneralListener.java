@@ -40,7 +40,7 @@ public class GeneralListener {
                 case "manufacture_line.create":
                 case "manufacture_line.update":
                 case "manufacture_line.get_by_id":
-                case "manufacture_line.get_all_in_plant":
+                case "manufacture_line.get_all_in_company":
                     return lineHandler.handle(event);
 
                 case "product.create":

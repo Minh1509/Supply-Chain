@@ -25,12 +25,12 @@ export class ManufactureLineController {
     return await firstValueFrom(this.generalClient.send(MANUFACTURE_LINE_CONSTANTS.CREATE_LINE, { plantId, line }));
   }
   
-  @Get('/all/:plantId')
-    async getAllPlants(@Param('plantId') plantId: number) {
-      return await firstValueFrom(
-        this.generalClient.send(MANUFACTURE_LINE_CONSTANTS.GET_ALL_PLANTS, {
-          plantId: Number(plantId),
-        }),
+  @Get('/all/:companyId')
+  async getAllPlants(@Param('companyId') companyId: number) {
+    return await firstValueFrom(
+      this.generalClient.send(MANUFACTURE_LINE_CONSTANTS.GET_ALL_COMPANY, {
+        companyId: Number(companyId),
+      }),
       );
     }
 

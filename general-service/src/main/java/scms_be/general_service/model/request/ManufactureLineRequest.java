@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class ManufactureLineRequest {
+    private Long companyId;
     private Long plantId;
     private Long lineId; // for get by id, update, delete
     private LineData line;
