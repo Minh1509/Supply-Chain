@@ -3,9 +3,14 @@ package scms_be.general_service.config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 @Slf4j
 @Configuration
@@ -18,13 +23,34 @@ public class RabbitMQConfig {
         return new Queue("general_queue", true);
     }
 
-
+    
     @Bean
-    public Jackson2JsonMessageConverter jackson2MessageConverter() {
-        return new Jackson2JsonMessageConverter();
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
     }
 
     @Bean
+    public Jackson2JsonMessageConverter jackson2JsonMessageConverter(ObjectMapper objectMapper) {
+        return new Jackson2JsonMessageConverter(objectMapper);
+    }
+
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
+            Jackson2JsonMessageConverter converter) {
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        rabbitTemplate.setMessageConverter(converter);
+        rabbitTemplate.setUseDirectReplyToContainer(true);
+        rabbitTemplate.setReplyTimeout(60000); // 60 seconds timeout
+        rabbitTemplate.setUseTemporaryReplyQueues(false);
+        log.info("RabbitTemplate configured with 60 seconds timeout");
+        return rabbitTemplate;
+    }
+
+     @Bean
     public DirectExchange exchange() {
         // NestJS mặc định dùng amq.direct
         return new DirectExchange("amq.direct");
