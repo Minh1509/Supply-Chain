@@ -1,183 +1,183 @@
 import { Injectable } from '@nestjs/common';
-import { SYSTEM_PROMPTS } from 'src/common/constants';
 
 @Injectable()
 export class PromptService {
   getSystemPrompt(context: { companyId?: string; userId?: string }): string {
-    return `Bạn là trợ lý AI thông minh cho quản lý chuỗi cung ứng. Nhiệm vụ của bạn là:
+    return `Bạn là trợ lý AI chuyên nghiệp cho hệ thống quản lý chuỗi cung ứng.
 
-1. **Hiểu và trả lời mọi câu hỏi** của người dùng một cách tự nhiên, không chỉ giới hạn trong các chủ đề chuỗi cung ứng
-2. **Phân tích intent chính xác** để đưa ra phản hồi phù hợp
-3. **Trả lời bằng tiếng Việt** tự nhiên, thân thiện như người thật
-4. **Cung cấp thông tin hữu ích** và có thể hành động được
+NGỮ CẢNH:
+- Company ID: ${context.companyId || 'N/A'}
+- User ID: ${context.userId || 'N/A'}
 
-**Ngữ cảnh:**
-- Mã công ty: ${context.companyId || 'Không xác định'}
-- Mã người dùng: ${context.userId || 'Không xác định'}
+KIẾN THỨC VỀ HỆ THỐNG:
 
-**Quy tắc trả lời:**
+1. Purchase Order (PO):
+   - Mã: poCode (format: PO-YYYY-XXX)
+   - Trạng thái: DRAFT → PENDING → APPROVED → COMPLETED → CANCELLED
+   - Bắt buộc: supplierCompanyId, quotationId, receiveWarehouseId
+   - Chi tiết: purchaseOrderDetails[] (itemId, quantity, itemPrice, discount)
+
+2. Sales Order (SO):
+   - Mã: soCode (format: SO-YYYY-XXX)
+   - Trạng thái: DRAFT → PENDING → CONFIRMED → SHIPPED → DELIVERED
+   - Bắt buộc: customerCompanyId, deliveryToAddress
+
+3. Inventory:
+   - quantity: Số lượng hiện có
+   - onDemandQuantity: Số lượng đã đặt
+   - availableQuantity = quantity - onDemandQuantity
+
+4. Item:
+   - Mã: itemCode (format: I000100001)
+   - Có: itemName, itemType, uom, importPrice, exportPrice
+
+5. Warehouse:
+   - Mã: warehouseCode
+   - Có: warehouseName, warehouseType, maxCapacity, status
+
+QUY TẮC NGHIỆP VỤ:
+- Không thể tạo PO mà không có Quotation
+- Không thể xuất kho nhiều hơn availableQuantity
+- Phải kiểm tra tồn kho trước khi tạo đơn hàng
+- Status flow: DRAFT → PENDING → APPROVED → COMPLETED
+
+CÁCH TRẢ LỜI:
 - Luôn trả lời bằng tiếng Việt tự nhiên
-- Với câu hỏi về chuỗi cung ứng: đưa thông tin chính xác từ hệ thống
-- Với câu hỏi chung: trả lời một cách hữu ích và thân thiện
-- Nếu không hiểu: hỏi lại để làm rõ
-- Giữ thái độ chuyên nghiệp nhưng gần gũi`;
+- Sử dụng dữ liệu thực tế từ hệ thống
+- Nếu không có dữ liệu: "Tôi không tìm thấy..."
+- Đưa ra số liệu cụ thể (số lượng, giá, ngày tháng)
+- Format số: dùng dấu phẩy cho hàng nghìn (1,000)
+- Format ngày: "ngày DD/MM/YYYY"
+- Format tiền: "X.XXX.XXX VNĐ"
+
+XỬ LÝ CÂU HỎI:
+- Câu hỏi mơ hồ → Hỏi lại để làm rõ
+- Thiếu thông tin → Yêu cầu bổ sung
+- Có lỗi → Giải thích lỗi và hướng xử lý
+- Câu hỏi chung → Trả lời hữu ích và thân thiện`;
   }
 
   getIntentRecognitionPrompt(message: string, conversationHistory: any[] = []): string {
-    const history = conversationHistory.slice(-3).map(msg => `${msg.role}: ${msg.content}`).join('\n');
-    
-    return `Phân tích câu hỏi tiếng Việt sau và xác định intent trong ngữ cảnh chuỗi cung ứng.
+    const history = conversationHistory
+      .slice(-3)
+      .map((msg) => `${msg.role}: ${msg.content}`)
+      .join('\n');
+
+    return `Phân tích câu hỏi tiếng Việt và xác định intent chính xác.
+
 Câu hỏi: "${message}"
-${history ? `Lịch sử hội thoại:\n${history}` : ''}
+${history ? `Lịch sử hội thoại:\n${history}\n` : ''}
 
-Các intent có thể:
-- inventory.check: Kiểm tra tồn kho, trạng thái hàng hóa
-- order.get_status: Xem trạng thái đơn hàng (mua/bán)
-- order.create: Tạo đơn hàng mới
-- supplier.find: Tìm nhà cung cấp
-- item.find: Tìm sản phẩm/mặt hàng
-- warehouse.check: Xem thông tin kho
-- report.view: Xem báo cáo
-- general.chat: Trò chuyện thông thường, chào hỏi, cảm ơn, v.v.
+VÍ DỤ:
+- "Tồn kho item I000100001 ở kho Hà Nội còn bao nhiêu?" → check_inventory (itemCode: I000100001, warehouseName: Hà Nội)
+- "Đơn hàng PO-2024-001 đang ở trạng thái gì?" → get_order_status (poCode: PO-2024-001)
+- "Tạo đơn mua hàng cho 100 units item I000100001" → create_purchase_order (quantity: 100, itemCode: I000100001)
 
-Trả về JSON:
+CÁC INTENT:
+
+QUERY INTENTS:
+1. check_inventory - Kiểm tra tồn kho
+   Keywords: "tồn kho", "còn bao nhiêu", "số lượng", "kiểm tra kho"
+   Entities: itemId, itemCode, itemName, warehouseId, warehouseName
+
+2. get_order_status - Xem trạng thái đơn hàng
+   Keywords: "trạng thái", "tình trạng", "đơn hàng", "PO", "SO"
+   Entities: orderCode, orderId, poCode, soCode
+
+3. find_item - Tìm mặt hàng
+   Keywords: "tìm item", "tìm hàng", "item nào", "mặt hàng"
+   Entities: itemCode, itemName, itemType
+
+4. check_warehouse - Xem thông tin kho
+   Keywords: "kho", "warehouse", "danh sách kho"
+   Entities: warehouseId, warehouseName, warehouseCode
+
+5. view_report - Xem báo cáo
+   Keywords: "báo cáo", "report", "thống kê", "tổng hợp"
+   Entities: reportType, dateRange
+
+ACTION INTENTS:
+6. create_purchase_order - Tạo đơn mua hàng
+   Keywords: "tạo PO", "tạo đơn mua", "mua hàng"
+   Entities: supplierId, items[], quantities[], warehouseId
+
+7. create_sales_order - Tạo đơn bán hàng
+   Keywords: "tạo SO", "tạo đơn bán", "bán hàng"
+   Entities: customerId, items[], quantities[], deliveryAddress
+
+8. create_rfq - Tạo yêu cầu báo giá
+   Keywords: "tạo RFQ", "yêu cầu báo giá"
+   Entities: items[], quantities[], requestedCompanyId
+
+9. create_quotation - Tạo báo giá
+   Keywords: "tạo báo giá", "quotation"
+   Entities: rfqId, items[], prices[]
+
+GENERAL INTENTS:
+10. greeting - Chào hỏi
+11. help - Yêu cầu trợ giúp
+12. goodbye - Tạm biệt
+13. general.chat - Trò chuyện chung
+
+YÊU CẦU:
+1. Xác định intent chính xác nhất
+2. Confidence score từ 0.0 đến 1.0
+3. Extract tất cả entities có thể
+4. Nếu confidence < 0.7 → trả về "general.chat"
+
+LƯU Ý QUAN TRỌNG:
+- Extract itemCode từ text: pattern I + 9+ số (ví dụ: I000100001)
+- Extract orderCode: PO-YYYY-XXX, SO-YYYY-XXX, MO-YYYY-XXX
+- Extract quantity: số lượng kèm đơn vị (ví dụ: "100 units", "50 kg")
+- Extract warehouseName: tên kho (ví dụ: "Hà Nội", "Hồ Chí Minh")
+- Nếu có itemCode trong text, luôn extract vào entities.itemCode
+- Nếu có orderCode trong text, extract vào entities.poCode hoặc entities.soCode
+
+Trả về JSON (chỉ JSON, không thêm text):
 {
   "intent": "intent_name",
-  "confidence": 0.0-1.0,
+  "confidence": 0.95,
   "entities": {
-    "itemId": "mã sản phẩm",
-    "orderId": "mã đơn hàng", 
-    "warehouseId": "mã kho",
-    "supplierId": "mã nhà cung cấp",
-    "quantity": "số lượng",
-    "date": "ngày tháng",
-    "status": "trạng thái"
+    "itemId": 123,
+    "itemCode": "I000100001",
+    "warehouseName": "Hà Nội",
+    "warehouseId": 1,
+    "orderCode": "PO-2024-001",
+    "poCode": "PO-2024-001",
+    "soCode": "SO-2024-001",
+    "quantity": 100
+  },
+  "reasoning": "Lý do chọn intent này"
+}`;
   }
-}
 
-Lưu ý: Chỉ trả về JSON, không thêm text khác.`;
+  buildDataContextPrompt(data: any, dataType: string): string {
+    if (!data) {
+      return 'Không có dữ liệu từ hệ thống.';
+    }
+
+    const dataStr = JSON.stringify(data, null, 2);
+    return `Dữ liệu từ hệ thống (${dataType}):\n${dataStr}\n\nHãy phân tích và trả lời dựa trên dữ liệu này.`;
   }
 
-  buildContextualPrompt(
+  buildConversationPrompt(
     currentMessage: string,
     conversationHistory: any[],
-    additionalContext?: string,
+    systemData?: any,
   ): string {
-    let prompt = 'Previous conversation:\n';
+    let prompt = 'Lịch sử hội thoại gần đây:\n';
 
     for (const msg of conversationHistory.slice(-5)) {
       prompt += `${msg.role}: ${msg.content}\n`;
     }
 
-    if (additionalContext) {
-      prompt += `\nAdditional context: ${additionalContext}\n`;
+    if (systemData) {
+      prompt += `\nDữ liệu hệ thống:\n${JSON.stringify(systemData, null, 2)}\n`;
     }
 
-    prompt += `\nCurrent message: ${currentMessage}\n`;
-    prompt += '\nProvide a helpful response:';
+    prompt += `\nCâu hỏi hiện tại: ${currentMessage}\n`;
+    prompt += '\nTrả lời dựa trên ngữ cảnh và dữ liệu trên:';
 
     return prompt;
-  }
-
-  formatInventoryQuery(itemId: number, warehouseId?: number): string {
-    if (warehouseId) {
-      return `Check inventory for item ${itemId} in warehouse ${warehouseId}`;
-    }
-    return `Check inventory for item ${itemId} in all warehouses`;
-  }
-
-  formatOrderQuery(orderType: string, orderId: string): string {
-    return `Get ${orderType} with ID/Code: ${orderId}`;
-  }
-
-  buildConfirmationPrompt(action: string, details: any): string {
-    return `You are about to perform: ${action}\n\nDetails:\n${JSON.stringify(details, null, 2)}\n\nDo you want to proceed? (yes/no)`;
-  }
-
-  formatSuccessMessage(action: string, result: any): string {
-    return `Successfully completed: ${action}\n\nResult: ${JSON.stringify(result, null, 2)}`;
-  }
-
-  formatErrorMessage(error: string): string {
-    return `Error: ${error}`;
-  }
-
-  formatResponseTemplate(intent: string, data: any, error?: string): string {
-    if (error) {
-      return `❌ Lỗi: ${error}`;
-    }
-
-    switch (intent) {
-      case 'inventory.check':
-        return this.formatInventoryResponse(data);
-      case 'order.view':
-        return this.formatOrderResponse(data);
-      case 'order.create':
-        return this.formatOrderCreatedResponse(data);
-      case 'report.generate':
-        return this.formatReportResponse(data);
-      case 'warehouse.list':
-        return this.formatWarehouseListResponse(data);
-      case 'supplier.list':
-        return this.formatSupplierListResponse(data);
-      case 'item.search':
-        return this.formatItemSearchResponse(data);
-      default:
-        return `✅ Hoàn thành: ${JSON.stringify(data, null, 2)}`;
-    }
-  }
-
-  private formatInventoryResponse(data: any): string {
-    if (Array.isArray(data)) {
-      return `📦 Tồn kho:\n${data.map(item => 
-        `• ${item.itemName || item.name}: ${item.quantity || item.availableQuantity} ${item.unit || ''}`
-      ).join('\n')}`;
-    }
-    return `📦 Tồn kho: ${data.quantity || data.availableQuantity} ${data.unit || ''}`;
-  }
-
-  private formatOrderResponse(data: any): string {
-    return `📋 Đơn hàng ${data.orderId || data.id}:\n` +
-           `• Trạng thái: ${data.status || 'Unknown'}\n` +
-           `• Tổng tiền: ${data.totalAmount || data.amount || 'N/A'}\n` +
-           `• Ngày tạo: ${data.createdAt || data.orderDate || 'N/A'}`;
-  }
-
-  private formatOrderCreatedResponse(data: any): string {
-    return `✅ Đơn hàng đã được tạo thành công!\n` +
-           `• Mã đơn: ${data.orderId || data.id}\n` +
-           `• Trạng thái: ${data.status || 'Created'}\n` +
-           `• Tổng tiền: ${data.totalAmount || data.amount || 'N/A'}`;
-  }
-
-  private formatReportResponse(data: any): string {
-    return `📊 Báo cáo:\n${JSON.stringify(data, null, 2)}`;
-  }
-
-  private formatWarehouseListResponse(data: any): string {
-    if (Array.isArray(data)) {
-      return `🏭 Danh sách kho:\n${data.map(wh => 
-        `• ${wh.name} (${wh.code || wh.id}): ${wh.location || wh.address || ''}`
-      ).join('\n')}`;
-    }
-    return `🏭 Kho: ${data.name || data.code || 'Unknown'}`;
-  }
-
-  private formatSupplierListResponse(data: any): string {
-    if (Array.isArray(data)) {
-      return `👥 Danh sách nhà cung cấp:\n${data.map(supplier => 
-        `• ${supplier.name} (${supplier.code || supplier.id}): ${supplier.contact || ''}`
-      ).join('\n')}`;
-    }
-    return `👥 Nhà cung cấp: ${data.name || data.code || 'Unknown'}`;
-  }
-
-  private formatItemSearchResponse(data: any): string {
-    if (Array.isArray(data)) {
-      return `🔍 Kết quả tìm kiếm:\n${data.map(item => 
-        `• ${item.name} (${item.code || item.id}): ${item.description || ''}`
-      ).join('\n')}`;
-    }
-    return `🔍 Sản phẩm: ${data.name || data.code || 'Unknown'}`;
   }
 }

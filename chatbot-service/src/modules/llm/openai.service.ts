@@ -1,15 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChatOpenAI } from '@langchain/openai';
 import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages';
-import { ConversationMessage } from 'src/common/interfaces/chat.interface';
+import { ConversationMessage, IntentResult } from 'src/common/interfaces/chat.interface';
 import { PromptService } from './prompt.service';
 
 @Injectable()
 export class OpenAIService {
-  private model: ChatOpenAI;
+  private readonly logger = new Logger(OpenAIService.name);
+  private readonly model: ChatOpenAI;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly promptService: PromptService,
+  ) {
     const openaiConfig = this.configService.get('openai');
     this.model = new ChatOpenAI({
       openAIApiKey: openaiConfig.apiKey,
@@ -22,43 +26,101 @@ export class OpenAIService {
   async generateResponse(
     messages: ConversationMessage[],
     systemPrompt?: string,
+    additionalContext?: any,
   ): Promise<string> {
-    const langchainMessages = this.convertToLangChainMessages(messages, systemPrompt);
-
+    const langchainMessages = this.buildMessages(
+      messages,
+      systemPrompt,
+      additionalContext,
+    );
     const response = await this.model.invoke(langchainMessages);
-    const responseText = response.content.toString();
-    
-    // Đảm bảo response luôn bằng tiếng Việt
-    if (this.containsVietnamese(messages) && !this.isVietnameseResponse(responseText)) {
-      return await this.translateToVietnamese(responseText);
+    return response.content.toString();
+  }
+
+  async analyzeIntent(
+    message: string,
+    conversationHistory: ConversationMessage[] = [],
+  ): Promise<IntentResult> {
+    try {
+      const prompt = this.promptService.getIntentRecognitionPrompt(
+        message,
+        conversationHistory,
+      );
+      const response = await this.model.invoke([new HumanMessage(prompt)]);
+
+      const content = response.content.toString();
+      const cleanedContent = this.extractJSON(content);
+
+      if (!cleanedContent) {
+        return this.getDefaultIntentResult();
+      }
+
+      const result = JSON.parse(cleanedContent);
+
+      if (result.confidence < 0.7) {
+        return {
+          intent: 'general.chat',
+          confidence: result.confidence || 0,
+          entities: result.entities || {},
+        };
+      }
+
+      return {
+        intent: result.intent || 'general.chat',
+        confidence: result.confidence || 0,
+        entities: result.entities || {},
+      };
+    } catch (error) {
+      this.logger.error(`Error analyzing intent: ${error.message}`);
+      return this.getDefaultIntentResult();
     }
-    
-    return responseText;
   }
 
-  async generateWithFunctions(
-    messages: ConversationMessage[],
-    functions: any[],
+  async generateDataDrivenResponse(
+    userMessage: string,
+    conversationHistory: ConversationMessage[],
+    systemData: any,
     systemPrompt?: string,
-  ): Promise<any> {
-    const langchainMessages = this.convertToLangChainMessages(messages, systemPrompt);
+  ): Promise<string> {
+    const dataContext = this.promptService.buildDataContextPrompt(
+      systemData,
+      this.getDataType(systemData),
+    );
 
-    const modelWithFunctions = this.model.bind({
-      functions: functions,
-    });
+    const conversationPrompt = this.promptService.buildConversationPrompt(
+      userMessage,
+      conversationHistory,
+      systemData,
+    );
 
-    const response = await modelWithFunctions.invoke(langchainMessages);
-    return response;
+    const messages: ConversationMessage[] = [
+      ...conversationHistory.slice(-5),
+      {
+        role: 'user',
+        content: `${conversationPrompt}\n\n${dataContext}`,
+        timestamp: new Date(),
+      },
+    ];
+
+    return await this.generateResponse(messages, systemPrompt);
   }
 
-  private convertToLangChainMessages(
+  private buildMessages(
     messages: ConversationMessage[],
     systemPrompt?: string,
-  ) {
+    additionalContext?: any,
+  ): any[] {
     const langchainMessages: any[] = [];
 
     if (systemPrompt) {
       langchainMessages.push(new SystemMessage(systemPrompt));
+    }
+
+    if (additionalContext) {
+      const contextStr = JSON.stringify(additionalContext, null, 2);
+      langchainMessages.push(
+        new SystemMessage(`Dữ liệu bổ sung từ hệ thống:\n${contextStr}`),
+      );
     }
 
     for (const msg of messages) {
@@ -74,53 +136,41 @@ export class OpenAIService {
     return langchainMessages;
   }
 
-  private containsVietnamese(messages: ConversationMessage[]): boolean {
-    const vietnamesePattern = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
-    return messages.some(msg => vietnamesePattern.test(msg.content));
-  }
-
-  private isVietnameseResponse(text: string): boolean {
-    const vietnamesePattern = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
-    return vietnamesePattern.test(text);
-  }
-
-  private async translateToVietnamese(text: string): Promise<string> {
-    try {
-      const translationPrompt = `Dịch đoạn văn sau sang tiếng Việt tự nhiên, giữ nguyên ý nghĩa:
-"${text}"`;
-      
-      const response = await this.model.invoke([new HumanMessage(translationPrompt)]);
-      return response.content.toString();
-    } catch (error) {
-      console.error(`Lỗi dịch sang tiếng Việt: ${error.message}`);
-      return text; // Trả về bản gốc nếu lỗi dịch
+  private extractJSON(text: string): string | null {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return jsonMatch[0];
     }
+    return null;
   }
 
-  async analyzeIntent(message: string, conversationHistory: ConversationMessage[] = []): Promise<any> {
-    const promptService = new PromptService();
-    const prompt = promptService.getIntentRecognitionPrompt(message, conversationHistory);
+  private getDefaultIntentResult(): IntentResult {
+    return {
+      intent: 'general.chat',
+      confidence: 0,
+      entities: {},
+    };
+  }
 
-    const response = await this.model.invoke([new HumanMessage(prompt)]);
-    try {
-      const result = JSON.parse(response.content.toString());
-      
-      // Validate confidence threshold
-      if (result.confidence < 0.7) {
-        return {
-          intent: 'general.chat',
-          confidence: result.confidence || 0,
-          entities: result.entities || {},
-        };
-      }
-      
-      return result;
-    } catch (e) {
-      return {
-        intent: 'general.chat',
-        confidence: 0,
-        entities: {},
-      };
+  private getDataType(data: any): string {
+    if (Array.isArray(data)) {
+      if (data.length === 0) return 'empty_array';
+      const firstItem = data[0];
+      if (firstItem.poCode || firstItem.poId) return 'purchase_orders';
+      if (firstItem.soCode || firstItem.soId) return 'sales_orders';
+      if (firstItem.warehouseId || firstItem.warehouseName) return 'inventories';
+      if (firstItem.itemId || firstItem.itemCode) return 'items';
+      if (firstItem.warehouseCode) return 'warehouses';
+      return 'array';
     }
+
+    if (data.poCode || data.poId) return 'purchase_order';
+    if (data.soCode || data.soId) return 'sales_order';
+    if (data.itemId || data.itemCode) return 'item';
+    if (data.warehouseId || data.warehouseCode) return 'warehouse';
+    if (data.quantity !== undefined && data.onDemandQuantity !== undefined)
+      return 'inventory';
+
+    return 'object';
   }
 }

@@ -1,79 +1,29 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigType } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { RABBITMQ_CONSTANTS } from 'src/common/constants';
+import { rabbitmqConfiguration } from 'src/config';
 import { ConversationService } from './conversation.service';
 
 @Module({
   imports: [
-    ClientsModule.registerAsync([
-      {
-        name: RABBITMQ_CONSTANTS.AUTH.name,
+    ClientsModule.registerAsync(
+      Object.values(RABBITMQ_CONSTANTS).map((svc) => ({
+        name: svc.name,
         imports: [ConfigModule],
-        useFactory: (configService: ConfigService) => ({
+        inject: [rabbitmqConfiguration.KEY],
+        useFactory: (rabbitmqConfig: ConfigType<typeof rabbitmqConfiguration>) => ({
           transport: Transport.RMQ,
           options: {
-            urls: [configService.get<string>('rabbitmq.url')],
-            queue: configService.get<string>('rabbitmq.authQueue'),
+            urls: [rabbitmqConfig.url],
+            queue: svc.queue,
             queueOptions: { durable: true },
           },
         }),
-        inject: [ConfigService],
-      },
-      {
-        name: RABBITMQ_CONSTANTS.BUSINESS.name,
-        imports: [ConfigModule],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [configService.get<string>('rabbitmq.url')],
-            queue: configService.get<string>('rabbitmq.businessQueue'),
-            queueOptions: { durable: true },
-          },
-        }),
-        inject: [ConfigService],
-      },
-      {
-        name: RABBITMQ_CONSTANTS.GENERAL.name,
-        imports: [ConfigModule],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [configService.get<string>('rabbitmq.url')],
-            queue: configService.get<string>('rabbitmq.generalQueue'),
-            queueOptions: { durable: true },
-          },
-        }),
-        inject: [ConfigService],
-      },
-      {
-        name: RABBITMQ_CONSTANTS.INVENTORY.name,
-        imports: [ConfigModule],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [configService.get<string>('rabbitmq.url')],
-            queue: configService.get<string>('rabbitmq.inventoryQueue'),
-            queueOptions: { durable: true },
-          },
-        }),
-        inject: [ConfigService],
-      },
-      {
-        name: RABBITMQ_CONSTANTS.OPERATION.name,
-        imports: [ConfigModule],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [configService.get<string>('rabbitmq.url')],
-            queue: configService.get<string>('rabbitmq.operationQueue'),
-            queueOptions: { durable: true },
-          },
-        }),
-        inject: [ConfigService],
-      },
-    ]),
+      })),
+    ),
   ],
   providers: [
     {

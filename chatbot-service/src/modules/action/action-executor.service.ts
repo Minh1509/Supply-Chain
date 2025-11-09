@@ -1,11 +1,16 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
 import { RABBITMQ_CONSTANTS } from 'src/common/constants';
+import { RABBITMQ_PATTERNS } from 'src/common/constants/rabbitmq-patterns';
 import { ActionRequest, ActionResult } from 'src/common/interfaces/chat.interface';
+import { validateAction } from 'src/common/knowledge-base/business-rules';
+import { RabbitMQUtil } from 'src/common/utils/rabbitmq.util';
 
 @Injectable()
 export class ActionExecutorService {
+  private readonly logger = new Logger(ActionExecutorService.name);
+  private readonly REQUEST_TIMEOUT = 30000;
+
   constructor(
     @Inject(RABBITMQ_CONSTANTS.AUTH.name)
     private readonly authClient: ClientProxy,
@@ -21,6 +26,22 @@ export class ActionExecutorService {
 
   async executeAction(action: ActionRequest): Promise<ActionResult> {
     try {
+      const validation = validateAction(action.type, action.params);
+      if (!validation.valid) {
+        return {
+          success: false,
+          error: validation.errors.join(', '),
+        };
+      }
+
+      const preCheck = await this.preCheckAction(action);
+      if (!preCheck.passed) {
+        return {
+          success: false,
+          error: preCheck.reason,
+        };
+      }
+
       switch (action.type) {
         // Inventory actions
         case 'check_inventory':
@@ -84,6 +105,7 @@ export class ActionExecutorService {
           };
       }
     } catch (error) {
+      this.logger.error(`Action execution failed: ${error.message}`, error.stack);
       return {
         success: false,
         error: error.message || 'Action execution failed',
@@ -91,240 +113,314 @@ export class ActionExecutorService {
     }
   }
 
-  // ==================== INVENTORY ACTIONS ====================
+  private async preCheckAction(
+    action: ActionRequest,
+  ): Promise<{ passed: boolean; reason?: string }> {
+    if (action.type === 'create_purchase_order') {
+      if (!action.params.quotationId) {
+        return {
+          passed: false,
+          reason:
+            'Không thể tạo đơn mua hàng mà không có báo giá (quotation). Vui lòng tạo quotation trước.',
+        };
+      }
+    }
 
-  private async checkInventory(params: any): Promise<ActionResult> {
-    const { itemId, warehouseId, amount } = params;
+    if (
+      action.type === 'check_inventory' ||
+      action.type === 'create_purchase_order' ||
+      action.type === 'create_sales_order'
+    ) {
+      if (action.params.items && Array.isArray(action.params.items)) {
+        for (const item of action.params.items) {
+          if (action.params.receiveWarehouseId || action.params.warehouseId) {
+            const warehouseId =
+              action.params.receiveWarehouseId || action.params.warehouseId;
+            const inventory = await this.checkInventoryInternal(item.itemId, warehouseId);
+            if (inventory) {
+              const available =
+                (inventory.quantity || 0) - (inventory.onDemandQuantity || 0);
+              if (available < (item.quantity || 0)) {
+                return {
+                  passed: false,
+                  reason: `Không đủ tồn kho cho item ${item.itemId || item.itemCode}. Chỉ còn ${available} units.`,
+                };
+              }
+            }
+          }
+        }
+      }
+    }
 
-    const result = await firstValueFrom(
-      this.inventoryClient.send('CHECK_INVENTORY', {
-        itemId,
-        warehouseId,
-        amount,
-      }),
+    return { passed: true };
+  }
+
+  private async sendRequest(
+    client: ClientProxy,
+    pattern: string,
+    data: any,
+    errorMessage: string,
+  ): Promise<ActionResult> {
+    const result = await RabbitMQUtil.sendRequest(
+      client,
+      pattern,
+      data,
+      this.REQUEST_TIMEOUT,
     );
+
+    if (!result) {
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    }
 
     return {
       success: true,
       data: result,
-      message: `Inventory check completed for item ${itemId}`,
+      message: 'Success',
     };
   }
 
-  private async getAllWarehouses(params: any): Promise<ActionResult> {
-    const { companyId } = params;
-
-    const result = await firstValueFrom(
-      this.inventoryClient.send('GET_ALL_WAREHOUSES_IN_COMPANY', {
-        companyId,
-      }),
+  private async checkInventoryInternal(
+    itemId: number,
+    warehouseId: number,
+  ): Promise<any> {
+    return RabbitMQUtil.sendRequest(
+      this.inventoryClient,
+      RABBITMQ_PATTERNS.INVENTORY.INVENTORY.CHECK,
+      { itemId, warehouseId },
+      this.REQUEST_TIMEOUT,
     );
+  }
 
-    return {
-      success: true,
-      data: result,
-      message: `Found ${result?.length || 0} warehouses`,
-    };
+  // ==================== INVENTORY ACTIONS ====================
+
+  private async checkInventory(params: any): Promise<ActionResult> {
+    const result = await this.sendRequest(
+      this.inventoryClient,
+      RABBITMQ_PATTERNS.INVENTORY.INVENTORY.CHECK,
+      params,
+      'Không thể kiểm tra tồn kho. Vui lòng thử lại sau.',
+    );
+    if (result.success) {
+      result.message = `Inventory check completed for item ${params.itemId}`;
+    }
+    return result;
+  }
+
+  private async getAllWarehouses(params: any): Promise<ActionResult> {
+    const result = await this.sendRequest(
+      this.inventoryClient,
+      RABBITMQ_PATTERNS.INVENTORY.WAREHOUSE.GET_ALL_IN_COMPANY,
+      params,
+      'Không thể lấy danh sách kho. Vui lòng thử lại sau.',
+    );
+    if (result.success && Array.isArray(result.data)) {
+      result.message = `Found ${result.data.length} warehouses`;
+    }
+    return result;
   }
 
   // ==================== PURCHASE ORDER ACTIONS ====================
 
   private async getPurchaseOrder(params: any): Promise<ActionResult> {
     const { poId, poCode } = params;
-
-    const pattern = poId ? 'GET_PO_BY_ID' : 'GET_PO_BY_CODE';
+    const pattern = poId
+      ? RABBITMQ_PATTERNS.BUSINESS.PO.GET_BY_ID
+      : RABBITMQ_PATTERNS.BUSINESS.PO.GET_BY_CODE;
     const payload = poId ? { poId } : { poCode };
 
-    const result = await firstValueFrom(this.businessClient.send(pattern, payload));
-
-    return {
-      success: true,
-      data: result,
-      message: `Found purchase order ${poId || poCode}`,
-    };
+    const result = await this.sendRequest(
+      this.businessClient,
+      pattern,
+      payload,
+      'Không tìm thấy đơn mua hàng. Vui lòng kiểm tra lại mã đơn hàng.',
+    );
+    if (result.success) {
+      result.message = `Found purchase order ${poId || poCode}`;
+    }
+    return result;
   }
 
   private async getAllPurchaseOrders(params: any): Promise<ActionResult> {
-    const { companyId } = params;
-
-    const result = await firstValueFrom(
-      this.businessClient.send('GET_ALL_PO_IN_COMPANY', { companyId }),
+    const result = await this.sendRequest(
+      this.businessClient,
+      RABBITMQ_PATTERNS.BUSINESS.PO.GET_ALL_IN_COMPANY,
+      params,
+      'Không thể lấy danh sách đơn mua hàng.',
     );
-
-    return {
-      success: true,
-      data: result,
-      message: `Found ${result?.length || 0} purchase orders`,
-    };
+    if (result.success && Array.isArray(result.data)) {
+      result.message = `Found ${result.data.length} purchase orders`;
+    }
+    return result;
   }
 
   private async createPurchaseOrder(params: any): Promise<ActionResult> {
-    const result = await firstValueFrom(
-      this.businessClient.send('CREATE_PURCHASE_ORDER', params),
+    return this.sendRequest(
+      this.businessClient,
+      RABBITMQ_PATTERNS.BUSINESS.PO.CREATE,
+      params,
+      'Không thể tạo đơn mua hàng. Vui lòng kiểm tra lại thông tin.',
     );
-
-    return {
-      success: true,
-      data: result,
-      message: `Purchase order created successfully`,
-    };
   }
 
   // ==================== SALES ORDER ACTIONS ====================
 
   private async getSalesOrder(params: any): Promise<ActionResult> {
     const { soId, soCode } = params;
-
-    const pattern = soId ? 'GET_SO_BY_ID' : 'GET_SO_BY_CODE';
+    const pattern = soId
+      ? RABBITMQ_PATTERNS.BUSINESS.SO.GET_BY_ID
+      : RABBITMQ_PATTERNS.BUSINESS.SO.GET_BY_CODE;
     const payload = soId ? { soId } : { soCode };
 
-    const result = await firstValueFrom(this.businessClient.send(pattern, payload));
-
-    return {
-      success: true,
-      data: result,
-      message: `Found sales order ${soId || soCode}`,
-    };
+    const result = await this.sendRequest(
+      this.businessClient,
+      pattern,
+      payload,
+      'Không tìm thấy đơn bán hàng. Vui lòng kiểm tra lại mã đơn hàng.',
+    );
+    if (result.success) {
+      result.message = `Found sales order ${soId || soCode}`;
+    }
+    return result;
   }
 
   private async getAllSalesOrders(params: any): Promise<ActionResult> {
-    const { companyId } = params;
-
-    const result = await firstValueFrom(
-      this.businessClient.send('GET_ALL_SO_IN_COMPANY', { companyId }),
+    const result = await this.sendRequest(
+      this.businessClient,
+      RABBITMQ_PATTERNS.BUSINESS.SO.GET_ALL_IN_COMPANY,
+      params,
+      'Không thể lấy danh sách đơn bán hàng.',
     );
-
-    return {
-      success: true,
-      data: result,
-      message: `Found ${result?.length || 0} sales orders`,
-    };
+    if (result.success && Array.isArray(result.data)) {
+      result.message = `Found ${result.data.length} sales orders`;
+    }
+    return result;
   }
 
   private async createSalesOrder(params: any): Promise<ActionResult> {
-    const result = await firstValueFrom(
-      this.businessClient.send('CREATE_SALES_ORDER', params),
+    return this.sendRequest(
+      this.businessClient,
+      RABBITMQ_PATTERNS.BUSINESS.SO.CREATE,
+      params,
+      'Không thể tạo đơn bán hàng. Vui lòng kiểm tra lại thông tin.',
     );
-
-    return {
-      success: true,
-      data: result,
-      message: `Sales order created successfully`,
-    };
   }
 
   // ==================== RFQ ACTIONS ====================
 
   private async getRFQ(params: any): Promise<ActionResult> {
-    const { rfqId } = params;
-
-    const result = await firstValueFrom(
-      this.businessClient.send('GET_RFQ_BY_ID', { rfqId }),
+    const result = await this.sendRequest(
+      this.businessClient,
+      RABBITMQ_PATTERNS.BUSINESS.RFQ.GET_BY_ID,
+      params,
+      'Không tìm thấy yêu cầu báo giá.',
     );
-
-    return {
-      success: true,
-      data: result,
-      message: `Found RFQ ${rfqId}`,
-    };
+    if (result.success) {
+      result.message = `Found RFQ ${params.rfqId}`;
+    }
+    return result;
   }
 
   private async createRFQ(params: any): Promise<ActionResult> {
-    const result = await firstValueFrom(this.businessClient.send('CREATE_RFQ', params));
-
-    return {
-      success: true,
-      data: result,
-      message: `RFQ created successfully`,
-    };
+    return this.sendRequest(
+      this.businessClient,
+      RABBITMQ_PATTERNS.BUSINESS.RFQ.CREATE,
+      params,
+      'Không thể tạo yêu cầu báo giá. Vui lòng kiểm tra lại thông tin.',
+    );
   }
 
   // ==================== QUOTATION ACTIONS ====================
 
   private async getQuotation(params: any): Promise<ActionResult> {
-    const { quotationId } = params;
-
-    const result = await firstValueFrom(
-      this.businessClient.send('GET_QUOTATION_BY_ID', { quotationId }),
+    const result = await this.sendRequest(
+      this.businessClient,
+      RABBITMQ_PATTERNS.BUSINESS.QUOTATION.GET_BY_ID,
+      params,
+      'Không tìm thấy báo giá.',
     );
-
-    return {
-      success: true,
-      data: result,
-      message: `Found quotation ${quotationId}`,
-    };
+    if (result.success) {
+      result.message = `Found quotation ${params.quotationId}`;
+    }
+    return result;
   }
 
   private async createQuotation(params: any): Promise<ActionResult> {
-    const result = await firstValueFrom(
-      this.businessClient.send('CREATE_QUOTATION', params),
+    return this.sendRequest(
+      this.businessClient,
+      RABBITMQ_PATTERNS.BUSINESS.QUOTATION.CREATE,
+      params,
+      'Không thể tạo báo giá. Vui lòng kiểm tra lại thông tin.',
     );
-
-    return {
-      success: true,
-      data: result,
-      message: `Quotation created successfully`,
-    };
   }
 
   // ==================== ITEM ACTIONS ====================
 
   private async getItem(params: any): Promise<ActionResult> {
-    const { itemId } = params;
+    const { itemId, itemCode } = params;
+    if (!itemId && !itemCode) {
+      return {
+        success: false,
+        error: 'Thiếu thông tin itemId hoặc itemCode.',
+      };
+    }
 
-    const result = await firstValueFrom(
-      this.generalClient.send('GET_ITEM_BY_ID', { itemId }),
+    const result = await this.sendRequest(
+      this.generalClient,
+      RABBITMQ_PATTERNS.GENERAL.ITEM.GET_BY_ID,
+      itemId ? { itemId } : { itemCode },
+      'Không tìm thấy mặt hàng. Vui lòng kiểm tra lại mã hàng.',
     );
-
-    return {
-      success: true,
-      data: result,
-      message: `Found item ${itemId}`,
-    };
+    if (result.success) {
+      result.message = `Found item ${itemId || itemCode}`;
+    }
+    return result;
   }
 
   private async getAllItems(params: any): Promise<ActionResult> {
-    const { companyId } = params;
-
-    const result = await firstValueFrom(
-      this.generalClient.send('GET_ALL_ITEMS_IN_COMPANY', { companyId }),
+    const result = await this.sendRequest(
+      this.generalClient,
+      RABBITMQ_PATTERNS.GENERAL.ITEM.GET_ALL_IN_COMPANY,
+      params,
+      'Không thể lấy danh sách mặt hàng.',
     );
-
-    return {
-      success: true,
-      data: result,
-      message: `Found ${result?.length || 0} items`,
-    };
+    if (result.success && Array.isArray(result.data)) {
+      result.message = `Found ${result.data.length} items`;
+    }
+    return result;
   }
-
-  // ==================== MANUFACTURE ORDER ACTIONS ====================
 
   private async getManufactureOrder(params: any): Promise<ActionResult> {
     const { moId, moCode } = params;
-
-    const pattern = moId ? 'GET_MO_BY_ID' : 'GET_MO_BY_CODE';
+    const pattern = moId
+      ? RABBITMQ_PATTERNS.OPERATION.MO.GET_BY_ID
+      : RABBITMQ_PATTERNS.OPERATION.MO.GET_BY_CODE;
     const payload = moId ? { moId } : { moCode };
 
-    const result = await firstValueFrom(this.operationClient.send(pattern, payload));
-
-    return {
-      success: true,
-      data: result,
-      message: `Found manufacture order ${moId || moCode}`,
-    };
+    const result = await this.sendRequest(
+      this.operationClient,
+      pattern,
+      payload,
+      'Không tìm thấy lệnh sản xuất. Vui lòng kiểm tra lại mã lệnh.',
+    );
+    if (result.success) {
+      result.message = `Found manufacture order ${moId || moCode}`;
+    }
+    return result;
   }
 
   private async getAllManufactureOrders(params: any): Promise<ActionResult> {
-    const { companyId } = params;
-
-    const result = await firstValueFrom(
-      this.operationClient.send('GET_ALL_MO_IN_COMPANY', { companyId }),
+    const result = await this.sendRequest(
+      this.operationClient,
+      RABBITMQ_PATTERNS.OPERATION.MO.GET_ALL_IN_COMPANY,
+      params,
+      'Không thể lấy danh sách lệnh sản xuất.',
     );
-
-    return {
-      success: true,
-      data: result,
-      message: `Found ${result?.length || 0} manufacture orders`,
-    };
+    if (result.success && Array.isArray(result.data)) {
+      result.message = `Found ${result.data.length} manufacture orders`;
+    }
+    return result;
   }
 }

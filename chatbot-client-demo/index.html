@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbot Demo - Supply Chain Assistant</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="chat-header">
+        <h1>AI Supply Chain Assistant</h1>
+        <p>Trợ lý quản lý chuỗi cung ứng</p>
+      </div>
+
+      <div class="connection-status">
+        <span id="status-indicator" class="status-disconnected"></span>
+        <span id="status-text">Đang kết nối...</span>
+      </div>
+
+      <div class="chat-container" id="chatContainer">
+        <!-- Messages will appear here -->
+      </div>
+
+      <div class="typing-indicator" id="typingIndicator" style="display: none">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <div class="input-container">
+        <input
+          type="text"
+          id="messageInput"
+          placeholder="Nhập tin nhắn... (Ví dụ: Kiểm tra tồn kho item I000100001)"
+          disabled
+        />
+        <button id="sendButton" disabled>Gửi</button>
+        <button id="clearButton">Xóa</button>
+      </div>
+
+      <div class="suggestions">
+        <p><strong>Gợi ý câu hỏi:</strong></p>
+        <div class="suggestion-chips">
+          <button
+            class="chip"
+            data-message="Tồn kho item I000100001 ở kho Hà Nội còn bao nhiêu?"
+          >
+            Kiểm tra tồn kho
+          </button>
+          <button
+            class="chip"
+            data-message="Đơn hàng PO-2024-001 đang ở trạng thái gì?"
+          >
+            Trạng thái đơn hàng
+          </button>
+          <button class="chip" data-message="Cho tôi xem danh sách kho hàng">
+            Xem kho hàng
+          </button>
+          <button class="chip" data-message="Tìm mặt hàng I000100001">
+            Tìm mặt hàng
+          </button>
+          <button
+            class="chip"
+            data-message="Tạo đơn mua hàng 100 units item I000100001"
+          >
+            Tạo đơn mua
+          </button>
+        </div>
+      </div>
+
+      <div class="config-panel">
+        <h3>Cấu hình</h3>
+        <div class="config-row">
+          <label>WebSocket URL:</label>
+          <input type="text" id="wsUrl" value="http://localhost:3006" />
+        </div>
+        <div class="config-row">
+          <label>User ID:</label>
+          <input type="number" id="userId" value="1" />
+        </div>
+        <div class="config-row">
+          <label>Company ID:</label>
+          <input type="number" id="companyId" value="1" />
+        </div>
+        <div class="config-row">
+          <label>Session ID:</label>
+          <input type="text" id="sessionId" value="session-demo-001" />
+        </div>
+        <button id="reconnectButton">Kết nối lại</button>
+      </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

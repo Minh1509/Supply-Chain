@@ -3,6 +3,9 @@ import { ConversationService } from '../conversation/conversation.service';
 import { OpenAIService } from '../llm/openai.service';
 import { PromptService } from '../llm/prompt.service';
 import { ActionExecutorService } from '../action/action-executor.service';
+import { DataMappingService } from '../data-mapping/data-mapping.service';
+import { EntityExtractionService } from '../entity-extraction/entity-extraction.service';
+import { DataEnrichmentService } from '../data-enrichment/data-enrichment.service';
 import { ChatMessageDto, ChatResponseDto } from 'src/common/dto/chat.dto';
 import { ConversationMessage, IntentResult } from 'src/common/interfaces/chat.interface';
 import { ChatIntent } from 'src/common/enums';
@@ -10,17 +13,20 @@ import { ChatIntent } from 'src/common/enums';
 @Injectable()
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
+  private readonly CONFIDENCE_THRESHOLD = 0.7;
 
   constructor(
     private readonly conversationService: ConversationService,
     private readonly openAIService: OpenAIService,
     private readonly promptService: PromptService,
     private readonly actionExecutor: ActionExecutorService,
+    private readonly dataMappingService: DataMappingService,
+    private readonly entityExtractionService: EntityExtractionService,
+    private readonly dataEnrichmentService: DataEnrichmentService,
   ) {}
 
   async processMessage(dto: ChatMessageDto): Promise<ChatResponseDto> {
     try {
-      // 1. Save user message
       const userMessage: ConversationMessage = {
         role: 'user',
         content: dto.message,
@@ -30,48 +36,38 @@ export class ChatService {
 
       await this.conversationService.saveMessage(dto.sessionId, userMessage);
 
-      // 2. Get conversation history
       const history = await this.conversationService.getHistory(dto.sessionId);
-
-      // 3. Analyze intent
       const intent = await this.analyzeIntent(dto.message, history);
-      this.logger.debug(`Detected intent: ${intent.intent}`);
 
-      // 4. Handle based on intent
+      this.logger.debug(`Intent: ${intent.intent}, Confidence: ${intent.confidence}`);
+
       let response: string;
       let additionalData: any = null;
 
-      if (intent.confidence >= 0.7) {
+      if (intent.confidence >= this.CONFIDENCE_THRESHOLD) {
         if (this.isQueryIntent(intent.intent)) {
-          // Query information
-          const actionResult = await this.handleQuery(intent, dto);
-          response = this.formatQueryResponse(actionResult, intent.intent);
-          additionalData = actionResult.data;
+          const result = await this.handleQuery(intent, dto);
+          response = await this.formatQueryResponse(result, intent.intent);
+          additionalData = result.data;
         } else if (this.isActionIntent(intent.intent)) {
-          // Execute action
-          const actionResult = await this.handleAction(intent, dto);
-          response = actionResult.message;
-          additionalData = actionResult.data;
+          const result = await this.handleAction(intent, dto);
+          response = result.message || result.error || 'Đã xử lý yêu cầu';
+          additionalData = result.data;
         } else {
-          // General conversation with high confidence
           response = await this.handleGeneralConversation(dto.message, history, dto);
         }
       } else {
-        // Low confidence - use general conversation with context
         response = await this.handleGeneralConversation(dto.message, history, dto);
       }
 
-      // 5. Save assistant response
       const assistantMessage: ConversationMessage = {
         role: 'assistant',
         content: response,
         timestamp: new Date(),
-        metadata: { intent: intent.intent },
+        metadata: { intent: intent.intent, confidence: intent.confidence },
       };
 
       await this.conversationService.saveMessage(dto.sessionId, assistantMessage);
-
-      // 6. Extend session
       await this.conversationService.extendSession(dto.sessionId);
 
       return {
@@ -81,15 +77,19 @@ export class ChatService {
         timestamp: new Date(),
       };
     } catch (error) {
-      this.logger.error(`Lỗi xử lý tin nhắn: ${error.message}`, error.stack);
+      this.logger.error(`Error processing message: ${error.message}`, error.stack);
       return {
-        message: 'Xin lỗi, tôi gặp sự cố khi xử lý câu hỏi này. Bạn có thể thử lại hoặc hỏi theo cách khác được không?',
+        message:
+          'Xin lỗi, tôi gặp sự cố khi xử lý câu hỏi này. Bạn có thể thử lại hoặc hỏi theo cách khác được không?',
         timestamp: new Date(),
       };
     }
   }
 
-  private async analyzeIntent(message: string, history: ConversationMessage[] = []): Promise<IntentResult> {
+  private async analyzeIntent(
+    message: string,
+    history: ConversationMessage[] = [],
+  ): Promise<IntentResult> {
     try {
       const result = await this.openAIService.analyzeIntent(message, history);
       return result;
@@ -131,12 +131,14 @@ export class ChatService {
     const actionType = this.mapIntentToAction(intent.intent);
     const params = this.extractParams(intent.entities, dto);
 
-    return await this.actionExecutor.executeAction({
+    const result = await this.actionExecutor.executeAction({
       type: actionType,
       params,
       userId: dto.userId,
       companyId: dto.companyId,
     });
+
+    return result;
   }
 
   private async handleAction(intent: IntentResult, dto: ChatMessageDto): Promise<any> {
@@ -151,18 +153,22 @@ export class ChatService {
     });
 
     if (result.success) {
+      const formattedData = this.dataMappingService.mapActionResult(
+        result.data,
+        actionType,
+      );
       return {
         success: true,
-        message: this.promptService.formatSuccessMessage(intent.intent, result.data),
+        message: formattedData,
         data: result.data,
       };
-    } else {
-      return {
-        success: false,
-        message: this.promptService.formatErrorMessage(result.error || 'Action failed'),
-        error: result.error,
-      };
     }
+
+    return {
+      success: false,
+      message: result.error || 'Không thể thực hiện hành động này',
+      error: result.error,
+    };
   }
 
   private async handleGeneralConversation(
@@ -170,25 +176,13 @@ export class ChatService {
     history: ConversationMessage[],
     dto: ChatMessageDto,
   ): Promise<string> {
-    // Enhanced system prompt for handling any question
     const systemPrompt = this.promptService.getSystemPrompt({
       companyId: dto.companyId?.toString(),
       userId: dto.userId?.toString(),
-    }) + `
-
-**Hướng dẫn xử lý câu hỏi:**
-1. Nếu là câu hỏi về chuỗi cung ứng: Trả lời dựa trên dữ liệu hệ thống
-2. Nếu là câu hỏi chung: Trả lời một cách hữu ích và thân thiện
-3. Nếu là câu chào, cảm ơn: Phản hồi lịch sự, tự nhiên
-4. Nếu không hiểu: Hỏi lại để làm rõ
-
-**Luôn nhớ:**
-- Trả lời bằng tiếng Việt tự nhiên
-- Giữ thái độ chuyên nghiệp nhưng thân thiện
-- Cung cấp thông tin hữu ích nhất có thể`;
+    });
 
     const messages: ConversationMessage[] = [
-      ...history,
+      ...history.slice(-5),
       { role: 'user' as const, content: message, timestamp: new Date() },
     ];
 
@@ -214,57 +208,72 @@ export class ChatService {
     entities: Record<string, any>,
     dto: ChatMessageDto,
   ): Record<string, any> {
+    const enrichedEntities = this.entityExtractionService.extractEntities(
+      dto.message,
+      entities,
+    );
+
     const params: Record<string, any> = {
       companyId: dto.companyId,
       userId: dto.userId,
     };
 
-    // Extract common entities
-    if (entities.itemId) params.itemId = entities.itemId;
-    if (entities.warehouseId) params.warehouseId = entities.warehouseId;
-    if (entities.orderId) params.orderId = entities.orderId;
-    if (entities.orderCode) params.orderCode = entities.orderCode;
-    if (entities.poId) params.poId = entities.poId;
-    if (entities.soId) params.soId = entities.soId;
-    if (entities.rfqId) params.rfqId = entities.rfqId;
-    if (entities.quotationId) params.quotationId = entities.quotationId;
+    if (enrichedEntities.itemId) params.itemId = enrichedEntities.itemId;
+    if (enrichedEntities.itemCode) params.itemCode = enrichedEntities.itemCode;
+    if (enrichedEntities.warehouseId) params.warehouseId = enrichedEntities.warehouseId;
+    if (enrichedEntities.warehouseName)
+      params.warehouseName = enrichedEntities.warehouseName;
+    if (enrichedEntities.orderId) params.orderId = enrichedEntities.orderId;
+    if (enrichedEntities.orderCode) params.orderCode = enrichedEntities.orderCode;
+    if (enrichedEntities.poId) params.poId = enrichedEntities.poId;
+    if (enrichedEntities.poCode) params.poCode = enrichedEntities.poCode;
+    if (enrichedEntities.soId) params.soId = enrichedEntities.soId;
+    if (enrichedEntities.soCode) params.soCode = enrichedEntities.soCode;
+    if (enrichedEntities.moId) params.moId = enrichedEntities.moId;
+    if (enrichedEntities.moCode) params.moCode = enrichedEntities.moCode;
+    if (enrichedEntities.rfqId) params.rfqId = enrichedEntities.rfqId;
+    if (enrichedEntities.rfqCode) params.rfqCode = enrichedEntities.rfqCode;
+    if (enrichedEntities.quotationId) params.quotationId = enrichedEntities.quotationId;
+    if (enrichedEntities.quantity) params.quantity = enrichedEntities.quantity;
+    if (enrichedEntities.supplierId) params.supplierId = enrichedEntities.supplierId;
+    if (enrichedEntities.customerId) params.customerId = enrichedEntities.customerId;
+    if (enrichedEntities.items) params.items = enrichedEntities.items;
 
     return params;
   }
 
-  private formatQueryResponse(result: any, intent?: string): string {
-    if (result.success && result.data) {
-      return this.promptService.formatResponseTemplate(result.data, intent || 'general');
-    } else {
-      return 'Mình chưa tìm thấy thông tin bạn cần. Bạn có thể cung cấp thêm chi tiết hoặc thử hỏi theo cách khác được không?';
+  private async formatQueryResponse(result: any, intent?: string): Promise<string> {
+    if (!result.success || !result.data) {
+      return 'Tôi không tìm thấy thông tin bạn cần. Bạn có thể cung cấp thêm chi tiết hoặc thử hỏi theo cách khác được không?';
     }
-  }
 
-  private formatListData(data: any[]): string {
-    return data
-      .slice(0, 5) // Show first 5 items
-      .map((item, index) => `${index + 1}. ${this.formatItem(item)}`)
-      .join('\n');
-  }
+    let data = result.data;
 
-  private formatItem(item: any): string {
-    if (item.name) return item.name;
-    if (item.code) return item.code;
-    if (item.id) return `ID: ${item.id}`;
-    return JSON.stringify(item);
-  }
-
-  private formatObjectData(data: any): string {
-    if (!data) return 'Không tìm thấy dữ liệu';
-
-    const lines: string[] = [];
-    for (const [key, value] of Object.entries(data)) {
-      if (typeof value !== 'object') {
-        lines.push(`${key}: ${value}`);
+    if (intent === 'get_order_status' || intent === 'check_inventory') {
+      if (data.poCode || data.poId) {
+        data = await this.dataEnrichmentService.enrichPurchaseOrder(data);
+      } else if (data.soCode || data.soId) {
+        data = await this.dataEnrichmentService.enrichSalesOrder(data);
+      } else if (data.quantity !== undefined) {
+        data = await this.dataEnrichmentService.enrichInventory(data);
       }
     }
 
-    return lines.join('\n');
+    const mappedData = this.dataMappingService.mapDataByIntent(data, intent);
+
+    if (mappedData) {
+      return mappedData;
+    }
+
+    const systemPrompt = this.promptService.getSystemPrompt({});
+    const dataContext = this.promptService.buildDataContextPrompt(data, intent || 'data');
+
+    return await this.openAIService.generateDataDrivenResponse(
+      'Phân tích và trình bày dữ liệu này một cách dễ hiểu',
+      [],
+      data,
+      `${systemPrompt}\n\n${dataContext}`,
+    );
   }
 
   async getHistory(sessionId: string, limit?: number): Promise<ConversationMessage[]> {
