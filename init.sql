@@ -20,3 +20,7 @@ GRANT ALL PRIVILEGES ON DATABASE business_service TO postgres;
 CREATE DATABASE operation_service;
 -- Cấp toàn quyền cho user postgres trên database operation_service
 GRANT ALL PRIVILEGES ON DATABASE operation_service TO postgres;
+
+CREATE DATABASE chatbot_service;
+-- Cấp toàn quyền cho user postgres trên database chatbot_service
+GRANT ALL PRIVILEGES ON DATABASE chatbot_service TO postgres;

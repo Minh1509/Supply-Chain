@@ -107,6 +107,34 @@ services:
       - supply-chain-prod
     restart: unless-stopped
 
+  chatbot-service-v2:
+    build:
+      context: ./chatbot-service-v2
+    image: chatbot-service-v2:1.0.0
+    container_name: chatbot-service-v2
+    env_file: ./chatbot-service-v2/.env.docker
+    ports:
+      - "3006:3006"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    networks:
+      - supply-chain
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - supply-chain
+    restart: unless-stopped
+
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: rabbitmq
@@ -157,6 +185,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+volumes:
+  ollama-data:
 
 networks:
   supply-chain:

@@ -115,25 +115,71 @@ services:
     networks:
       - supply-chain-prod
     restart: unless-stopped
-  # chatbot-service:
-  #   build:
-  #     context: ./chatbot-service
-  #     dockerfile: Dockerfile.prod
-  #   image: chatbot-service:1.0.5
-  #   container_name: chatbot-service-prod
-  #   env_file: ./chatbot-service/.env.prod
-  #   ports:
-  #     - "3006:3006"
-  #   depends_on:
-  #     rabbitmq:
-  #       condition: service_healthy
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - supply-chain-prod
-  #   restart: unless-stopped
+
+  chatbot-service-v2:
+    build:
+      context: ./chatbot-service-v2
+      dockerfile: Dockerfile.prod
+    image: chatbot-service-v2:1.0.5
+    container_name: chatbot-service-v2-prod
+    env_file: ./chatbot-service-v2/.env.prod
+    ports:
+      - "3006:3006"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    networks:
+      - supply-chain-prod
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3006/api/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-prod
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data-prod:/root/.ollama
+    networks:
+      - supply-chain-prod
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          cpus: "1.0"
+          memory: 2G
+    environment:
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=2
+      - OLLAMA_KEEP_ALIVE=5m
 
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
@@ -190,6 +236,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+volumes:
+  ollama-data-prod:
 
 networks:
   supply-chain-prod:
