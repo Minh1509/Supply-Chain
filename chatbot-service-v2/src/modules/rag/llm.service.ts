@@ -17,9 +17,10 @@ export class LlmService {
           options: {
             temperature: 0.7,
             top_p: 0.9,
+            num_predict: 256, // Limit response length to avoid timeout
           },
         },
-        { timeout: 30000 },
+        { timeout: 60000 }, // Increase to 60 seconds
       );
 
       return response.data.response;

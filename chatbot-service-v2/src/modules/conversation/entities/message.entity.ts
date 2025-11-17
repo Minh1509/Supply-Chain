@@ -19,7 +19,7 @@ export class MessageEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ type: 'uuid' })
   conversationId: string;
 
   @Column({ type: 'enum', enum: MessageRole })
@@ -44,6 +44,6 @@ export class MessageEntity {
   createdAt: Date;
 
   @ManyToOne(() => ConversationEntity, (conversation) => conversation.messages)
-  @JoinColumn({ name: 'conversationId' })
+  @JoinColumn({ name: 'conversation_id' })
   conversation: ConversationEntity;
 }

@@ -13,7 +13,7 @@ const AppDataSource = new DataSource({
   synchronize: false,
   logging: false,
   entities: ['dist/**/*.entity.js'],
-  migrations: ['dist/database/migrations/*.js'],
+  migrations: ['dist/src/database/migrations/*.js'],
   namingStrategy: new SnakeNamingStrategy(),
 });
 

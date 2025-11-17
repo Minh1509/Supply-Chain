@@ -27,7 +27,7 @@ export class InitialSchema1700000000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE "messages" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-        "conversation_id" character varying NOT NULL,
+        "conversation_id" uuid NOT NULL,
         "role" character varying NOT NULL,
         "content" text NOT NULL,
         "intent" character varying,
