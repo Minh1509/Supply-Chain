@@ -115,25 +115,46 @@ services:
     networks:
       - supply-chain-prod
     restart: unless-stopped
-  # chatbot-service:
-  #   build:
-  #     context: ./chatbot-service
-  #     dockerfile: Dockerfile.prod
-  #   image: chatbot-service:1.0.5
-  #   container_name: chatbot-service-prod
-  #   env_file: ./chatbot-service/.env.prod
-  #   ports:
-  #     - "3006:3006"
-  #   depends_on:
-  #     rabbitmq:
-  #       condition: service_healthy
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - supply-chain-prod
-  #   restart: unless-stopped
+  chatbot-service:
+    build:
+      context: ./chatbot-service
+      dockerfile: Dockerfile.prod
+    image: chatbot-service:1.0.5
+    container_name: chatbot-service-prod
+    env_file: ./chatbot-service/.env.prod
+    ports:
+      - "3006:3006"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localai:
+        condition: service_healthy
+    networks:
+      - supply-chain-prod
+    restart: unless-stopped
+
+  localai:
+    image: localai/localai:latest
+    container_name: localai-prod
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./localai-models:/models
+    environment:
+      - THREADS=4
+      - CONTEXT_SIZE=512
+    networks:
+      - supply-chain-prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   rabbitmq:
     image: rabbitmq:3.13-management-alpine

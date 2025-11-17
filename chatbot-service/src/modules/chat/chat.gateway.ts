@@ -14,10 +14,10 @@ import { ChatMessageDto } from 'src/common/dto/chat.dto';
 import { CHAT_CONSTANTS } from 'src/common/constants';
 
 @WebSocketGateway({
-  cors: {
-    origin: '*',
-  },
+  cors: { origin: '*' },
   namespace: '/chat',
+  pingTimeout: 120000,
+  pingInterval: 25000,
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -47,22 +47,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       this.logger.debug(`Nhận tin nhắn từ ${client.id}: ${data.message}`);
 
-      // Gửi trạng thái đang nhập
       client.emit(CHAT_CONSTANTS.EVENTS.TYPING, { isTyping: true });
 
-      // Xử lý mọi câu hỏi của user
       const response = await this.chatService.processMessage(data);
 
-      // Gửi phản hồi
       client.emit(CHAT_CONSTANTS.EVENTS.TYPING, { isTyping: false });
       client.emit(CHAT_CONSTANTS.EVENTS.MESSAGE, response);
 
       return response;
     } catch (error) {
-      this.logger.error(`Lỗi xử lý tin nhắn: ${error.message}`, error.stack);
+      this.logger.error(`Lỗi: ${error.message}`);
+      client.emit(CHAT_CONSTANTS.EVENTS.TYPING, { isTyping: false });
       client.emit(CHAT_CONSTANTS.EVENTS.ERROR, {
-        message: 'Xin lỗi, tôi không thể xử lý câu hỏi này. Vui lòng thử lại.',
-        error: error.message,
+        message: 'Lỗi xử lý tin nhắn. Vui lòng thử lại!',
       });
     }
   }

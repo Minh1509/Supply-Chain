@@ -9,6 +9,7 @@ import { DataEnrichmentService } from '../data-enrichment/data-enrichment.servic
 import { ChatMessageDto, ChatResponseDto } from 'src/common/dto/chat.dto';
 import { ConversationMessage, IntentResult } from 'src/common/interfaces/chat.interface';
 import { ChatIntent } from 'src/common/enums';
+import { LocalAIService } from '../llm/localai.service';
 
 @Injectable()
 export class ChatService {
@@ -17,7 +18,7 @@ export class ChatService {
 
   constructor(
     private readonly conversationService: ConversationService,
-    private readonly openAIService: OpenAIService,
+    private readonly localAIService: LocalAIService,
     private readonly promptService: PromptService,
     private readonly actionExecutor: ActionExecutorService,
     private readonly dataMappingService: DataMappingService,
@@ -91,7 +92,7 @@ export class ChatService {
     history: ConversationMessage[] = [],
   ): Promise<IntentResult> {
     try {
-      const result = await this.openAIService.analyzeIntent(message, history);
+      const result = await this.localAIService.analyzeIntent(message, history);
       return result;
     } catch (error) {
       this.logger.error(`Error analyzing intent: ${error.message}`);
@@ -186,7 +187,7 @@ export class ChatService {
       { role: 'user' as const, content: message, timestamp: new Date() },
     ];
 
-    return await this.openAIService.generateResponse(messages, systemPrompt);
+    return await this.localAIService.generateResponse(messages, systemPrompt);
   }
 
   private mapIntentToAction(intent: string): string {
@@ -268,7 +269,7 @@ export class ChatService {
     const systemPrompt = this.promptService.getSystemPrompt({});
     const dataContext = this.promptService.buildDataContextPrompt(data, intent || 'data');
 
-    return await this.openAIService.generateDataDrivenResponse(
+    return await this.localAIService.generateDataDrivenResponse(
       'Phân tích và trình bày dữ liệu này một cách dễ hiểu',
       [],
       data,

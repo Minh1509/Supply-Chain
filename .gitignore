@@ -9,3 +9,4 @@ postgres-data-prod/
 redis-data-prod/
 rabbitmq-data-prod/
 /.idea/
+localai-models/
