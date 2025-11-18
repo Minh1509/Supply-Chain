@@ -10,6 +10,7 @@ import { ConversationModule } from './conversation/conversation.module';
 import { PersonalizationModule } from './personalization/personalization.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { HealthModule } from './health/health.module';
+import { AppController } from './app.controller';
 import { databaseConfig } from '../config/database.config';
 
 @Module({
@@ -30,5 +31,6 @@ import { databaseConfig } from '../config/database.config';
     PersonalizationModule,
     AnalyticsModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

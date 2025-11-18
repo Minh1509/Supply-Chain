@@ -19,10 +19,9 @@ export class ActionExecutorService {
           return await this.inventoryAction.getInventory(entities);
 
         case IntentType.QUERY_ORDER:
-          if (entities.orderType === 'purchase' || entities.orderCode?.startsWith('PO')) {
-            return await this.businessAction.getPurchaseOrder(entities);
-          }
-          return await this.businessAction.getSalesOrder(entities);
+          return entities.orderType === 'purchase' || entities.orderCode?.startsWith('PO')
+            ? await this.businessAction.getPurchaseOrder(entities)
+            : await this.businessAction.getSalesOrder(entities);
 
         case IntentType.QUERY_MANUFACTURE:
           return await this.operationAction.getManufactureOrder(entities);
@@ -34,7 +33,7 @@ export class ActionExecutorService {
           return null;
       }
     } catch (error) {
-      console.error('Fetch data error:', error.message);
+      console.error('Fetch error:', error.message);
       return null;
     }
   }

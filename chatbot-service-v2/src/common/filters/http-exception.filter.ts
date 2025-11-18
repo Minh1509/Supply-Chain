@@ -16,15 +16,24 @@ export class AllExceptionsFilter implements ExceptionFilter {
         ? exception.getResponse()
         : { message: 'Internal server error' };
 
-    // Log full error details for debugging
-    console.error('Exception caught:', {
-      path: request.url,
-      method: request.method,
-      body: request.body,
-      status,
-      message,
-      stack: exception instanceof Error ? exception.stack : 'No stack trace',
-    });
+    // Skip logging for common static asset 404s
+    const skipLogging = status === 404 && (
+      request.url.includes('/favicon.ico') ||
+      request.url.includes('.map') ||
+      request.url.includes('/robots.txt')
+    );
+
+    // Log full error details for debugging (except skipped paths)
+    if (!skipLogging) {
+      console.error('Exception caught:', {
+        path: request.url,
+        method: request.method,
+        body: request.body,
+        status,
+        message,
+        stack: exception instanceof Error ? exception.stack : 'No stack trace',
+      });
+    }
 
     response.status(status).json({
       success: false,

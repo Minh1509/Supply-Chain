@@ -7,97 +7,65 @@ export class GeneralActionService {
 
   async getItem(entities: any): Promise<any> {
     try {
-      const payload = {
-        pattern: 'item.get_by_id',
-        data: {
-          itemId: entities.itemId,
-        },
-      };
-
-      const response = await this.rabbitmq.send('general_queue', payload);
+      const response = await this.rabbitmq.send('item.get_by_id', { itemId: entities.itemId });
       return this.formatItemResponse(response);
     } catch (error) {
-      console.error('Get item error:', error.message);
       return null;
     }
   }
 
   async getProduct(entities: any): Promise<any> {
     try {
-      const payload = {
-        pattern: 'product.get_by_id',
-        data: {
-          productId: entities.productId,
-        },
-      };
-
-      const response = await this.rabbitmq.send('general_queue', payload);
+      const response = await this.rabbitmq.send('product.get_by_id', { productId: entities.productId });
       return this.formatProductResponse(response);
     } catch (error) {
-      console.error('Get product error:', error.message);
       return null;
     }
   }
 
   async getManufacturePlant(entities: any): Promise<any> {
     try {
-      const payload = {
-        pattern: 'manufacture_plant.get_all_in_company',
-        data: {
-          companyId: entities.companyId || 1,
-        },
-      };
-
-      const response = await this.rabbitmq.send('general_queue', payload);
-      return response;
+      const response = await this.rabbitmq.send('manufacture_plant.get_all_in_company', {
+        companyId: entities.companyId || 1,
+      });
+      return response || [];
     } catch (error) {
-      console.error('Get manufacture plant error:', error.message);
       return [];
     }
   }
 
   async getManufactureLine(entities: any): Promise<any> {
     try {
-      const payload = {
-        pattern: 'manufacture_line.get_all_in_plant',
-        data: {
-          plantId: entities.plantId,
-        },
-      };
-
-      const response = await this.rabbitmq.send('general_queue', payload);
-      return response;
+      const response = await this.rabbitmq.send('manufacture_line.get_all_in_plant', {
+        plantId: entities.plantId,
+      });
+      return response || [];
     } catch (error) {
-      console.error('Get manufacture line error:', error.message);
       return [];
     }
   }
 
   private formatItemResponse(response: any): any {
-    if (response && response.id) {
-      return {
-        itemId: response.id,
-        itemCode: response.code,
-        itemName: response.name,
-        type: response.type,
-        unit: response.unit,
-        description: response.description,
-      };
-    }
-    return null;
+    return response?.id
+      ? {
+          itemId: response.id,
+          itemCode: response.code,
+          itemName: response.name,
+          type: response.type,
+          unit: response.unit,
+        }
+      : null;
   }
 
   private formatProductResponse(response: any): any {
-    if (response && response.id) {
-      return {
-        productId: response.id,
-        productCode: response.code,
-        productName: response.name,
-        category: response.category,
-        price: response.price,
-        description: response.description,
-      };
-    }
-    return null;
+    return response?.id
+      ? {
+          productId: response.id,
+          productCode: response.code,
+          productName: response.name,
+          category: response.category,
+          price: response.price,
+        }
+      : null;
   }
 }
