@@ -3,7 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { firstValueFrom } from 'rxjs';
 import { RABBITMQ_CONSTANTS } from 'src/common/constants/rabbitmq.constant';
-import { ManuStageRequestDto } from './dto/manu-stage-request.dto';
+import { ManuStageRequestDto, ManuStageUpdateData } from './dto/manu-stage-request.dto';
 import { MANUFACTURE_STAGE_CONSTANTS } from './manufacture-stage.constant';
 
 @Controller('/manufacture-stage')
@@ -13,6 +13,13 @@ export class ManufactureStageController {
   constructor(
     @Inject(RABBITMQ_CONSTANTS.OPERATION.name) private operationClient: ClientProxy,
   ) {}
+
+  @Get('/is-item-created-stage/:itemId')
+  async isItemCreatedStage(@Param('itemId') itemId: number) {
+    return await firstValueFrom(
+      this.operationClient.send(MANUFACTURE_STAGE_CONSTANTS.IS_ITEM_CREATED_STAGE, { itemId }),
+    );
+  }
 
   @Post()
   async createStage(@Body() manuStageData: ManuStageRequestDto) {
@@ -43,9 +50,9 @@ export class ManufactureStageController {
   }
 
   @Put('/:stageId')
-  async updateStage(@Param('stageId') stageId: number, @Body() manuStageData: ManuStageRequestDto) {
+  async updateStage(@Param('stageId') stageId: number, @Body() manuStageUpdateData: ManuStageUpdateData) {
     return await firstValueFrom(
-      this.operationClient.send(MANUFACTURE_STAGE_CONSTANTS.UPDATE_STAGE, { stageId, manuStageData }),
+      this.operationClient.send(MANUFACTURE_STAGE_CONSTANTS.UPDATE_STAGE, { stageId, manuStageUpdateData }),
     );
   }
 

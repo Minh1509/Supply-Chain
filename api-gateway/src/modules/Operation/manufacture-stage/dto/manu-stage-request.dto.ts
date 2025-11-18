@@ -49,3 +49,15 @@ export class ManuStageRequestDto {
   @Type(() => ManuStageDetailRequestDto)
   stageDetails: ManuStageDetailRequestDto[];
 }
+
+export class ManuStageUpdateData {
+  @ApiProperty({ description: 'Description', example: 'Quy trình sản xuất sản phẩm A' })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiProperty({ description: 'Status', example: 'Không còn hiệu lực' })
+  @IsOptional()
+  @IsString()
+  status?: string;
+}

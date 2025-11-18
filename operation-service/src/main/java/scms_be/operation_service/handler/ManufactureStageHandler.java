@@ -23,6 +23,8 @@ public class ManufactureStageHandler {
         ManuStageRequest request = objectMapper.convertValue(event.getData(), ManuStageRequest.class);
         System.out.println("manufacture stage event: " + event);
         switch (event.getPattern()) {
+            case "manufacture_stage.is_item_created_stage": 
+                return stageService.isItemCreatedStage(request.getItemId());
             case "manufacture_stage.create": 
                 return stageService.createStage(request.getManuStageData());
             case "manufacture_stage.get_by_item_id": 
@@ -32,7 +34,7 @@ public class ManufactureStageHandler {
             case "manufacture_stage.get_all_in_company": 
                 return stageService.getAllStagesInCompany(request.getCompanyId());      
             case "manufacture_stage.update": 
-                return stageService.updateStage(request.getStageId(), request.getManuStageData());
+                return stageService.updateStage(request.getStageId(), request.getManuStageUpdateData());
             case "manufacture_stage.delete": 
                 stageService.deleteStage(request.getStageId());
                 return "OK";

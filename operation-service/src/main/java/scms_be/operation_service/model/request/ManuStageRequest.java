@@ -10,6 +10,7 @@ public class ManuStageRequest {
   private Long companyId;
   private Long itemId;
   private ManuStageData manuStageData;
+  private ManuStageUpdateData manuStageUpdateData;
 
   @Data
   public static class ManuStageData {
@@ -18,4 +19,11 @@ public class ManuStageRequest {
     private String status;
     private List<ManuStageDetailRequest> stageDetails;
   }
+
+  @Data
+  public static class ManuStageUpdateData {
+    private String description;
+    private String status;
+  }
+
 }

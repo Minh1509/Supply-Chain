@@ -1,6 +1,8 @@
 package scms_be.operation_service.service;
 
+import java.util.ArrayList;
 import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +15,7 @@ import scms_be.operation_service.model.entity.ManufactureStage;
 import scms_be.operation_service.model.entity.ManufactureStageDetail;
 import scms_be.operation_service.model.request.ManuStageDetailRequest;
 import scms_be.operation_service.model.request.ManuStageRequest.ManuStageData;
+import scms_be.operation_service.model.request.ManuStageRequest.ManuStageUpdateData;
 import scms_be.operation_service.repository.ManufactureStageDetailRepository;
 import scms_be.operation_service.repository.ManufactureStageRepository;
 
@@ -28,11 +31,25 @@ public class ManufactureStageService {
   @Autowired
   private ManufactureStageDetailRepository stageDetailRepository;
 
+  public boolean isItemCreatedStage(Long itemId) {
+    ManufactureStage stage = stageRepository.findByItemIdAndStatus(itemId, "Có hiệu lực");
+    return stage != null;
+  }
+
   public ManufactureStageDto createStage(ManuStageData stageRequest) {
 
     if (stageRequest.getStageDetails() == null || stageRequest.getStageDetails().isEmpty()) {
       throw new RpcException(400, "Danh sách công đoạn không được để trống!");
     }
+
+    if (isItemCreatedStage(stageRequest.getItemId())) {
+      ManufactureStage existingStage = stageRepository.findByItemIdAndStatus(stageRequest.getItemId(), "Có hiệu lực");
+      existingStage.setStatus("Không còn hiệu lực");
+      stageRepository.save(existingStage);
+    }
+
+    // Kiểm tra StageName không được trùng nhau
+    validateUniqueStageNames(stageRequest.getStageDetails());
 
     ManufactureStage stage = new ManufactureStage();
     stage.setStageCode(generateStageCode(stageRequest.getItemId()));
@@ -68,9 +85,15 @@ public class ManufactureStageService {
     int count = stageRepository.countByStageCodeStartingWith(prefix);
     return prefix + String.format("%02d", count + 1);
   }
-
-  public ManufactureStageDto getStagesByItemId(Long itemId) {
-    return convertToDto(stageRepository.findByItemId(itemId));
+  
+  public List<ManufactureStageDto> getStagesByItemId(Long itemId) {
+    List<ManufactureStage> stages = stageRepository.findByItemId(itemId);
+    if (stages == null || stages.isEmpty()) {
+      throw new RpcException(404, "Không tìm thấy công đoạn sản xuất cho hàng hóa này!");
+    }
+    return stages.stream()
+        .map(this::convertToDto)
+        .toList();
   }
 
   public ManufactureStageDto getStageById(Long stageId) {
@@ -81,40 +104,28 @@ public class ManufactureStageService {
 
   public List<ManufactureStageDto> getAllStagesInCompany(Long companyId) {
     List<ItemDto> items = eventPublisher.GetItemAllByCompanyId(companyId);
-    List<ManufactureStageDto> stageDtos = items.stream()
-        .map(item -> {
-          ManufactureStage stage = stageRepository.findByItemId(item.getItemId());
-          if (stage != null) {
-            return convertToDto(stage);
-          }
-          return null;
-        })
-        .filter(stageDto -> stageDto != null)
-        .toList();
+    List<ManufactureStageDto> stageDtos = new ArrayList<>();
+
+    for( ItemDto item : items) {
+      List<ManufactureStage> stages = stageRepository.findByItemId(item.getItemId());
+      for(ManufactureStage stage : stages) {
+        ManufactureStageDto stageDto = convertToDto(stage);
+        stageDtos.add(stageDto);
+      }
+    }
     return stageDtos;
   }
 
-  public ManufactureStageDto updateStage(Long stageId, ManuStageData stage) {
-  ManufactureStage exist = stageRepository.findById(stageId)
+  public ManufactureStageDto updateStage(Long stageId, ManuStageUpdateData stage) {
+    ManufactureStage exist = stageRepository.findById(stageId)
     .orElseThrow(() -> new RpcException(404, "Không tìm thấy công đoạn sản xuất!"));
 
-    if (stage.getStageDetails() == null || stage.getStageDetails().isEmpty()) {
-      throw new RpcException(400, "Danh sách công đoạn không được để trống!");
+    if (exist.getStatus().equals("Không còn hiệu lực")) {
+      throw new RpcException(400, "Không thể cập nhật. Công đoạn không còn hiệu lực!");
     }
 
     exist.setDescription(stage.getDescription());
     exist.setStatus(stage.getStatus());
-
-    for (ManuStageDetailRequest detailRequest : stage.getStageDetails()) {
-      ManufactureStageDetail stageDetail = new ManufactureStageDetail();
-      stageDetail.setStage(exist);
-      stageDetail.setStageName(detailRequest.getStageName());
-      stageDetail.setStageOrder(detailRequest.getStageOrder());
-      stageDetail.setEstimatedTime(detailRequest.getEstimatedTime());
-      stageDetail.setDescription(detailRequest.getDescription());
-
-      stageDetailRepository.save(stageDetail);
-    }
     return convertToDto(stageRepository.save(exist));
   }
 
@@ -158,5 +169,25 @@ public class ManufactureStageService {
     dto.setEstimatedTime(stageDetail.getEstimatedTime());
     dto.setDescription(stageDetail.getDescription());
     return dto;
+  }
+
+  /**
+   * Kiểm tra tính duy nhất của StageName trong danh sách stage details
+   * @param stageDetails danh sách stage details cần kiểm tra
+   * @throws RpcException nếu có StageName trùng lặp
+   */
+  private void validateUniqueStageNames(List<ManuStageDetailRequest> stageDetails) {
+    List<String> stageNames = stageDetails.stream()
+        .map(detail -> detail.getStageName().trim().toLowerCase())
+        .toList();
+    
+    List<String> duplicateNames = stageNames.stream()
+        .filter(name -> stageNames.stream().filter(n -> n.equals(name)).count() > 1)
+        .distinct()
+        .toList();
+    
+    if (!duplicateNames.isEmpty()) {
+      throw new RpcException(400, "Tên công đoạn bị trùng lặp: " + String.join(", ", duplicateNames));
+    }
   }
 }

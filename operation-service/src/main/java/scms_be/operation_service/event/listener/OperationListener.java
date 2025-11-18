@@ -63,6 +63,7 @@ public class OperationListener {
                 case "manufacture_process.update":
                     return manufactureProcessHandler.handle(event);
                 // Manufacture stage handlers
+                case "manufacture_stage.is_item_created_stage": 
                 case "manufacture_stage.create":
                 case "manufacture_stage.get_by_item_id":
                 case "manufacture_stage.get_by_id":

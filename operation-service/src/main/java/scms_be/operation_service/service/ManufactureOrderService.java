@@ -58,7 +58,7 @@ public class ManufactureOrderService {
     if (bom == null) {
       throw new RpcException(404, "Hàng hóa chưa có BOM!");
     }
-    ManufactureStage stage = stageRepository.findByItemId(orderRequest.getItemId());
+    ManufactureStage stage = stageRepository.findByItemIdAndStatus(orderRequest.getItemId(), "Có hiệu lực");
     if (stage == null) {
       throw new RpcException(404, "Chưa thiết lập công đoạn sản xuất cho hàng hóa này!");
     }
@@ -87,7 +87,7 @@ public class ManufactureOrderService {
     order.setStatus(orderRequest.getStatus());
 
     manufactureOrderRepository.save(order);
-    ManufactureStage newStage = stageRepository.findByItemId(orderRequest.getItemId());
+    ManufactureStage newStage = stage;
     List<ManufactureStageDetail> stageDetailList = stageDetailRepository.findByStage_StageId(newStage.getStageId());
     for (ManufactureStageDetail stageDetail : stageDetailList) {
       ManuProcessData processRequest = new ManuProcessData();

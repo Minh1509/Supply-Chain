@@ -1,4 +1,5 @@
 export const MANUFACTURE_STAGE_CONSTANTS = {
+  IS_ITEM_CREATED_STAGE: 'manufacture_stage.is_item_created_stage',
   CREATE_STAGE: 'manufacture_stage.create',
   GET_STAGE_BY_ITEM: 'manufacture_stage.get_by_item_id',
   GET_STAGE_BY_ID: 'manufacture_stage.get_by_id',
