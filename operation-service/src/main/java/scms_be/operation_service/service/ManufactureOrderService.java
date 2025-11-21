@@ -58,7 +58,7 @@ public class ManufactureOrderService {
     if (bom == null) {
       throw new RpcException(404, "Hàng hóa chưa có BOM!");
     }
-    ManufactureStage stage = stageRepository.findByItemIdAndStatus(orderRequest.getItemId(), "Có hiệu lực");
+    ManufactureStage stage = stageRepository.findByItemIdAndStatus(orderRequest.getItemId(), "Đang sử dụng");
     if (stage == null) {
       throw new RpcException(404, "Chưa thiết lập công đoạn sản xuất cho hàng hóa này!");
     }

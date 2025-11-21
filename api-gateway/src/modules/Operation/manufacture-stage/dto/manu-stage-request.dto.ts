@@ -56,7 +56,7 @@ export class ManuStageUpdateData {
   @IsString()
   description?: string;
 
-  @ApiProperty({ description: 'Status', example: 'Không còn hiệu lực' })
+  @ApiProperty({ description: 'Status', example: 'Ngừng sử dụng' })
   @IsOptional()
   @IsString()
   status?: string;

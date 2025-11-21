@@ -32,7 +32,7 @@ public class ManufactureStageService {
   private ManufactureStageDetailRepository stageDetailRepository;
 
   public boolean isItemCreatedStage(Long itemId) {
-    ManufactureStage stage = stageRepository.findByItemIdAndStatus(itemId, "Có hiệu lực");
+    ManufactureStage stage = stageRepository.findByItemIdAndStatus(itemId, "Đang sử dụng");
     return stage != null;
   }
 
@@ -43,8 +43,8 @@ public class ManufactureStageService {
     }
 
     if (isItemCreatedStage(stageRequest.getItemId())) {
-      ManufactureStage existingStage = stageRepository.findByItemIdAndStatus(stageRequest.getItemId(), "Có hiệu lực");
-      existingStage.setStatus("Không còn hiệu lực");
+      ManufactureStage existingStage = stageRepository.findByItemIdAndStatus(stageRequest.getItemId(), "Đang sử dụng");
+      existingStage.setStatus("Ngừng sử dụng");
       stageRepository.save(existingStage);
     }
 
@@ -120,7 +120,7 @@ public class ManufactureStageService {
     ManufactureStage exist = stageRepository.findById(stageId)
     .orElseThrow(() -> new RpcException(404, "Không tìm thấy công đoạn sản xuất!"));
 
-    if (exist.getStatus().equals("Không còn hiệu lực")) {
+    if (exist.getStatus().equals("Ngừng sử dụng")) {
       throw new RpcException(400, "Không thể cập nhật. Công đoạn không còn hiệu lực!");
     }
 
