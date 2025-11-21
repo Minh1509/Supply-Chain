@@ -1,40 +1,32 @@
-import { IsNotEmpty, IsString, IsOptional, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsUUID } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
-export class ChatMessageDto {
-  @IsNotEmpty()
+export class ChatRequestDto {
+  @ApiProperty({ example: 'Tồn kho sản phẩm ABC là bao nhiêu?' })
   @IsString()
   message: string;
 
-  @IsNotEmpty()
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsUUID()
+  conversationId?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
-  sessionId: string;
+  userId?: string;
 
-  @IsNotEmpty()
-  @IsNumber()
-  userId: number;
-
+  @ApiProperty({ required: false })
   @IsOptional()
-  @IsNumber()
-  companyId?: number;
-
-  @IsOptional()
-  metadata?: Record<string, any>;
+  @IsString()
+  userRole?: string;
 }
 
 export class ChatResponseDto {
+  conversationId: string;
   message: string;
   intent?: string;
-  suggestions?: string[];
-  data?: any;
+  entities?: Record<string, any>;
+  actions?: any[];
   timestamp: Date;
-}
-
-export class ConversationHistoryDto {
-  @IsNotEmpty()
-  @IsString()
-  sessionId: string;
-
-  @IsOptional()
-  @IsNumber()
-  limit?: number;
 }

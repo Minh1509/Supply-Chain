@@ -107,12 +107,12 @@ services:
       - supply-chain-prod
     restart: unless-stopped
 
-  chatbot-service-v2:
+  chatbot-service:
     build:
-      context: ./chatbot-service-v2
-    image: chatbot-service-v2:1.0.0
-    container_name: chatbot-service-v2
-    env_file: ./chatbot-service-v2/.env.docker
+      context: ./chatbot-service
+    image: chatbot-service:1.0.0
+    container_name: chatbot-service
+    env_file: ./chatbot-service/.env.docker
     ports:
       - "3006:3006"
     depends_on:

@@ -1,22 +1,9 @@
-FROM node:20-alpine AS builder
-
+FROM node:22-alpine
 WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci
-
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile --production=false && \
+    yarn cache clean && \
+    rm -rf /tmp/* /var/cache/apk/*
 COPY . .
-RUN npm run build
-
-FROM node:20-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci --only=production
-
-COPY --from=builder /app/dist ./dist
-
 EXPOSE 3006
-
-CMD ["node", "dist/main"]
+CMD ["sh", "-c", "yarn migrate:run && yarn start:dev"]

@@ -1,71 +1,88 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import Redis from 'ioredis';
-import { REDIS_KEYS } from 'src/common/constants';
-import {
-  ConversationContext,
-  ConversationMessage,
-} from 'src/common/interfaces/chat.interface';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ConversationEntity } from './entities/conversation.entity';
+import { MessageEntity, MessageRole } from './entities/message.entity';
 
 @Injectable()
 export class ConversationService {
   constructor(
-    @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
-    private readonly configService: ConfigService,
+    @InjectRepository(ConversationEntity)
+    private readonly conversationRepo: Repository<ConversationEntity>,
+    @InjectRepository(MessageEntity)
+    private readonly messageRepo: Repository<MessageEntity>,
   ) {}
 
-  async saveMessage(sessionId: string, message: ConversationMessage): Promise<void> {
-    const key = REDIS_KEYS.CONVERSATION_HISTORY(sessionId);
-    const maxHistory = this.configService.get('session.maxConversationHistory');
-    const expiry = this.configService.get('session.expirySeconds');
+  async createConversation(data: {
+    userId?: string;
+    userName?: string;
+    userRole?: string;
+    companyId?: number;
+  }): Promise<ConversationEntity> {
+    const conversation = this.conversationRepo.create({
+      userId: data.userId,
+      userName: data.userName,
+      userRole: data.userRole,
+      companyId: data.companyId || 1,
+      context: {},
+      metadata: {},
+      isActive: true,
+      lastMessageAt: new Date(),
+    });
 
-    // Add message to list
-    await this.redisClient.lpush(key, JSON.stringify(message));
-
-    // Trim to max history
-    await this.redisClient.ltrim(key, 0, maxHistory - 1);
-
-    // Set expiry
-    await this.redisClient.expire(key, expiry);
+    return this.conversationRepo.save(conversation);
   }
 
-  async getHistory(sessionId: string, limit?: number): Promise<ConversationMessage[]> {
-    const key = REDIS_KEYS.CONVERSATION_HISTORY(sessionId);
-    const maxHistory = limit || this.configService.get('session.maxConversationHistory');
-
-    const messages = await this.redisClient.lrange(key, 0, maxHistory - 1);
-
-    return messages.map((msg) => JSON.parse(msg)).reverse();
+  async getConversation(conversationId: string): Promise<ConversationEntity> {
+    return this.conversationRepo.findOne({
+      where: { id: conversationId },
+      relations: ['messages'],
+    });
   }
 
-  async clearHistory(sessionId: string): Promise<void> {
-    const key = REDIS_KEYS.CONVERSATION_HISTORY(sessionId);
-    await this.redisClient.del(key);
+  async addMessage(data: {
+    conversationId: string;
+    role: MessageRole;
+    content: string;
+    intent?: string;
+    entities?: Record<string, any>;
+    metadata?: Record<string, any>;
+    responseTime?: number;
+  }): Promise<MessageEntity> {
+    const message = this.messageRepo.create(data);
+    await this.messageRepo.save(message);
+
+    await this.conversationRepo.update(data.conversationId, {
+      lastMessageAt: new Date(),
+    });
+
+    return message;
   }
 
-  async saveContext(
-    sessionId: string,
-    context: Partial<ConversationContext>,
+  async getConversationHistory(conversationId: string, limit = 10): Promise<MessageEntity[]> {
+    return this.messageRepo.find({
+      where: { conversationId },
+      order: { createdAt: 'DESC' },
+      take: limit,
+    });
+  }
+
+  async updateConversationContext(
+    conversationId: string,
+    context: Record<string, any>,
   ): Promise<void> {
-    const key = REDIS_KEYS.SESSION_DATA(sessionId);
-    const expiry = this.configService.get('session.expirySeconds');
-
-    await this.redisClient.setex(key, expiry, JSON.stringify(context));
+    await this.conversationRepo.update(conversationId, { context });
   }
 
-  async getContext(sessionId: string): Promise<ConversationContext | null> {
-    const key = REDIS_KEYS.SESSION_DATA(sessionId);
-    const data = await this.redisClient.get(key);
-
-    return data ? JSON.parse(data) : null;
+  async getUserConversations(userId: string, limit = 20): Promise<ConversationEntity[]> {
+    return this.conversationRepo.find({
+      where: { userId, isActive: true },
+      order: { lastMessageAt: 'DESC' },
+      take: limit,
+    });
   }
 
-  async extendSession(sessionId: string): Promise<void> {
-    const expiry = this.configService.get('session.expirySeconds');
-    const historyKey = REDIS_KEYS.CONVERSATION_HISTORY(sessionId);
-    const contextKey = REDIS_KEYS.SESSION_DATA(sessionId);
-
-    await this.redisClient.expire(historyKey, expiry);
-    await this.redisClient.expire(contextKey, expiry);
+  async closeConversation(conversationId: string): Promise<void> {
+    await this.conversationRepo.update(conversationId, { isActive: false });
   }
 }

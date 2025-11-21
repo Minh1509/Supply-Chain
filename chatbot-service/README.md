@@ -1,114 +1,243 @@
-# Chatbot Service
+# Chatbot Service V2
 
-AI-powered chatbot service for Supply Chain Management System.
+RAG-based chatbot service cho Supply Chain Management System, được xây dựng bằng NestJS và Ollama.
 
-## Features
+## 🚀 Features
 
-- 🤖 OpenAI GPT-4 integration
-- 💬 Real-time WebSocket communication
-- 🔄 Multi-turn conversation with context
-- 🎯 Intent recognition and entity extraction
-- ⚡ Action execution (call existing microservices)
-- 📊 Query information (inventory, orders, reports)
-- 🔐 User authentication and authorization
-- 📝 Conversation history with Redis
+- **RAG (Retrieval-Augmented Generation)**: Tích hợp knowledge base để trả lời chính xác
+- **Intent Recognition**: Nhận diện ý định người dùng
+- **Context Management**: Quản lý ngữ cảnh hội thoại
+- **Personalization**: Cá nhân hóa trải nghiệm người dùng
+- **Analytics**: Theo dõi và phân tích hiệu suất chatbot
+- **RabbitMQ Integration**: Giao tiếp với các microservices khác
+- **Swagger Documentation**: API docs tự động
 
-## Tech Stack
+## 📋 Prerequisites
 
-- **Framework:** NestJS
-- **AI:** OpenAI GPT-4, LangChain
-- **WebSocket:** Socket.IO
-- **Message Queue:** RabbitMQ
-- **Cache:** Redis
-- **Language:** TypeScript
+- Node.js 22+
+- PostgreSQL 15+
+- RabbitMQ 3.13+
+- Ollama (với models: qwen2.5:3b, nomic-embed-text)
+- Docker & Docker Compose (cho deployment)
 
-## Installation
+## 🛠️ Installation
 
-```bash
-npm install
-```
-
-## Running the service
-
-### Development
+### Local Development
 
 ```bash
-npm run start:dev
+# Install dependencies
+yarn install
+
+# Setup environment
+cp .env.example .env
+
+# Run database migration
+yarn migrate:run
+
+# Start development server
+yarn start:dev
 ```
 
-### Production
+### Docker Development
 
 ```bash
-npm run build
-npm run start:prod
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f chatbot-service-v2
+
+# Stop services
+docker-compose down
 ```
 
-## Environment Variables
+### Production Deployment
 
-Copy `.env.example` to `.env` and configure:
+```bash
+# Build production image
+docker-compose -f docker-compose.prod.yml build chatbot-service-v2
 
-- `OPENAI_API_KEY`: Your OpenAI API key
-- `RABBITMQ_URL`: RabbitMQ connection URL
-- `REDIS_HOST`: Redis host
-- Other service queues
+# Start production services
+docker-compose -f docker-compose.prod.yml up -d chatbot-service-v2 ollama
 
-## API Documentation
+# Verify deployment
+bash scripts/verify-deployment.sh
+```
 
-### WebSocket Events
-
-#### Client → Server
-
-- `message`: Send a message to chatbot
-- `get_history`: Get conversation history
-- `clear_history`: Clear conversation history
-
-#### Server → Client
-
-- `message`: Receive bot response
-- `typing`: Bot is typing
-- `error`: Error occurred
-
-### REST Endpoints
-
-- `GET /api/v1/chat/health`: Health check
-- `GET /api/v1/chat/history/:sessionId`: Get chat history
-
-## Architecture
+## 📁 Project Structure
 
 ```
-chatbot-service/
+chatbot-service-v2/
 ├── src/
-│   ├── main.ts
-│   ├── app.module.ts
-│   ├── config/              # Configuration files
-│   ├── common/              # Shared utilities
-│   ├── modules/
-│   │   ├── chat/            # Chat controller & gateway
-│   │   ├── llm/             # LLM integration (OpenAI)
-│   │   ├── intent/          # Intent recognition
-│   │   ├── action/          # Action executor
-│   │   └── conversation/    # Conversation manager
+│   ├── common/           # Shared utilities, filters, guards
+│   ├── config/           # Configuration files
+│   ├── database/         # Database migrations
+│   └── modules/
+│       ├── actions/      # Action handlers (inventory, order, etc.)
+│       ├── analytics/    # Analytics & metrics
+│       ├── chat/         # Chat endpoints
+│       ├── conversation/ # Conversation management
+│       ├── health/       # Health check
+│       ├── intent/       # Intent recognition
+│       ├── personalization/ # User preferences
+│       ├── rabbitmq/     # Message queue integration
+│       └── rag/          # RAG implementation
+├── knowledge-base/       # Knowledge base files
+├── public/              # Static web UI
+├── scripts/             # Utility scripts
+├── Dockerfile           # Development Dockerfile
+├── Dockerfile.prod      # Production Dockerfile
+└── docker-compose.yml   # Development compose file
 ```
 
-## Usage Examples
+## 🔧 Configuration
 
-### Check Inventory
+### Environment Variables
 
-```
-User: "Tồn kho item 123 ở kho Hà Nội còn bao nhiêu?"
-Bot: "Item #123 tại kho Hà Nội hiện có 500 units"
+| Variable               | Description             | Default                           |
+| ---------------------- | ----------------------- | --------------------------------- |
+| APP_PORT               | Application port        | 3006                              |
+| NODE_ENV               | Environment             | development                       |
+| DB_HOST                | PostgreSQL host         | localhost                         |
+| DB_PORT                | PostgreSQL port         | 5432                              |
+| DB_DATABASE            | Database name           | chatbot_service                   |
+| RABBITMQ_URL           | RabbitMQ connection URL | amqp://admin:admin@localhost:5672 |
+| OLLAMA_BASE_URL        | Ollama API URL          | http://localhost:11434            |
+| OLLAMA_MODEL           | LLM model               | qwen2.5:3b                        |
+| OLLAMA_EMBEDDING_MODEL | Embedding model         | nomic-embed-text                  |
+
+## 📚 API Documentation
+
+Sau khi start service, truy cập:
+
+- **Swagger UI**: http://localhost:3006/api/docs
+- **Health Check**: http://localhost:3006/api/health
+- **Web UI**: http://localhost:3006
+
+## 🧪 Testing
+
+```bash
+# Run integration tests
+bash test/integration.test.sh
+
+# Test chat functionality
+bash scripts/test-chat.sh
 ```
 
-### Create Purchase Order
+## 🗄️ Database
 
-```
-User: "Tạo đơn mua hàng cho 100 units item X từ supplier A"
-Bot: "Đã tạo Purchase Order #PO-2024-001 thành công"
+### Migrations
+
+```bash
+# Generate new migration
+yarn migration:generate src/database/migrations/MigrationName
+
+# Run migrations
+yarn migrate:run
+
+# Revert last migration
+yarn migration:revert
 ```
 
-### Get Order Status
+### Schema
 
+- **conversations**: Lưu trữ hội thoại
+- **messages**: Lưu trữ tin nhắn
+- **user_preferences**: Cài đặt người dùng
+- **chat_logs**: Logs cho analytics
+- **metrics**: Metrics và thống kê
+
+## 🤖 Ollama Setup
+
+```bash
+# Pull required models
+ollama pull qwen2.5:3b
+ollama pull nomic-embed-text
+
+# List installed models
+ollama list
+
+# Test model
+ollama run qwen2.5:3b "Hello"
 ```
-User: "Đơn hàng PO-2024-001 đang ở trạng thái gì?"
-Bot: "PO-2024-001 đang ở trạng thái APPROVED"
+
+## 📊 Monitoring
+
+### Logs
+
+```bash
+# Development
+yarn start:dev
+
+# Production
+docker logs -f chatbot-service-v2-prod
 ```
+
+### Metrics
+
+Truy cập analytics endpoints:
+
+- GET /api/analytics/metrics
+- GET /api/analytics/conversations
+- GET /api/analytics/intents
+
+## 🔒 Security
+
+- Sử dụng environment variables cho sensitive data
+- Enable CORS với whitelist domains
+- Validate input với class-validator
+- Sanitize user input
+- Rate limiting (recommended)
+
+## 🚨 Troubleshooting
+
+### Service không start
+
+1. Kiểm tra logs: `docker logs chatbot-service-v2-prod`
+2. Verify database connection
+3. Check RabbitMQ connection
+4. Ensure Ollama is running
+
+### Migration fails
+
+```bash
+# Check database exists
+docker exec postgres-prod psql -U postgres -l | grep chatbot_service
+
+# Run migration manually
+docker exec chatbot-service-v2-prod yarn migrate:prod:run
+```
+
+### Ollama không response
+
+```bash
+# Check Ollama status
+docker exec ollama-prod ollama list
+
+# Pull models if missing
+docker exec ollama-prod ollama pull qwen2.5:3b
+docker exec ollama-prod ollama pull nomic-embed-text
+```
+
+## 📝 Scripts
+
+- `yarn start:dev` - Start development server
+- `yarn start:prod` - Start production server
+- `yarn build` - Build for production
+- `yarn migrate:run` - Run database migrations
+- `yarn lint` - Lint code
+
+## 🤝 Contributing
+
+1. Create feature branch
+2. Make changes
+3. Run tests
+4. Submit pull request
+
+## 📄 License
+
+Private - Supply Chain Management System
+
+## 📞 Support
+
+For issues and questions, contact the development team.

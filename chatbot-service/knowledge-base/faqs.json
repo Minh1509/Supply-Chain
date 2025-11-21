@@ -1,0 +1,326 @@
+[
+  {
+    "question": "Làm sao để kiểm tra tồn kho?",
+    "answer": "Bạn có thể kiểm tra tồn kho bằng cách vào module Inventory > Warehouse, sau đó chọn kho cụ thể. Hoặc hỏi tôi: 'Tồn kho sản phẩm X ở kho Y là bao nhiêu?'"
+  },
+  {
+    "question": "Kiểm tra số lượng hàng trong kho",
+    "answer": "Để kiểm tra số lượng hàng, bạn có thể hỏi tôi: 'Tồn kho sản phẩm [tên] ở kho [tên kho]' hoặc vào Inventory > Warehouse để xem chi tiết."
+  },
+  {
+    "question": "Xem tồn kho hiện tại",
+    "answer": "Hỏi tôi: 'Tồn kho sản phẩm ABC?' hoặc 'Còn bao nhiêu sản phẩm XYZ trong kho?' để biết số lượng hiện có."
+  },
+  {
+    "question": "Tạo phiếu xuất kho như thế nào?",
+    "answer": "Vào Inventory > Issue Ticket > Create New. Điền thông tin kho xuất, sản phẩm, số lượng và lý do xuất. Lưu ý kiểm tra tồn kho trước khi xuất."
+  },
+  {
+    "question": "Xuất hàng ra khỏi kho",
+    "answer": "Để xuất hàng, tạo phiếu xuất kho (Issue Ticket) với thông tin: kho xuất, sản phẩm, số lượng. Hỏi tôi: 'Tạo phiếu xuất 50 sản phẩm ABC từ kho HN'"
+  },
+  {
+    "question": "Làm sao để tạo lệnh sản xuất?",
+    "answer": "Cần có Sales Order và BOM trước. Sau đó vào Operation > Manufacture Order > Create, chọn sản phẩm, số lượng và dây chuyền sản xuất."
+  },
+  {
+    "question": "Xem báo cáo tồn kho ở đâu?",
+    "answer": "Vào Inventory > Reports > Monthly Inventory Report. Có thể lọc theo tháng, kho và sản phẩm."
+  },
+  {
+    "question": "Purchase Order khác gì với Sales Order?",
+    "answer": "Purchase Order (PO) là đơn mua hàng từ nhà cung cấp. Sales Order (SO) là đơn bán hàng cho khách hàng."
+  },
+  {
+    "question": "BOM là gì?",
+    "answer": "BOM (Bill of Materials) là định mức nguyên vật liệu cần thiết để sản xuất 1 sản phẩm. Ví dụ: làm 1 chiếc bàn cần bao nhiêu gỗ, ốc vít, sơn..."
+  },
+  {
+    "question": "Tồn kho âm có được không?",
+    "answer": "Không. Hệ thống sẽ không cho phép xuất kho nếu số lượng tồn không đủ. Cần nhập thêm hàng trước."
+  },
+  {
+    "question": "Làm sao để chuyển hàng giữa các kho?",
+    "answer": "Sử dụng Transfer Ticket. Vào Inventory > Transfer Ticket > Create, chọn kho nguồn, kho đích, sản phẩm và số lượng."
+  },
+  {
+    "question": "Quotation là gì?",
+    "answer": "Quotation (báo giá) là đề xuất giá bán gửi cho khách hàng. Khi khách chấp nhận, Quotation sẽ chuyển thành Sales Order."
+  },
+  {
+    "question": "RFQ là gì?",
+    "answer": "RFQ (Request for Quotation) là yêu cầu báo giá gửi cho nhà cung cấp. Sau khi nhận báo giá và chọn nhà cung cấp, RFQ chuyển thành Purchase Order."
+  },
+  {
+    "question": "Delivery Order là gì?",
+    "answer": "Delivery Order (phiếu giao hàng) được tạo từ Sales Order để giao hàng cho khách. Bao gồm thông tin sản phẩm, số lượng, địa chỉ giao hàng."
+  },
+  {
+    "question": "Invoice khác gì với Delivery Order?",
+    "answer": "Invoice (hóa đơn) là chứng từ thanh toán, có giá trị pháp lý. Delivery Order là phiếu giao hàng. Thường giao hàng trước, xuất hóa đơn sau."
+  },
+  {
+    "question": "Làm sao để tạo BOM?",
+    "answer": "Vào General > BOM > Create New. Chọn sản phẩm thành phẩm, thêm danh sách nguyên vật liệu với số lượng cần thiết cho 1 đơn vị sản phẩm."
+  },
+  {
+    "question": "Kiểm tra trạng thái đơn hàng như thế nào?",
+    "answer": "Vào Business > Sales Order hoặc Purchase Order, tìm theo mã đơn. Trạng thái có thể là: Draft, Confirmed, Processing, Completed, Cancelled."
+  },
+  {
+    "question": "Làm sao để hủy đơn hàng?",
+    "answer": "Chỉ có thể hủy đơn ở trạng thái Draft hoặc Confirmed. Vào chi tiết đơn hàng, click Cancel và nhập lý do hủy."
+  },
+  {
+    "question": "Tồn kho available và on-demand khác gì nhau?",
+    "answer": "Available là số lượng có thể xuất ngay. On-demand là số lượng đã được đặt trước (reserved). Tồn thực tế = Available + On-demand."
+  },
+  {
+    "question": "Làm sao để thêm sản phẩm mới?",
+    "answer": "Vào General > Item > Create New. Điền thông tin: tên, mã, đơn vị, loại (raw material, product, finished goods), giá."
+  },
+  {
+    "question": "Warehouse khác gì với Location?",
+    "answer": "Warehouse (kho) là địa điểm lưu trữ lớn. Location (vị trí) là khu vực cụ thể trong kho (kệ A, tầng 2, v.v.)."
+  },
+  {
+    "question": "Làm sao để xem lịch sử giao dịch của sản phẩm?",
+    "answer": "Vào Inventory > Item History, chọn sản phẩm. Hệ thống hiển thị tất cả giao dịch nhập/xuất/chuyển kho."
+  },
+  {
+    "question": "Cảnh báo tồn kho thấp hoạt động như thế nào?",
+    "answer": "Mỗi sản phẩm có thể set minimum stock level. Khi tồn kho < mức này, hệ thống gửi cảnh báo qua notification."
+  },
+  {
+    "question": "Làm sao để tạo báo cáo tùy chỉnh?",
+    "answer": "Vào Reports > Custom Report > Create. Chọn loại báo cáo, thời gian, filters (kho, sản phẩm, công ty) và format xuất (PDF, Excel)."
+  },
+  {
+    "question": "Phân quyền người dùng như thế nào?",
+    "answer": "Admin vào Settings > Users > Roles. Có các role: Admin, Manager, Warehouse Staff, Sales, Accountant. Mỗi role có quyền khác nhau."
+  },
+  {
+    "question": "Làm sao để backup dữ liệu?",
+    "answer": "Hệ thống tự động backup hàng ngày. Để backup thủ công: Settings > System > Backup Now. File backup lưu ở cloud storage."
+  },
+  {
+    "question": "Multi-company là gì?",
+    "answer": "Hệ thống hỗ trợ nhiều công ty trong 1 database. Mỗi user có thể thuộc nhiều công ty, dữ liệu được phân tách theo companyId."
+  },
+  {
+    "question": "Làm sao để xuất báo cáo Excel?",
+    "answer": "Ở màn hình báo cáo, click nút Export > Excel. File sẽ được download về máy với format .xlsx."
+  },
+  {
+    "question": "Tích hợp với kế toán như thế nào?",
+    "answer": "Hệ thống tự động tạo journal entries khi có giao dịch. Kế toán có thể xem và duyệt ở Accounting module."
+  },
+  {
+    "question": "Làm sao để track serial number?",
+    "answer": "Với sản phẩm có serial number, khi nhập/xuất kho cần nhập từng serial. Hệ thống track được lịch sử của từng serial."
+  },
+  {
+    "question": "Batch/Lot tracking là gì?",
+    "answer": "Tracking theo lô hàng, thường dùng cho thực phẩm, dược phẩm. Mỗi lô có expiry date, có thể recall khi cần."
+  },
+  {
+    "question": "Làm sao để set up workflow approval?",
+    "answer": "Settings > Workflow > Configure. Có thể set approval cho PO, SO, Issue Ticket, v.v. Định nghĩa ai approve ở mỗi bước."
+  },
+  {
+    "question": "Dashboard hiển thị những gì?",
+    "answer": "Dashboard hiển thị: tồn kho tổng quan, đơn hàng pending, cảnh báo, doanh thu, top sản phẩm bán chạy, biểu đồ xu hướng."
+  },
+  {
+    "question": "Chatbot có thể làm gì?",
+    "answer": "Chatbot có thể: tra cứu tồn kho, kiểm tra đơn hàng, tạo phiếu nhập/xuất kho, xem báo cáo, trả lời câu hỏi về hệ thống. Hỏi tôi bất cứ điều gì!"
+  },
+  {
+    "question": "Làm sao để hỏi chatbot hiệu quả?",
+    "answer": "Hỏi rõ ràng, cụ thể và cung cấp đủ thông tin. Ví dụ: 'Tồn kho sản phẩm 123 ở kho 1 là bao nhiêu?' thay vì chỉ hỏi 'Tồn kho?'"
+  },
+  {
+    "question": "Chatbot có hiểu tiếng Việt không?",
+    "answer": "Có! Tôi hiểu cả tiếng Việt và tiếng Anh. Bạn có thể hỏi bằng ngôn ngữ nào cũng được."
+  },
+  {
+    "question": "Chatbot có nhớ hội thoại trước không?",
+    "answer": "Có, tôi nhớ context trong phiên làm việc hiện tại. Bạn không cần lặp lại thông tin đã cung cấp."
+  },
+  {
+    "question": "Chatbot không hiểu câu hỏi của tôi, phải làm sao?",
+    "answer": "Hãy thử hỏi lại rõ ràng hơn, cung cấp thêm thông tin (mã sản phẩm, mã kho, v.v.). Hoặc xem ví dụ câu hỏi mẫu trong hướng dẫn."
+  },
+  {
+    "question": "Supply chain là gì?",
+    "answer": "Supply chain (chuỗi cung ứng) là toàn bộ quy trình từ lúc mua nguyên liệu, sản xuất, lưu kho đến khi giao hàng cho khách hàng. Bao gồm: mua hàng, sản xuất, quản lý kho, bán hàng, giao hàng."
+  },
+  {
+    "question": "SCM là gì?",
+    "answer": "SCM (Supply Chain Management) là quản lý chuỗi cung ứng - hệ thống giúp quản lý toàn bộ quy trình từ mua nguyên liệu, sản xuất, lưu kho đến giao hàng."
+  },
+  {
+    "question": "Lead time là gì?",
+    "answer": "Lead time là thời gian từ lúc đặt hàng đến khi nhận hàng. Ví dụ: đặt hàng ngày 1, nhận ngày 10 thì lead time là 9 ngày."
+  },
+  {
+    "question": "Safety stock là gì?",
+    "answer": "Safety stock (tồn kho an toàn) là số lượng hàng dự trữ để phòng trường hợp nhu cầu tăng đột ngột hoặc nhà cung cấp giao chậm."
+  },
+  {
+    "question": "Reorder point là gì?",
+    "answer": "Reorder point (điểm đặt hàng lại) là mức tồn kho mà khi xuống thấp hơn thì cần đặt hàng thêm. Công thức: Reorder Point = (Lead Time × Nhu cầu trung bình) + Safety Stock"
+  },
+  {
+    "question": "EOQ là gì?",
+    "answer": "EOQ (Economic Order Quantity) là số lượng đặt hàng tối ưu để tổng chi phí (chi phí đặt hàng + chi phí lưu kho) là thấp nhất."
+  },
+  {
+    "question": "SKU là gì?",
+    "answer": "SKU (Stock Keeping Unit) là mã định danh duy nhất cho mỗi sản phẩm trong kho. Ví dụ: LAPTOP-DELL-XPS-13-2024"
+  },
+  {
+    "question": "Backorder là gì?",
+    "answer": "Backorder là đơn hàng không thể giao ngay vì hết hàng, nhưng khách vẫn đặt và sẽ nhận khi có hàng về."
+  },
+  {
+    "question": "Dropshipping là gì?",
+    "answer": "Dropshipping là mô hình bán hàng mà người bán không cần lưu kho, khi có đơn thì đặt hàng từ nhà cung cấp và giao thẳng cho khách."
+  },
+  {
+    "question": "Cross-docking là gì?",
+    "answer": "Cross-docking là kỹ thuật chuyển hàng trực tiếp từ kho nhận sang kho xuất mà không lưu kho lâu dài, giúp giảm thời gian và chi phí."
+  },
+  {
+    "question": "JIT là gì?",
+    "answer": "JIT (Just-In-Time) là phương pháp quản lý tồn kho tối thiểu, chỉ nhập hàng khi cần dùng, giúp giảm chi phí lưu kho."
+  },
+  {
+    "question": "Vendor là gì?",
+    "answer": "Vendor (nhà cung cấp) là công ty hoặc cá nhân cung cấp nguyên liệu, sản phẩm cho doanh nghiệp."
+  },
+  {
+    "question": "Supplier khác gì với Vendor?",
+    "answer": "Supplier và Vendor đều là nhà cung cấp. Supplier thường cung cấp nguyên liệu thô, Vendor cung cấp sản phẩm hoàn chỉnh. Nhưng trong thực tế hai từ thường dùng thay thế nhau."
+  },
+  {
+    "question": "Inbound và Outbound là gì?",
+    "answer": "Inbound là hàng nhập vào kho (nhập kho). Outbound là hàng xuất ra khỏi kho (xuất kho, giao hàng)."
+  },
+  {
+    "question": "3PL là gì?",
+    "answer": "3PL (Third-Party Logistics) là dịch vụ logistics bên thứ ba, giúp doanh nghiệp quản lý kho, vận chuyển, giao hàng mà không cần tự làm."
+  },
+  {
+    "question": "Fulfillment là gì?",
+    "answer": "Fulfillment là quy trình hoàn thành đơn hàng: nhận đơn → lấy hàng từ kho → đóng gói → giao hàng → xác nhận giao thành công."
+  },
+  {
+    "question": "Picking là gì?",
+    "answer": "Picking là quy trình lấy hàng từ kho theo đơn hàng. Có nhiều phương pháp: piece picking (lấy từng món), batch picking (lấy nhiều đơn cùng lúc), zone picking (chia khu vực)."
+  },
+  {
+    "question": "Packing là gì?",
+    "answer": "Packing là quy trình đóng gói hàng hóa sau khi picking, chuẩn bị để giao hàng. Bao gồm: kiểm tra, đóng thùng, dán nhãn, in phiếu giao hàng."
+  },
+  {
+    "question": "Cycle count là gì?",
+    "answer": "Cycle count là kiểm kê tồn kho định kỳ (hàng ngày/tuần) cho một phần kho thay vì kiểm kê toàn bộ một lần, giúp phát hiện sai lệch sớm."
+  },
+  {
+    "question": "Stockout là gì?",
+    "answer": "Stockout là tình trạng hết hàng, không đủ tồn kho để đáp ứng đơn hàng. Nguyên nhân: dự báo sai, nhà cung cấp chậm, nhu cầu tăng đột ngột."
+  },
+  {
+    "question": "Overstock là gì?",
+    "answer": "Overstock là tình trạng tồn kho quá nhiều, vượt quá nhu cầu. Gây lãng phí chi phí lưu kho, chiếm vốn, hàng có thể hết hạn."
+  },
+  {
+    "question": "FIFO là gì?",
+    "answer": "FIFO (First In First Out) là phương pháp xuất kho: hàng nhập trước xuất trước. Thường dùng cho hàng có hạn sử dụng (thực phẩm, dược phẩm)."
+  },
+  {
+    "question": "LIFO là gì?",
+    "answer": "LIFO (Last In First Out) là phương pháp xuất kho: hàng nhập sau xuất trước. Ít dùng trong thực tế vì hàng cũ có thể tồn đọng lâu."
+  },
+  {
+    "question": "FEFO là gì?",
+    "answer": "FEFO (First Expired First Out) là phương pháp xuất kho: hàng hết hạn sớm nhất xuất trước. Dùng cho hàng có expiry date."
+  },
+  {
+    "question": "ABC analysis là gì?",
+    "answer": "ABC analysis là phân loại hàng hóa: A (20% sản phẩm, 80% doanh thu - quan trọng nhất), B (30% sản phẩm, 15% doanh thu), C (50% sản phẩm, 5% doanh thu - ít quan trọng)."
+  },
+  {
+    "question": "Demand forecasting là gì?",
+    "answer": "Demand forecasting (dự báo nhu cầu) là dự đoán nhu cầu khách hàng trong tương lai dựa trên dữ liệu lịch sử, xu hướng thị trường, mùa vụ."
+  },
+  {
+    "question": "Inventory turnover là gì?",
+    "answer": "Inventory turnover (vòng quay tồn kho) là số lần bán hết và thay thế tồn kho trong một kỳ. Công thức: Doanh thu / Tồn kho trung bình. Càng cao càng tốt."
+  },
+  {
+    "question": "Làm sao để giảm tồn kho?",
+    "answer": "Cách giảm tồn kho: 1) Dự báo nhu cầu chính xác hơn, 2) Áp dụng JIT, 3) Tăng inventory turnover, 4) Giảm lead time, 5) Khuyến mãi hàng tồn kho lâu."
+  },
+  {
+    "question": "Làm sao để tối ưu chi phí kho?",
+    "answer": "Tối ưu chi phí kho: 1) Sắp xếp kho khoa học (ABC analysis), 2) Áp dụng cross-docking, 3) Tự động hóa picking/packing, 4) Giảm tồn kho thừa, 5) Đàm phán giá thuê kho."
+  },
+  {
+    "question": "Làm sao để tránh hết hàng?",
+    "answer": "Tránh hết hàng: 1) Set reorder point hợp lý, 2) Duy trì safety stock, 3) Theo dõi lead time, 4) Cảnh báo tồn kho thấp, 5) Có nhà cung cấp dự phòng."
+  },
+  {
+    "question": "Làm sao để quản lý nhiều kho?",
+    "answer": "Quản lý nhiều kho: 1) Dùng hệ thống WMS tập trung, 2) Phân bổ tồn kho hợp lý theo vùng, 3) Transfer stock giữa các kho, 4) Theo dõi real-time, 5) Tối ưu chi phí vận chuyển."
+  },
+  {
+    "question": "WMS là gì?",
+    "answer": "WMS (Warehouse Management System) là hệ thống quản lý kho, giúp tự động hóa nhập/xuất/kiểm kho, tracking vị trí hàng, tối ưu picking route."
+  },
+  {
+    "question": "ERP là gì?",
+    "answer": "ERP (Enterprise Resource Planning) là hệ thống quản lý tổng thể doanh nghiệp, tích hợp tất cả module: kế toán, nhân sự, mua hàng, bán hàng, sản xuất, kho."
+  },
+  {
+    "question": "Hệ thống này có những module gì?",
+    "answer": "Hệ thống SCMS có 4 module chính: 1) General (quản lý chung: item, warehouse, company), 2) Business (bán hàng, mua hàng), 3) Operation (sản xuất), 4) Inventory (quản lý kho)."
+  },
+  {
+    "question": "Làm sao để tích hợp với hệ thống khác?",
+    "answer": "Tích hợp qua API REST hoặc RabbitMQ message queue. Hỗ trợ webhook, export/import Excel, sync real-time với ERP, accounting software."
+  },
+  {
+    "question": "Hệ thống có hỗ trợ mobile không?",
+    "answer": "Hiện tại chưa có mobile app riêng, nhưng web interface responsive, có thể dùng trên mobile browser. Mobile app đang trong roadmap phát triển."
+  },
+  {
+    "question": "Làm sao để train nhân viên mới?",
+    "answer": "Train nhân viên: 1) Đọc user manual, 2) Xem video hướng dẫn, 3) Thực hành trên môi trường demo, 4) Hỏi chatbot khi gặp vấn đề, 5) Liên hệ support team."
+  },
+  {
+    "question": "Hệ thống có hỗ trợ đa ngôn ngữ không?",
+    "answer": "Hiện tại hỗ trợ tiếng Việt và tiếng Anh. Có thể thêm ngôn ngữ khác theo yêu cầu."
+  },
+  {
+    "question": "Làm sao để xuất dữ liệu ra Excel?",
+    "answer": "Ở màn hình báo cáo hoặc danh sách, click nút Export > chọn Excel. File sẽ download về máy với format .xlsx."
+  },
+  {
+    "question": "Làm sao để import dữ liệu từ Excel?",
+    "answer": "Vào module tương ứng > Import > chọn file Excel (theo template) > Validate > Import. Hệ thống sẽ báo lỗi nếu dữ liệu không hợp lệ."
+  },
+  {
+    "question": "Hệ thống có tự động backup không?",
+    "answer": "Có, hệ thống tự động backup database hàng ngày lúc 2h sáng. Backup lưu trên cloud storage, giữ 30 ngày gần nhất."
+  },
+  {
+    "question": "Làm sao để khôi phục dữ liệu?",
+    "answer": "Liên hệ admin hoặc support team để restore từ backup. Cần cung cấp thời điểm cần restore và lý do."
+  },
+  {
+    "question": "Tôi có thể hỏi chatbot những gì?",
+    "answer": "Bạn có thể hỏi về: tồn kho, đơn hàng, lệnh sản xuất, báo cáo, cách sử dụng hệ thống, tạo phiếu xuất/nhập kho, kiến thức về supply chain. Hỏi bất cứ điều gì liên quan đến SCMS!"
+  }
+]
