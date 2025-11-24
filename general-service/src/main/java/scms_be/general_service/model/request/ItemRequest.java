@@ -7,6 +7,7 @@ public class ItemRequest {
     private Long companyId;
     private Long itemId; // for get by id, update, delete
     private ItemData item;
+    private String imageUrl; // for update image - nhận URL đã upload từ API Gateway
     
     @Data
     public static class ItemData {

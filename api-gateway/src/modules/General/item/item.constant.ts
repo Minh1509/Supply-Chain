@@ -4,4 +4,5 @@ export const ITEM_CONSTANTS = {
   GET_ITEM_BY_ID: 'item.get_by_id',
   UPDATE_ITEM: 'item.update',
   DELETE_ITEM: 'item.delete',
+  UPDATE_IMAGE_ITEM: 'item.update_image'
 };

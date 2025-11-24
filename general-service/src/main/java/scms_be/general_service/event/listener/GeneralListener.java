@@ -35,6 +35,7 @@ public class GeneralListener {
                 case "item.get_by_id":
                 case "item.get_all_in_company":
                 case "item.delete":
+                case "item.update_image":
                     return itemHandler.handle(event);
 
                 case "manufacture_line.create":

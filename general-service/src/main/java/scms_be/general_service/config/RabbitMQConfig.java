@@ -82,6 +82,11 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(itemQueue).to(exchange).with("item.delete");
     }
 
+    @Bean
+    public Binding itemUpdateImage(Queue itemQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(itemQueue).to(exchange).with("item.update_image");
+    }
+
     // Manufacture Plant bindings
     @Bean
     public Binding plantCreateBinding(Queue manufacturePlantQueue, DirectExchange exchange) {

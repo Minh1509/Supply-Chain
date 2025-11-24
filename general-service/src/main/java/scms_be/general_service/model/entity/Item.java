@@ -34,4 +34,7 @@ public class Item {
   private Double importPrice;
   private Double exportPrice;
   private String description;
+  
+  @Column(columnDefinition = "TEXT")
+  private String imageUrl;
 }

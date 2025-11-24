@@ -102,10 +102,20 @@ export class AuthService extends BaseService {
       const savedCompany = await companyRepo.save(company);
 
       // Tạo department mặc định
-      const departmentNames = ['Quản trị', 'Kho', 'Vận chuyển', 'Mua hàng', 'Bán hàng'];
-      if (dto.companyType?.toLowerCase() === 'doanh nghiệp sản xuất') {
-        departmentNames.push('Sản xuất');
+      // const departmentNames = ['Quản trị', 'Kho', 'Vận chuyển', 'Mua hàng', 'Bán hàng'];
+      // if (dto.companyType?.toLowerCase() === 'doanh nghiệp sản xuất') {
+      //   departmentNames.push('Sản xuất');
+      // }
+      // Tạo department mặc định
+      const departmentNames = ['Quản trị', 'Mua', 'Bán hàng'];
+      if (dto.companyType?.toLowerCase() === 'doanh nghiệp thương mại') {
+        departmentNames.push('Kho', 'Vận chuyển');
       }
+
+      if (dto.companyType?.toLowerCase() === 'doanh nghiệp sản xuất') {
+        departmentNames.push('Kho', 'Sản xuất', 'Vận chuyển');
+      }
+
 
       const departments: Department[] = [];
       for (const depName of departmentNames) {

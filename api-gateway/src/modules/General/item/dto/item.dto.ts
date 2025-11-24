@@ -66,4 +66,11 @@ export class ItemDto {
     example: 'High-performance laptop for development',
   })
   description: string;
+
+  @ApiProperty({
+    description: 'Item image URL',
+    example: 'https://cdn.example.com/items/abc123.jpg',
+    required: false,
+  })
+  imageUrl?: string;
 }

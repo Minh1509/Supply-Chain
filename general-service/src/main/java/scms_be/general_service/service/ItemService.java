@@ -98,7 +98,18 @@ public class ItemService {
     dto.setImportPrice(item.getImportPrice());
     dto.setExportPrice(item.getExportPrice());
     dto.setDescription(item.getDescription());
+    dto.setImageUrl(item.getImageUrl());
 
     return dto;
+  }
+
+  public String itemUpdateImage(Long itemId, String imageUrl) {
+    Item item = itemRepository.findById(itemId)
+        .orElseThrow(() -> new RpcException(404, "Không tìm thấy hàng hóa!"));
+    
+    item.setImageUrl(imageUrl);
+    itemRepository.save(item);
+    
+    return imageUrl;
   }
 }

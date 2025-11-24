@@ -30,6 +30,8 @@ public class ItemHandler {
                 return itemService.getAllItemsInCompany(req.getCompanyId());
             case "item.delete":
                 return itemService.deleteItem(req.getItemId());
+            case "item.update_image":
+                return itemService.itemUpdateImage(req.getItemId(), req.getImageUrl());
             default:
                 throw new RpcException(400, "Unknown item event: " + event.getPattern());
         }
