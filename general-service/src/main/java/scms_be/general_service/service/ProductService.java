@@ -25,17 +25,27 @@ public class ProductService {
   @Autowired
   private ItemRepository itemRepository;
 
+  @Autowired
+  private QRCodeService qrCodeService;
+
   public ProductDto createProduct(Long itemId, ProductData newProduct) {
     Item item = itemRepository.findById(itemId)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy hàng hóa!"));
 
     Product product = new Product();
-
     product.setItem(item);
     product.setSerialNumber(UUID.randomUUID().toString().substring(0, 8));
     product.setBatchNo(newProduct.getBatchNo());
-    product.setQrCode(newProduct.getQrCode());
-    return convertToDto(productRepository.save(product));
+    
+    Product savedProduct = productRepository.save(product);
+    
+    String qrCodeString = qrCodeService.generateQRCodeString(
+        savedProduct.getProductId(), 
+        savedProduct.getSerialNumber()
+    );
+    savedProduct.setQrCode(qrCodeString);
+    
+    return convertToDto(productRepository.save(savedProduct));
   }
 
   public List<ProductDto> getAllProductsByItem(Long itemId) {
@@ -45,16 +55,15 @@ public class ProductService {
 
   public ProductDto getProductById(Long productId) {
     Product product = productRepository.findById(productId)
-        .orElseThrow(() -> new RpcException(404, "Không tìm thấy hàng hóa!"));
+        .orElseThrow(() -> new RpcException(404, "Không tìm thấy sản phẩm!"));
     return convertToDto(product);
   }
 
   public ProductDto updateProduct(Long productId, ProductData updated) {
     Product existing = productRepository.findById(productId)
-        .orElseThrow(() -> new RpcException(404, "Không tìm thấy hàng hóa!"));
+        .orElseThrow(() -> new RpcException(404, "Không tìm thấy sản phẩm!"));
 
     existing.setBatchNo(updated.getBatchNo());
-    existing.setQrCode(updated.getQrCode());
     return convertToDto(productRepository.save(existing));
   }
 
@@ -65,6 +74,41 @@ public class ProductService {
       return true;
     }
     return false;
+  }
+
+  public ProductDto getProductByQrCode(String qrCode) {
+    Product product = productRepository.findByQrCode(qrCode)
+        .orElseThrow(() -> new RpcException(404, "Không tìm thấy sản phẩm với QR code này!"));
+    return convertToDto(product);
+  }
+
+  public List<ProductDto> getAllProductsByCompany(Long companyId) {
+    List<Product> products = productRepository.findByCurrentCompanyId(companyId);
+    return products.stream().map(this::convertToDto).collect(Collectors.toList());
+  }
+
+  public List<ProductDto> getProductsByBatchNo(Long batchNo) {
+    List<Product> products = productRepository.findByBatchNo(batchNo);
+    return products.stream().map(this::convertToDto).collect(Collectors.toList());
+  }
+
+  public ProductDto transferProduct(Long productId, Long newCompanyId) {
+    Product product = productRepository.findById(productId)
+        .orElseThrow(() -> new RpcException(404, "Không tìm thấy sản phẩm!"));
+    
+    product.setCurrentCompanyId(newCompanyId);
+    return convertToDto(productRepository.save(product));
+  }
+
+  public String getQRCodeImage(Long productId) {
+    Product product = productRepository.findById(productId)
+        .orElseThrow(() -> new RpcException(404, "Không tìm thấy sản phẩm!"));
+    
+    if (product.getQrCode() == null || product.getQrCode().isEmpty()) {
+      throw new RpcException(400, "Sản phẩm chưa có QR code!");
+    }
+    
+    return qrCodeService.generateQRCodeImage(product.getQrCode());
   }
 
   private ProductDto convertToDto(Product product) {
@@ -79,5 +123,4 @@ public class ProductService {
     dto.setCurrentCompanyId(product.getCurrentCompanyId());
     return dto;
   }
-  
 }

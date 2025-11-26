@@ -7,6 +7,10 @@ public class ProductRequest {
     private Long itemId;
     private Long productId; // for get by id, update, delete
     private ProductData product;
+    private String qrCode;
+    private Long companyId;
+    private Long batchNo;
+    private Long newCompanyId;
     
     @Data
     public static class ProductData {

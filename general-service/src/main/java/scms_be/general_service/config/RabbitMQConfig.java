@@ -17,13 +17,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 @EnableRabbit
 public class RabbitMQConfig {
 
-    // General Service Queue
     @Bean
     public Queue generalQueue() {
         return new Queue("general_queue", true);
     }
 
-    
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -44,124 +42,129 @@ public class RabbitMQConfig {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(converter);
         rabbitTemplate.setUseDirectReplyToContainer(true);
-        rabbitTemplate.setReplyTimeout(60000); // 60 seconds timeout
+        rabbitTemplate.setReplyTimeout(60000);
         rabbitTemplate.setUseTemporaryReplyQueues(false);
         log.info("RabbitTemplate configured with 60 seconds timeout");
         return rabbitTemplate;
     }
 
-     @Bean
+    @Bean
     public DirectExchange exchange() {
-        // NestJS mặc định dùng amq.direct
         return new DirectExchange("amq.direct");
     }
 
-    // General bindings
     @Bean
-    public Binding itemCreateBinding(Queue itemQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(itemQueue).to(exchange).with("item.create");
+    public Binding itemCreateBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("item.create");
     }
 
     @Bean
-    public Binding itemGetAllBinding(Queue itemQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(itemQueue).to(exchange).with("item.get_all_in_company");
+    public Binding itemGetAllBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("item.get_all_in_company");
     }
 
     @Bean
-    public Binding itemGetByIdBinding(Queue itemQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(itemQueue).to(exchange).with("item.get_by_id");
+    public Binding itemGetByIdBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("item.get_by_id");
     }
 
     @Bean
-    public Binding itemUpdateBinding(Queue itemQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(itemQueue).to(exchange).with("item.update");
+    public Binding itemUpdateBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("item.update");
     }
 
     @Bean
-    public Binding itemDeleteBinding(Queue itemQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(itemQueue).to(exchange).with("item.delete");
+    public Binding itemDeleteBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("item.delete");
     }
 
     @Bean
-    public Binding itemUpdateImage(Queue itemQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(itemQueue).to(exchange).with("item.update_image");
-    }
-
-    // Manufacture Plant bindings
-    @Bean
-    public Binding plantCreateBinding(Queue manufacturePlantQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(manufacturePlantQueue).to(exchange).with("manufacture_plant.create");
+    public Binding plantCreateBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("manufacture_plant.create");
     }
 
     @Bean
-    public Binding plantGetAllBinding(Queue manufacturePlantQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(manufacturePlantQueue).to(exchange).with("manufacture_plant.get_all_in_company");
+    public Binding plantGetAllBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("manufacture_plant.get_all_in_company");
     }
 
     @Bean
-    public Binding plantGetByIdBinding(Queue manufacturePlantQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(manufacturePlantQueue).to(exchange).with("manufacture_plant.get_by_id");
+    public Binding plantGetByIdBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("manufacture_plant.get_by_id");
     }
 
     @Bean
-    public Binding plantUpdateBinding(Queue manufacturePlantQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(manufacturePlantQueue).to(exchange).with("manufacture_plant.update");
+    public Binding plantUpdateBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("manufacture_plant.update");
     }
 
     @Bean
-    public Binding plantDeleteBinding(Queue manufacturePlantQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(manufacturePlantQueue).to(exchange).with("manufacture_plant.delete");
-    }
-
-    // Manufacture Line bindings
-    @Bean
-    public Binding lineCreateBinding(Queue manufactureLineQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(manufactureLineQueue).to(exchange).with("manufacture_line.create");
+    public Binding lineCreateBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("manufacture_line.create");
     }
 
     @Bean
-    public Binding lineGetAllBinding(Queue manufactureLineQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(manufactureLineQueue).to(exchange).with("manufacture_line.get_all_in_plant");
+    public Binding lineGetAllBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("manufacture_line.get_all_in_plant");
     }
 
     @Bean
-    public Binding lineGetByIdBinding(Queue manufactureLineQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(manufactureLineQueue).to(exchange).with("manufacture_line.get_by_id");
+    public Binding lineGetByIdBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("manufacture_line.get_by_id");
     }
 
     @Bean
-    public Binding lineUpdateBinding(Queue manufactureLineQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(manufactureLineQueue).to(exchange).with("manufacture_line.update");
+    public Binding lineUpdateBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("manufacture_line.update");
     }
 
     @Bean
-    public Binding lineDeleteBinding(Queue manufactureLineQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(manufactureLineQueue).to(exchange).with("manufacture_line.delete");
-    }
-
-    // Product bindings
-    @Bean
-    public Binding productCreateBinding(Queue productQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(productQueue).to(exchange).with("product.create");
+    public Binding productCreateBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.create");
     }
 
     @Bean
-    public Binding productGetAllBinding(Queue productQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(productQueue).to(exchange).with("product.get_all_by_item");
+    public Binding productGetAllBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.get_all_by_item");
     }
 
     @Bean
-    public Binding productGetByIdBinding(Queue productQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(productQueue).to(exchange).with("product.get_by_id");
+    public Binding productGetByIdBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.get_by_id");
     }
 
     @Bean
-    public Binding productUpdateBinding(Queue productQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(productQueue).to(exchange).with("product.update");
+    public Binding productUpdateBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.update");
     }
 
     @Bean
-    public Binding productDeleteBinding(Queue productQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(productQueue).to(exchange).with("product.delete");
+    public Binding productDeleteBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.delete");
+    }
+
+    @Bean
+    public Binding productGetByQrBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.get_by_qr");
+    }
+
+    @Bean
+    public Binding productGetByCompanyBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.get_all_by_company");
+    }
+
+    @Bean
+    public Binding productGetByBatchBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.get_by_batch");
+    }
+
+    @Bean
+    public Binding productTransferBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.transfer");
+    }
+
+    @Bean
+    public Binding productGetQrImageBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.get_qr_image");
     }
 }

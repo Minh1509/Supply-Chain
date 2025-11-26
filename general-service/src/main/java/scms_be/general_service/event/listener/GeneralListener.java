@@ -49,6 +49,11 @@ public class GeneralListener {
                 case "product.get_by_id":
                 case "product.get_all_by_item":
                 case "product.delete":
+                case "product.get_by_qr":
+                case "product.get_all_by_company":
+                case "product.get_by_batch":
+                case "product.transfer":
+                case "product.get_qr_image":
                     return productHandler.handle(event);
 
                 case "manufacture_plant.create":
