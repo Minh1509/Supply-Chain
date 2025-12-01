@@ -22,4 +22,7 @@ public class ManufactureOrderDto {
   private LocalDateTime createdOn;
   private LocalDateTime lastUpdatedOn;
   private String status;
+  private String batchNo;
+  private Double completedQuantity;
+  private Boolean productsGenerated;
 }

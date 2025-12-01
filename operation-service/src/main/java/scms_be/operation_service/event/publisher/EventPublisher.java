@@ -1,5 +1,6 @@
 package scms_be.operation_service.event.publisher;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -282,5 +283,20 @@ public class EventPublisher {
         }
 
         throw new RpcException(500, "Unexpected response type: " + response.getClass());
+    }
+    public void publishProductBatchCreate(Long itemId, Integer quantity, String batchNo, Long moId) {
+        log.info("Publishing product batch create event: itemId={}, quantity={}, batchNo={}", itemId, quantity, batchNo);
+        
+        GenericEvent event = new GenericEvent();
+        event.setPattern("product.batch_create");
+        
+        Map<String, Object> data = new HashMap<>();
+        data.put("itemId", itemId);
+        data.put("quantity", quantity);
+        data.put("batchNo", batchNo);
+        data.put("moId", moId);
+        event.setData(data);
+        
+        rabbitTemplate.convertAndSend(EventConstants.GENERAL_SERVICE_QUEUE, event);
     }
 }

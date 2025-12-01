@@ -4,17 +4,11 @@ import lombok.Data;
 
 @Data
 public class ProductRequest {
+    private Long productId;
     private Long itemId;
-    private Long productId; // for get by id, update, delete
-    private ProductData product;
     private String qrCode;
-    private Long companyId;
-    private Long batchNo;
-    private Long newCompanyId;
-    
-    @Data
-    public static class ProductData {
-        private Long batchNo;
-        private String qrCode;
-    }
+    private String batchNo;
+    private Integer quantity;
+    private Long moId;
+    private String newStatus;
 }

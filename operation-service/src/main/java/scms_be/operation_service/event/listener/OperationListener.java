@@ -55,6 +55,7 @@ public class OperationListener {
                 case "manufacture_order.update":
                 case "manufacture_order.report":
                 case "manufacture_order.monthly_report":
+                case "manufacture_order.complete":
                     return manufactureOrderHandler.handle(event);
                 // Manufacture process handlers
                 case "manufacture_process.create":

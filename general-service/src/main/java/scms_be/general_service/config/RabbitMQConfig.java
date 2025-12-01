@@ -119,38 +119,8 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding productCreateBinding(Queue generalQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(generalQueue).to(exchange).with("product.create");
-    }
-
-    @Bean
-    public Binding productGetAllBinding(Queue generalQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(generalQueue).to(exchange).with("product.get_all_by_item");
-    }
-
-    @Bean
     public Binding productGetByIdBinding(Queue generalQueue, DirectExchange exchange) {
         return BindingBuilder.bind(generalQueue).to(exchange).with("product.get_by_id");
-    }
-
-    @Bean
-    public Binding productUpdateBinding(Queue generalQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(generalQueue).to(exchange).with("product.update");
-    }
-
-    @Bean
-    public Binding productDeleteBinding(Queue generalQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(generalQueue).to(exchange).with("product.delete");
-    }
-
-    @Bean
-    public Binding productGetByQrBinding(Queue generalQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(generalQueue).to(exchange).with("product.get_by_qr");
-    }
-
-    @Bean
-    public Binding productGetByCompanyBinding(Queue generalQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(generalQueue).to(exchange).with("product.get_all_by_company");
     }
 
     @Bean
@@ -159,12 +129,22 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding productTransferBinding(Queue generalQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(generalQueue).to(exchange).with("product.transfer");
+    public Binding productBatchCreateBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.batch_create");
     }
 
     @Bean
-    public Binding productGetQrImageBinding(Queue generalQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(generalQueue).to(exchange).with("product.get_qr_image");
+    public Binding productScanDetailBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.scan_detail");
+    }
+
+    @Bean
+    public Binding productGenerateBatchQrPdfBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.generate_batch_qr_pdf");
+    }
+
+    @Bean
+    public Binding productUpdateBatchStatusBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.update_batch_status");
     }
 }

@@ -69,4 +69,14 @@ export class ManufactureOrderController {
       this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.MONTHLY_MANU_REPORT, { companyId, type }),
     );
   }
+
+  @Put(':moId/complete')
+  async completeMO(@Param('moId') moId: number, @Body() body: { completedQuantity: number }) {
+    return await firstValueFrom(
+      this.operationClient.send(MANUFACTURE_ORDER_CONSTANTS.COMPLETE_MO, {
+        moId,
+        completedQuantity: body.completedQuantity,
+      }),
+    );
+  }
 }

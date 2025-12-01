@@ -122,6 +122,11 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(operationQueue).to(exchange).with("manufacture_order.monthly_report");
     }
 
+    @Bean
+    public Binding manufactureOrderCompleteBinding(Queue operationQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(operationQueue).to(exchange).with("manufacture_order.complete");
+    }
+
     // Manufacture Process bindings
     @Bean
     public Binding manufactureProcessCreateBinding(Queue operationQueue, DirectExchange exchange) {

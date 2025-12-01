@@ -17,5 +17,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
   
   List<Product> findByCurrentCompanyId(Long companyId);
   
-  List<Product> findByBatchNo(Long batchNo);
+  List<Product> findByBatchNo(String batchNo);
 }
