@@ -124,6 +124,10 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Binding productGetByIdBinding(Queue generalQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(generalQueue).to(exchange).with("product.get_by_company");
+    }
+    @Bean
     public Binding productGetByBatchBinding(Queue generalQueue, DirectExchange exchange) {
         return BindingBuilder.bind(generalQueue).to(exchange).with("product.get_by_batch");
     }
