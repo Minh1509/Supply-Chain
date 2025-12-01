@@ -44,5 +44,5 @@ public class ManufactureOrder {
   private Double completedQuantity;
   
   @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
-  private Boolean productsGenerated;
+  private Boolean productsGenerated = false;
 }

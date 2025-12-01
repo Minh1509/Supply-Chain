@@ -42,7 +42,7 @@ public class QRCodeService {
 
     public Long parseProductIdFromQR(String qrCode) {
         try {
-            String[] parts = qrCode.split(":");
+            String[] parts = qrCode.split("-");
             if (parts.length >= 2 && "PRODUCT".equals(parts[0])) {
                 return Long.parseLong(parts[1]);
             }

@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
 import scms_be.operation_service.event.publisher.EventPublisher;
 import scms_be.operation_service.exception.RpcException;
 import scms_be.operation_service.model.dto.ItemReportDto;
@@ -32,6 +33,7 @@ import scms_be.operation_service.repository.ManufactureOrderRepository;
 import scms_be.operation_service.repository.ManufactureStageDetailRepository;
 import scms_be.operation_service.repository.ManufactureStageRepository;
 
+@Slf4j
 @Service
 public class ManufactureOrderService {
 
@@ -85,6 +87,7 @@ public class ManufactureOrderService {
     order.setCreatedOn(LocalDateTime.now());
     order.setLastUpdatedOn(LocalDateTime.now());
     order.setStatus(orderRequest.getStatus());
+    order.setProductsGenerated(false);
 
     manufactureOrderRepository.save(order);
     ManufactureStage newStage = stage;
@@ -246,29 +249,46 @@ public class ManufactureOrderService {
   public ManufactureOrderDto completeMO(Long moId, Double completedQuantity) {
     ManufactureOrder mo = manufactureOrderRepository.findById(moId)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy lệnh sản xuất!"));
-        
-    // Validate status if needed, currently assuming valid transition
     
     mo.setCompletedQuantity(completedQuantity);
     mo.setStatus("Đã hoàn thành");
     mo.setLastUpdatedOn(LocalDateTime.now());
     
-    // Generate batchNo
-    if (mo.getBatchNo() == null) {
+    if (mo.getBatchNo() == null || mo.getBatchNo().isEmpty()) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         mo.setBatchNo("BATCH-" + mo.getMoCode() + "-" + timestamp);
     }
 
-    if (Boolean.FALSE.equals(mo.getProductsGenerated())) {
+    boolean needToCreateProducts = (mo.getProductsGenerated() == null || Boolean.FALSE.equals(mo.getProductsGenerated()));
+    
+    if (needToCreateProducts) {
         ItemDto item = eventPublisher.getItemById(mo.getItemId());
+        
         if (item != null && Boolean.TRUE.equals(item.getIsSellable())) {
-             eventPublisher.publishProductBatchCreate(
-                 mo.getItemId(), 
-                 completedQuantity.intValue(), 
-                 mo.getBatchNo(), 
-                 mo.getMoId()
-             );
-             mo.setProductsGenerated(true);
+            try {
+                List<Map<String, Object>> products = eventPublisher.createProductBatchSync(
+                    mo.getItemId(), 
+                    completedQuantity.intValue(), 
+                    mo.getBatchNo(), 
+                    mo.getMoId()
+                );
+                
+                log.info("Successfully created {} products for MO {} (batch: {})", 
+                         products.size(), mo.getMoCode(), mo.getBatchNo());
+                
+                mo.setProductsGenerated(true);
+                
+            } catch (RpcException e) {
+                log.error("Failed to create products for MO {}: {}", mo.getMoCode(), e.getMessage());
+                throw new RpcException(500, "Hoàn thành MO thành công nhưng không thể tạo products: " + e.getMessage());
+                
+            } catch (Exception e) {
+                log.error("Unexpected error creating products: {}", e.getMessage());
+                throw new RpcException(500, "Lỗi không xác định khi tạo products: " + e.getMessage());
+            }
+            
+        } else {
+            mo.setProductsGenerated(true);
         }
     }
     

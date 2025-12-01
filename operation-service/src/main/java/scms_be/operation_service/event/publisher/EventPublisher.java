@@ -299,4 +299,59 @@ public class EventPublisher {
         
         rabbitTemplate.convertAndSend(EventConstants.GENERAL_SERVICE_QUEUE, event);
     }
+
+    public List<Map<String, Object>> createProductBatchSync(Long itemId, Integer quantity, String batchNo, Long moId) {
+        log.info("Creating product batch SYNC: itemId={}, quantity={}, batchNo={}", itemId, quantity, batchNo);
+        
+        GenericEvent event = new GenericEvent();
+        event.setPattern("product.batch_create");
+        
+        Map<String, Object> data = new HashMap<>();
+        data.put("itemId", itemId);
+        data.put("quantity", quantity);
+        data.put("batchNo", batchNo);
+        data.put("moId", moId);
+        event.setData(data);
+        
+        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.GENERAL_SERVICE_QUEUE, event);
+
+        if (response == null) {
+            log.error("No response from general-service");
+            throw new RpcException(504, "Không nhận được phản hồi từ general service");
+        }
+
+        log.info("Response type: {}", response.getClass().getName());
+
+        if (response instanceof ErrorResponse) {
+            ErrorResponse error = (ErrorResponse) response;
+            log.error("Error from general-service: {} - {}", error.getStatusCode(), error.getMessage());
+            throw new RpcException(error.getStatusCode(), error.getMessage());
+        }
+
+        if (response instanceof Map) {
+            Map<String, Object> responseMap = (Map<String, Object>) response;
+            
+            if (responseMap.containsKey("statusCode") && responseMap.containsKey("message")) {
+                Integer statusCode = (Integer) responseMap.get("statusCode");
+                String message = (String) responseMap.get("message");
+                log.error("Error response: {} - {}", statusCode, message);
+                throw new RpcException(statusCode, message);
+            }
+        }
+
+        try {
+            List<Map<String, Object>> products = objectMapper.convertValue(
+                response, 
+                new TypeReference<List<Map<String, Object>>>() {}
+            );
+            
+            log.info("Successfully created {} products", products.size());
+            return products;
+            
+        } catch (Exception e) {
+            log.error("Failed to parse response: {}", e.getMessage());
+            log.error("Response content: {}", response);
+            throw new RpcException(500, "Lỗi parse response: " + e.getMessage());
+        }
+    }
 }
