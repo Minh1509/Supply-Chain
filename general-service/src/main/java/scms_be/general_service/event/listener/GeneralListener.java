@@ -46,11 +46,11 @@ public class GeneralListener {
 
                 case "product.get_by_id":
                 case "product.get_by_batch":
+                case "product.get_by_company":
                 case "product.scan_detail":
                 case "product.batch_create":
                 case "product.generate_batch_qr_pdf":
                 case "product.update_batch_status":
-                case product.get_by_company"
                     return productHandler.handle(event);
 
                 case "manufacture_plant.create":
