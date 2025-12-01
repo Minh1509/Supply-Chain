@@ -41,6 +41,7 @@ public class ProductService {
     for (int i = 0; i < quantity; i++) {
         Product product = new Product();
         product.setItem(item);
+        product.setCurrentCompanyId(item.getCompanyId());
         product.setBatchNo(batchNo);
         product.setStatus("PRODUCED");
         product.setSerialNumber(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
