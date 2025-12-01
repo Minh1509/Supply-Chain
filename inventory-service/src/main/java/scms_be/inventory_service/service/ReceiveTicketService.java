@@ -68,9 +68,10 @@ public class ReceiveTicketService {
     ticket.setReceiveType(request.getReceiveType());
 
     List<ReceiveTicketDetail> details = new ArrayList<>();
+    ManufactureOrderDto manufactureOrder = null;
 
     if (request.getReceiveType().equals("Sản xuất")) {
-      ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderByCode(request.getReferenceCode());
+      manufactureOrder = eventPublisher.getManufactureOrderByCode(request.getReferenceCode());
       if (manufactureOrder == null) {
         throw new RpcException(404, "Không tìm thấy công lệnh sản xuất!");
       }
@@ -137,6 +138,15 @@ public class ReceiveTicketService {
     ticket.setReceiveTicketDetails(details);
 
     ReceiveTicket receiveTicket = receiveTicketRepository.save(ticket);
+    
+    // Trigger event update product status
+    if (request.getReceiveType().equals("Sản xuất") && 
+        "Đã hoàn thành".equals(receiveTicket.getStatus()) && 
+        manufactureOrder != null && 
+        manufactureOrder.getBatchNo() != null) {
+        
+        eventPublisher.publishProductBatchStatusUpdate(manufactureOrder.getBatchNo(), "IN_WAREHOUSE");
+    }
 
     return convertToDto(receiveTicket);
   }

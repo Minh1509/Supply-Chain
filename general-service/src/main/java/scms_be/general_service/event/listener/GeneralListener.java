@@ -44,16 +44,12 @@ public class GeneralListener {
                 case "manufacture_line.get_all_in_company":
                     return lineHandler.handle(event);
 
-                case "product.create":
-                case "product.update":
                 case "product.get_by_id":
-                case "product.get_all_by_item":
-                case "product.delete":
-                case "product.get_by_qr":
-                case "product.get_all_by_company":
                 case "product.get_by_batch":
-                case "product.transfer":
-                case "product.get_qr_image":
+                case "product.scan_detail":
+                case "product.batch_create":
+                case "product.generate_batch_qr_pdf":
+                case "product.update_batch_status":
                     return productHandler.handle(event);
 
                 case "manufacture_plant.create":

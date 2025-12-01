@@ -39,4 +39,10 @@ public class ManufactureOrder {
   private LocalDateTime createdOn;
   private LocalDateTime lastUpdatedOn;
   private String status;
+  
+  private String batchNo;
+  private Double completedQuantity;
+  
+  @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+  private Boolean productsGenerated;
 }

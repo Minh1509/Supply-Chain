@@ -7,4 +7,5 @@ export const MANUFACTURE_ORDER_CONSTANTS = {
   UPDATE_MO: 'manufacture_order.update',
   MANUFACTURE_REPORT: 'manufacture_order.report',
   MONTHLY_MANU_REPORT: 'manufacture_order.monthly_report',
+  COMPLETE_MO: 'manufacture_order.complete',
 };

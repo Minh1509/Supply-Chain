@@ -243,6 +243,38 @@ public class ManufactureOrderService {
     return "MO" + itemId + lineId + String.format("%d", count + 1);
   }
 
+  public ManufactureOrderDto completeMO(Long moId, Double completedQuantity) {
+    ManufactureOrder mo = manufactureOrderRepository.findById(moId)
+        .orElseThrow(() -> new RpcException(404, "Không tìm thấy lệnh sản xuất!"));
+        
+    // Validate status if needed, currently assuming valid transition
+    
+    mo.setCompletedQuantity(completedQuantity);
+    mo.setStatus("Đã hoàn thành");
+    mo.setLastUpdatedOn(LocalDateTime.now());
+    
+    // Generate batchNo
+    if (mo.getBatchNo() == null) {
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        mo.setBatchNo("BATCH-" + mo.getMoCode() + "-" + timestamp);
+    }
+
+    if (Boolean.FALSE.equals(mo.getProductsGenerated())) {
+        ItemDto item = eventPublisher.getItemById(mo.getItemId());
+        if (item != null && Boolean.TRUE.equals(item.getIsSellable())) {
+             eventPublisher.publishProductBatchCreate(
+                 mo.getItemId(), 
+                 completedQuantity.intValue(), 
+                 mo.getBatchNo(), 
+                 mo.getMoId()
+             );
+             mo.setProductsGenerated(true);
+        }
+    }
+    
+    return convertToDto(manufactureOrderRepository.save(mo));
+  }
+
   private ManufactureOrderDto convertToDto(ManufactureOrder mo) {
     ManufactureOrderDto dto = new ManufactureOrderDto();
     dto.setMoId(mo.getMoId());
@@ -272,6 +304,9 @@ public class ManufactureOrderService {
     dto.setCreatedOn(mo.getCreatedOn());
     dto.setLastUpdatedOn(mo.getLastUpdatedOn());
     dto.setStatus(mo.getStatus());
+    dto.setBatchNo(mo.getBatchNo());
+    dto.setCompletedQuantity(mo.getCompletedQuantity());
+    dto.setProductsGenerated(mo.getProductsGenerated());
     return dto;
   }
 }

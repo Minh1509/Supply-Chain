@@ -27,6 +27,7 @@ public class Product {
   
   private Long currentCompanyId;
   private String serialNumber;
-  private Long batchNo;
+  private String batchNo;
   private String qrCode;
+  private String status;
 }

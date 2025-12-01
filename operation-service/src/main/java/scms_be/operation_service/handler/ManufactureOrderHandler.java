@@ -39,6 +39,8 @@ public class ManufactureOrderHandler {
                 return manufactureOrderService.getManuReport(request.getManuReportRequest(), request.getCompanyId());
             case "manufacture_order.monthly_report":
                 return manufactureOrderService.getMonthlyManuReport(request.getCompanyId(), request.getType());
+            case "manufacture_order.complete":
+                return manufactureOrderService.completeMO(request.getMoId(), request.getCompletedQuantity());
             default:
                 throw new RpcException(400, "Unknown manufacture event: " + event.getPattern());
         }

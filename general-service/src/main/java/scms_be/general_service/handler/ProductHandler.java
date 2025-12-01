@@ -21,26 +21,24 @@ public class ProductHandler {
         ProductRequest req = objectMapper.convertValue( event.getData(), ProductRequest.class );
         System.out.println("event: " + event + ", req: " + req);
         switch (event.getPattern()) {
-            case "product.create":
-                return productService.createProduct(req.getItemId(), req.getProduct());
-            case "product.update":
-                return productService.updateProduct(req.getProductId(), req.getProduct());
             case "product.get_by_id":
                 return productService.getProductById(req.getProductId());
-            case "product.get_all_by_item":
-                return productService.getAllProductsByItem(req.getItemId());
-            case "product.delete":
-                return productService.deleteProduct(req.getProductId());
-            case "product.get_by_qr":
-                return productService.getProductByQrCode(req.getQrCode());
-            case "product.get_all_by_company":
-                return productService.getAllProductsByCompany(req.getCompanyId());
             case "product.get_by_batch":
                 return productService.getProductsByBatchNo(req.getBatchNo());
-            case "product.transfer":
-                return productService.transferProduct(req.getProductId(), req.getNewCompanyId());
-            case "product.get_qr_image":
-                return productService.getQRCodeImage(req.getProductId());
+            case "product.scan_detail":
+                return productService.scanQRCodeDetail(req.getQrCode());
+            case "product.batch_create":
+                return productService.batchCreateProducts(
+                    req.getItemId(), 
+                    req.getQuantity(), 
+                    req.getBatchNo(),
+                    req.getMoId()
+                );
+            case "product.generate_batch_qr_pdf":
+                return productService.generateBatchQRCodesPDF(req.getBatchNo());
+            case "product.update_batch_status":
+                productService.updateBatchStatus(req.getBatchNo(), req.getNewStatus());
+                return "Success";
             default:
                 throw new RpcException(400, "Unknown product event: " + event.getPattern());
         }

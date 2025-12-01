@@ -11,6 +11,7 @@ public class ManuOrderRequest {
   private Long moId;
   private String moCode;
   private String type;
+  private Double completedQuantity;
   private ManuOrderData manuOrderData;
 
   @Data

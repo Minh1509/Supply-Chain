@@ -324,4 +324,17 @@ public class EventPublisher {
 
         throw new RpcException(500, "Unexpected response type: " + response.getClass());
     }
+    public void publishProductBatchStatusUpdate(String batchNo, String newStatus) {
+        log.info("Publishing product batch status update: batchNo={}, newStatus={}", batchNo, newStatus);
+        
+        GenericEvent event = new GenericEvent();
+        event.setPattern("product.update_batch_status");
+        
+        Map<String, Object> data = new java.util.HashMap<>();
+        data.put("batchNo", batchNo);
+        data.put("newStatus", newStatus);
+        event.setData(data);
+        
+        rabbitTemplate.convertAndSend(EventConstants.GENERAL_SERVICE_QUEUE, event);
+    }
 }
