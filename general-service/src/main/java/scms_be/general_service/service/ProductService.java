@@ -63,6 +63,11 @@ public class ProductService {
     return products.stream().map(this::convertToDto).collect(Collectors.toList());
   }
 
+  public List<ProductDto> getProductsByCompanyId(Long companyId) {
+    List<Product> products = productRepository.findByCurrentCompanyId(companyId);
+    return products.stream().map(this::convertToDto).collect(Collectors.toList());
+  }
+
   public String generateBatchQRCodesPDF(String batchNo) {
     List<Product> products = productRepository.findByBatchNo(batchNo);
     if (products.isEmpty()) {

@@ -25,6 +25,8 @@ public class ProductHandler {
                 return productService.getProductById(req.getProductId());
             case "product.get_by_batch":
                 return productService.getProductsByBatchNo(req.getBatchNo());
+            case "product.get_by_company":
+                return productService.getProductsByCompanyId(req.getCompanyId());
             case "product.scan_detail":
                 return productService.scanQRCodeDetail(req.getQrCode());
             case "product.batch_create":

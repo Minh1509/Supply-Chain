@@ -50,6 +50,13 @@ export class ProductController {
     );
   }
 
+  @Get('/company/:companyId')
+  async getProductsByCompany(@Param('companyId') companyId: number) {
+    return await firstValueFrom(
+      this.generalClient.send(PRODUCT_CONSTANTS.GET_PRODUCTS_BY_COMPANY, { companyId }),
+    );
+  }
+
   @Get(':productId')
   async getProductById(@Param('productId') productId: number) {
     return await firstValueFrom(
