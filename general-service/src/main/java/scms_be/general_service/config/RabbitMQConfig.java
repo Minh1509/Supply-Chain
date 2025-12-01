@@ -1,7 +1,9 @@
 package scms_be.general_service.config;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.core.*;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -11,6 +13,8 @@ import org.springframework.context.annotation.Configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
@@ -124,7 +128,7 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding productGetByIdBinding(Queue generalQueue, DirectExchange exchange) {
+    public Binding productGetByCompanyBinding(Queue generalQueue, DirectExchange exchange) {
         return BindingBuilder.bind(generalQueue).to(exchange).with("product.get_by_company");
     }
     @Bean
