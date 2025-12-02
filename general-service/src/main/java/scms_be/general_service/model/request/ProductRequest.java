@@ -11,5 +11,7 @@ public class ProductRequest {
     private String batchNo;
     private Integer quantity;
     private Long moId;
+    private String moCode;
+    private String manufacturerCompanyName;
     private String newStatus;
 }

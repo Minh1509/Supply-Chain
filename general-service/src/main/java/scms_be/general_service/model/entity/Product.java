@@ -1,5 +1,8 @@
 package scms_be.general_service.model.entity;
 
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -26,8 +29,16 @@ public class Product {
   private Item item;
   
   private Long currentCompanyId;
+  private String currentCompanyName;
   private String serialNumber;
   private String batchNo;
   private String qrCode;
   private String status;
+  
+  private Long moId;
+  private LocalDateTime manufacturedDate;
+  private Long manufacturerCompanyId;
+  
+  @Column(length = 500)
+  private String manufacturerCompanyName;
 }

@@ -1,5 +1,6 @@
 package scms_be.general_service.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -7,9 +8,11 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import scms_be.general_service.event.publisher.EventPublisher;
 import scms_be.general_service.exception.RpcException;
-import scms_be.general_service.model.dto.ProductDto;
 import scms_be.general_service.model.dto.ProductDetailDto;
+import scms_be.general_service.model.dto.ProductDto;
+import scms_be.general_service.model.dto.publisher.CompanyDto;
 import scms_be.general_service.model.entity.Item;
 import scms_be.general_service.model.entity.Product;
 import scms_be.general_service.repository.ItemRepository;
@@ -26,6 +29,9 @@ public class ProductService {
 
   @Autowired
   private QRCodePDFGenerator qrCodePDFGenerator;
+  
+  @Autowired
+  private EventPublisher eventPublisher;
 
   public ProductDto getProductById(Long productId) {
     Product product = productRepository.findById(productId)
@@ -36,15 +42,24 @@ public class ProductService {
   public List<ProductDto> batchCreateProducts(Long itemId, Integer quantity, String batchNo, Long moId) {
     Item item = itemRepository.findById(itemId)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy hàng hóa!"));
+    
+    CompanyDto manufacturerCompany = eventPublisher.getCompanyById(item.getCompanyId());
+    String manufacturerCompanyName = manufacturerCompany != null ? manufacturerCompany.getCompanyName() : "N/A";
 
     List<Product> products = new java.util.ArrayList<>();
     for (int i = 0; i < quantity; i++) {
         Product product = new Product();
         product.setItem(item);
         product.setCurrentCompanyId(item.getCompanyId());
+        product.setCurrentCompanyName(manufacturerCompanyName);
         product.setBatchNo(batchNo);
-        product.setStatus("PRODUCED");
+        product.setStatus("Đã sản xuất");
         product.setSerialNumber(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        
+        product.setMoId(moId);
+        product.setManufacturedDate(LocalDateTime.now());
+        product.setManufacturerCompanyId(item.getCompanyId());
+        product.setManufacturerCompanyName(manufacturerCompanyName);
         
         product = productRepository.save(product);
         
@@ -91,11 +106,27 @@ public class ProductService {
     dto.setTechnicalSpecifications(product.getItem().getTechnicalSpecifications());
     dto.setDescription(product.getItem().getDescription());
     dto.setImageUrl(product.getItem().getImageUrl());
+    
     dto.setCurrentCompanyId(product.getCurrentCompanyId());
+    CompanyDto currentCompany = eventPublisher.getCompanyById(product.getCurrentCompanyId());
+    dto.setCurrentCompanyName(currentCompany != null ? currentCompany.getCompanyName() : product.getCurrentCompanyName());
+    
     dto.setSerialNumber(product.getSerialNumber());
     dto.setBatchNo(product.getBatchNo());
     dto.setQrCode(product.getQrCode());
     dto.setStatus(product.getStatus());
+    
+    dto.setManufacturedDate(product.getManufacturedDate());
+    dto.setManufacturerCompanyId(product.getManufacturerCompanyId());
+    dto.setManufacturerCompanyName(product.getManufacturerCompanyName());
+    dto.setMoId(product.getMoId());
+    
+    if (product.getBatchNo() != null && product.getBatchNo().startsWith("BATCH-MO")) {
+        String[] parts = product.getBatchNo().split("-");
+        if (parts.length >= 2) {
+            dto.setMoCode(parts[1]);
+        }
+    }
     
     return dto;
   }
