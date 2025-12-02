@@ -25,7 +25,7 @@ async function bootstrap() {
   app.use(
     rateLimit({
       windowMs: 60 * 1000, // 1 minutes
-      max: 100, // limit each IP to 100 requests per windowMs
+      max: 5000, // limit each IP to 100 requests per windowMs
       standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
       legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
     }),
