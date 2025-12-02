@@ -33,10 +33,10 @@ public class ProductService {
   @Autowired
   private EventPublisher eventPublisher;
 
-  public ProductDto getProductById(Long productId) {
+  public ProductDetailDto getProductById(Long productId) {
     Product product = productRepository.findById(productId)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy sản phẩm!"));
-    return convertToDto(product);
+    return convertToDetailDto(product);
   }
 
   public List<ProductDto> batchCreateProducts(Long itemId, Integer quantity, String batchNo, Long moId) {
@@ -74,11 +74,6 @@ public class ProductService {
         .collect(Collectors.toList());
   }
 
-  public List<ProductDto> getProductsByBatchNo(String batchNo) {
-    List<Product> products = productRepository.findByBatchNo(batchNo);
-    return products.stream().map(this::convertToDto).collect(Collectors.toList());
-  }
-
   public List<ProductDto> getProductsByCompanyId(Long companyId) {
     List<Product> products = productRepository.findByCurrentCompanyId(companyId);
     return products.stream().map(this::convertToDto).collect(Collectors.toList());
@@ -94,10 +89,53 @@ public class ProductService {
     return java.util.Base64.getEncoder().encodeToString(pdfBytes);
   }
 
+  public String generateMultipleQRCodesPDF(List<Long> productIds) {
+    List<Product> products = productRepository.findAllById(productIds);
+    if (products.isEmpty()) {
+        throw new RpcException(404, "Không tìm thấy sản phẩm nào!");
+    }
+    
+    byte[] pdfBytes = qrCodePDFGenerator.generateBatchQRCodesPDF(products);
+    return java.util.Base64.getEncoder().encodeToString(pdfBytes);
+  }
+
   public ProductDetailDto scanQRCodeDetail(String qrCode) {
     Product product = productRepository.findByQrCode(qrCode)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy sản phẩm với QR code này!"));
     
+    return convertToDetailDto(product);
+  }
+
+  public void updateBatchStatus(String batchNo, String newStatus) {
+    List<Product> products = productRepository.findByBatchNo(batchNo);
+    if (!products.isEmpty()) {
+        for (Product product : products) {
+            product.setStatus(newStatus);
+        }
+        productRepository.saveAll(products);
+    }
+  }
+
+  private ProductDto convertToDto(Product product) {
+    ProductDto dto = new ProductDto();
+    dto.setProductId(product.getProductId());
+    dto.setItemId(product.getItem().getItemId());
+    dto.setItemCode(product.getItem().getItemCode());
+    dto.setItemName(product.getItem().getItemName());
+    dto.setTechnicalSpecifications(product.getItem().getTechnicalSpecifications());
+    dto.setCurrentCompanyId(product.getCurrentCompanyId());
+    dto.setCurrentCompanyName(product.getCurrentCompanyName());
+    dto.setSerialNumber(product.getSerialNumber());
+    dto.setBatchNo(product.getBatchNo());
+    dto.setQrCode(product.getQrCode());
+    dto.setStatus(product.getStatus());
+    dto.setManufacturedDate(product.getManufacturedDate());
+    dto.setManufacturerCompanyId(product.getManufacturerCompanyId());
+    dto.setManufacturerCompanyName(product.getManufacturerCompanyName());
+    return dto;
+  }
+
+  private ProductDetailDto convertToDetailDto(Product product) {
     ProductDetailDto dto = new ProductDetailDto();
     dto.setProductId(product.getProductId());
     dto.setItemId(product.getItem().getItemId());
@@ -128,30 +166,6 @@ public class ProductService {
         }
     }
     
-    return dto;
-  }
-
-  public void updateBatchStatus(String batchNo, String newStatus) {
-    List<Product> products = productRepository.findByBatchNo(batchNo);
-    if (!products.isEmpty()) {
-        for (Product product : products) {
-            product.setStatus(newStatus);
-        }
-        productRepository.saveAll(products);
-    }
-  }
-
-  private ProductDto convertToDto(Product product) {
-    ProductDto dto = new ProductDto();
-    dto.setProductId(product.getProductId());
-    dto.setItemId(product.getItem().getItemId());
-    dto.setItemName(product.getItem().getItemName());
-    dto.setTechnicalSpecifications(product.getItem().getTechnicalSpecifications());
-    dto.setSerialNumber(product.getSerialNumber());
-    dto.setBatchNo(product.getBatchNo());
-    dto.setQrCode(product.getQrCode());
-    dto.setCurrentCompanyId(product.getCurrentCompanyId());
-    dto.setStatus(product.getStatus());
     return dto;
   }
 }

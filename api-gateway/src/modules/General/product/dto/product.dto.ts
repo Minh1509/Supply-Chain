@@ -14,6 +14,12 @@ export class ProductDto {
   itemId: number;
 
   @ApiProperty({
+    description: 'Mã item',
+    example: 'ITEM-001',
+  })
+  itemCode: string;
+
+  @ApiProperty({
     description: 'Tên của item',
     example: 'Máy tính xách tay Dell',
   })
@@ -32,20 +38,50 @@ export class ProductDto {
   currentCompanyId: number;
 
   @ApiProperty({
+    description: 'Tên công ty hiện tại',
+    example: 'Công ty ABC',
+  })
+  currentCompanyName: string;
+
+  @ApiProperty({
     description: 'Số serial của sản phẩm',
-    example: 'SN123456789',
+    example: 'SN123456',
   })
   serialNumber: string;
 
   @ApiProperty({
     description: 'Batch number',
-    example: 12345,
+    example: 'BATCH-MO-001',
   })
-  batchNo: number;
+  batchNo: string;
 
   @ApiProperty({
     description: 'QR Code của sản phẩm',
-    example: 'QR123456789',
+    example: 'PRODUCT-1-ABC12345',
   })
   qrCode: string;
+
+  @ApiProperty({
+    description: 'Trạng thái sản phẩm',
+    example: 'Đã sản xuất',
+  })
+  status: string;
+
+  @ApiProperty({
+    description: 'Ngày sản xuất',
+    example: '2024-12-02T10:30:00',
+  })
+  manufacturedDate: Date;
+
+  @ApiProperty({
+    description: 'ID công ty sản xuất',
+    example: 1,
+  })
+  manufacturerCompanyId: number;
+
+  @ApiProperty({
+    description: 'Tên công ty sản xuất',
+    example: 'Công ty ABC',
+  })
+  manufacturerCompanyName: string;
 }

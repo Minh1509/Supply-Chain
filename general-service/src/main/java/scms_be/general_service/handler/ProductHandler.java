@@ -23,8 +23,6 @@ public class ProductHandler {
         switch (event.getPattern()) {
             case "product.get_by_id":
                 return productService.getProductById(req.getProductId());
-            case "product.get_by_batch":
-                return productService.getProductsByBatchNo(req.getBatchNo());
             case "product.get_by_company":
                 return productService.getProductsByCompanyId(req.getCompanyId());
             case "product.scan_detail":
@@ -38,6 +36,8 @@ public class ProductHandler {
                 );
             case "product.generate_batch_qr_pdf":
                 return productService.generateBatchQRCodesPDF(req.getBatchNo());
+            case "product.generate_multiple_qr_pdf":
+                return productService.generateMultipleQRCodesPDF(req.getProductIds());
             case "product.update_batch_status":
                 productService.updateBatchStatus(req.getBatchNo(), req.getNewStatus());
                 return "Success";

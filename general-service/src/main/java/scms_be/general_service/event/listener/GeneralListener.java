@@ -45,11 +45,11 @@ public class GeneralListener {
                     return lineHandler.handle(event);
 
                 case "product.get_by_id":
-                case "product.get_by_batch":
                 case "product.get_by_company":
                 case "product.scan_detail":
                 case "product.batch_create":
                 case "product.generate_batch_qr_pdf":
+                case "product.generate_multiple_qr_pdf":
                 case "product.update_batch_status":
                     return productHandler.handle(event);
 

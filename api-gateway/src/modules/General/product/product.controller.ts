@@ -36,17 +36,17 @@ export class ProductController {
     );
   }
 
-  @Get('/batch/:batchNo')
-  async getProductsByBatch(@Param('batchNo') batchNo: string) {
-    return await firstValueFrom(
-      this.generalClient.send(PRODUCT_CONSTANTS.GET_PRODUCTS_BY_BATCH, { batchNo }),
-    );
-  }
-
   @Get('/batch/:batchNo/qr-pdf')
   async downloadBatchQRPDF(@Param('batchNo') batchNo: string) {
     return await firstValueFrom(
       this.generalClient.send(PRODUCT_CONSTANTS.GENERATE_BATCH_QR_PDF, { batchNo }),
+    );
+  }
+
+  @Post('/multiple/qr-pdf')
+  async downloadMultipleQRPDF(@Body() body: { productIds: number[] }) {
+    return await firstValueFrom(
+      this.generalClient.send(PRODUCT_CONSTANTS.GENERATE_MULTIPLE_QR_PDF, body),
     );
   }
 
