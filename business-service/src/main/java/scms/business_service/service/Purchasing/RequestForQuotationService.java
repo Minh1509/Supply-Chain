@@ -184,7 +184,7 @@ public class RequestForQuotationService {
                     if (supplierItem != null) {
                         d.setSupplierItemCode(supplierItem.getItemCode());
                         d.setSupplierItemName(supplierItem.getItemName());
-                        d.setSupplierItemPrice(supplierItem.getImportPrice());
+                        d.setSupplierItemPrice(supplierItem.getExportPrice());
                     }
 
                     return d;
