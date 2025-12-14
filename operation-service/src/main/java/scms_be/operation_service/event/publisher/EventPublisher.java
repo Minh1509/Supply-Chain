@@ -157,7 +157,7 @@ public class EventPublisher {
         log.info("Getting SalesOrder by ID: {}", soId);
         
         GenericEvent event = new GenericEvent();
-        event.setPattern("sales_order.get_by_id");
+        event.setPattern("so.get_by_id");
         
         Map<String, Object> data = Map.of("soId", soId);
         event.setData(data);
@@ -194,7 +194,7 @@ public class EventPublisher {
         log.info("Getting SalesOrders by Company ID: {}", companyId);
 
         GenericEvent event = new GenericEvent();
-        event.setPattern("sales_order.get_all_by_company_id");
+        event.setPattern("so.get_all_by_company_id");
 
         Map<String, Object> data = Map.of("companyId", companyId);
         event.setData(data);

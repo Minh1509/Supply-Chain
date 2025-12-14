@@ -14,6 +14,7 @@ public class RfqDetailDto {
   private String supplierItemCode;
   private String supplierItemName;
   private Double supplierItemPrice;
+  private String imageUrl;
   private Double quantity;
   private String note;
 }

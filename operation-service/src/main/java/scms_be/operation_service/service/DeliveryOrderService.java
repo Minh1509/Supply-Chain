@@ -40,7 +40,7 @@ public class DeliveryOrderService {
       throw new RpcException(404, "Không tìm thấy đơn bán hàng!");
     }
     DeliveryOrder deliveryOrder = new DeliveryOrder();
-    deliveryOrder.setSalesOrderId(salesOrder.getSoId());
+    deliveryOrder.setSoId(salesOrder.getSoId());
     deliveryOrder.setDoCode(generateDoCode(salesOrder.getSoId()));
     deliveryOrder.setCreatedBy(deliveryOrderRequest.getCreatedBy());
     deliveryOrder.setCreatedOn(LocalDateTime.now());
@@ -50,19 +50,33 @@ public class DeliveryOrderService {
     DeliveryOrder savedDeliveryOrder = deliveryOrderRepository.save(deliveryOrder);
 
     List<SalesOrderDetailDto> salesOrderDetailList = salesOrder.getSalesOrderDetails();
+    System.out.println("Number of sales order details: " + salesOrderDetailList.size());
+    
+    // Initialize the deliveryOrderDetails list to prevent orphan removal issues
+    List<DeliveryOrderDetail> deliveryOrderDetailsList = new ArrayList<>();
+    
     for(SalesOrderDetailDto salesOrderDetail : salesOrderDetailList ){
+        System.out.println("Processing item ID: " + salesOrderDetail.getItemId());
         ItemDto item = eventPublisher.getItemById(salesOrderDetail.getItemId());
+        System.out.println("Retrieved item: " + (item != null ? item.getItemCode() : "null"));
+        
       if (item == null) {
-        throw new RpcException(404, "Không tìm thấy hàng hóa!");
+        System.err.println("Item not found for ID: " + salesOrderDetail.getItemId());
+        throw new RpcException(404, "Không tìm thấy hàng hóa với ID: " + salesOrderDetail.getItemId());
       }
       DeliveryOrderDetail newDoDetail = new DeliveryOrderDetail();
       newDoDetail.setDeliveryOrder(savedDeliveryOrder);
       newDoDetail.setItemId(item.getItemId());
       newDoDetail.setQuantity(salesOrderDetail.getQuantity());
       newDoDetail.setNote(salesOrderDetail.getNote());
-      deliveryOrderDetailRepository.save(newDoDetail);
+      
+      DeliveryOrderDetail savedDetail = deliveryOrderDetailRepository.save(newDoDetail);
+      deliveryOrderDetailsList.add(savedDetail);
+      System.out.println("Saved delivery order detail ID: " + savedDetail.getDeliveryOrderDetailId());
     }
-    deliveryOrderRepository.save(savedDeliveryOrder);
+    
+    // Set the list to prevent orphan removal from deleting the details
+    savedDeliveryOrder.setDeliveryOrderDetails(deliveryOrderDetailsList);
 
     return convertToDto(savedDeliveryOrder);
   }
@@ -74,7 +88,7 @@ public class DeliveryOrderService {
   }
 
   public DeliveryOrderDto getDoBySalesOrderId(Long soId) {
-    DeliveryOrder deliveryOrder = deliveryOrderRepository.findBySalesOrderId(soId);
+    DeliveryOrder deliveryOrder = deliveryOrderRepository.findBySoId(soId);
     if (deliveryOrder == null) {
       throw new RpcException(404, "Không tìm thấy đơn vận chuyển!");
     }
@@ -86,7 +100,7 @@ public class DeliveryOrderService {
 
     List<DeliveryOrder> deliveryOrders = new ArrayList<>();
     for (SalesOrderDto salesOrder : salesOrders) {
-      DeliveryOrder deliveryOrder = deliveryOrderRepository.findBySalesOrderId(salesOrder.getSoId());
+      DeliveryOrder deliveryOrder = deliveryOrderRepository.findBySoId(salesOrder.getSoId());
       if (deliveryOrder != null) {
         deliveryOrders.add(deliveryOrder);
       }
@@ -118,7 +132,7 @@ public class DeliveryOrderService {
     deliveryOrderDto.setDoId(deliveryOrder.getDoId());
     deliveryOrderDto.setDoCode(deliveryOrder.getDoCode());
     
-    SalesOrderDto saleDtoOrder = eventPublisher.getSalesOrderById(deliveryOrder.getSalesOrderId());
+    SalesOrderDto saleDtoOrder = eventPublisher.getSalesOrderById(deliveryOrder.getSoId());
     if (saleDtoOrder == null) {
       throw new RpcException(404, "Không tìm thấy đơn bán hàng!");
     }

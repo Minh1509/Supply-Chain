@@ -15,4 +15,5 @@ public class ItemDto {
     private Double importPrice;
     private Double exportPrice;
     private String description;
+    private String imageUrl;
 }

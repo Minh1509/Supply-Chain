@@ -8,6 +8,6 @@ public interface DeliveryOrderRepository extends JpaRepository<DeliveryOrder, Lo
 
   int countByDoCodeStartingWith(String prefix);
 
-  DeliveryOrder findBySalesOrderId(Long soId);
+  DeliveryOrder findBySoId(Long soId);
 
 }

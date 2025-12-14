@@ -29,7 +29,7 @@ public class DeliveryOrder {
   private String doCode;
 
   @Column(name = "so_id", nullable = false)
-  private Long salesOrderId;
+  private Long soId;
 
   private String createdBy;
   private LocalDateTime createdOn;
