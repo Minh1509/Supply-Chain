@@ -39,6 +39,11 @@ public class DeliveryOrderService {
     if (salesOrder == null) {
       throw new RpcException(404, "Không tìm thấy đơn bán hàng!");
     }
+    
+    if(deliveryOrderRepository.findBySoId(salesOrder.getSoId()) != null) {
+      throw new RpcException(400, "Đơn vận chuyển cho đơn bán hàng này đã tồn tại!");
+    }
+    
     DeliveryOrder deliveryOrder = new DeliveryOrder();
     deliveryOrder.setSoId(salesOrder.getSoId());
     deliveryOrder.setDoCode(generateDoCode(salesOrder.getSoId()));

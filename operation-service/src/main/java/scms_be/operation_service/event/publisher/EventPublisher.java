@@ -194,7 +194,7 @@ public class EventPublisher {
         log.info("Getting SalesOrders by Company ID: {}", companyId);
 
         GenericEvent event = new GenericEvent();
-        event.setPattern("so.get_all_by_company_id");
+        event.setPattern("so.get_all_in_company");
 
         Map<String, Object> data = Map.of("companyId", companyId);
         event.setData(data);
