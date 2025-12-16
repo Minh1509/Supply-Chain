@@ -52,12 +52,19 @@ public class InvoiceService {
     return convertToDto(savedInvoice);
   }
 
+  @Transactional
   public InvoiceDto getInvoicePdf(Long id) {
     Invoice invoice = invoiceRepository.findById(id)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy hóa đơn!"));
 
     if (invoice.getFile() == null || invoice.getFile().length == 0) {
-      throw new RpcException(404, "Hóa đơn chưa có file PDF!");
+      if (invoice.getSalesOrder() != null) {
+        byte[] pdfBytes = pdfGenerator.generateInvoicePdf(invoice.getSalesOrder());
+        invoice.setFile(pdfBytes);
+        invoice = invoiceRepository.save(invoice);
+      } else {
+        throw new RpcException(404, "Hóa đơn chưa có file PDF và không tìm thấy đơn hàng gốc để tạo lại!");
+      }
     }
 
     InvoiceDto dto = new InvoiceDto();
@@ -67,11 +74,22 @@ public class InvoiceService {
     return dto;
   }
 
+  @Transactional
   public InvoiceDto getInvoiceBySo(Long soId) {
     Invoice invoice = invoiceRepository.findBySalesOrderSoId(soId);
     if (invoice == null) {
       return generateInvoice(soId);
     }
+
+    if (invoice.getFile() == null || invoice.getFile().length == 0) {
+      SalesOrder salesOrder = salesOrderRepository.findById(soId)
+          .orElseThrow(() -> new RpcException(404, "Không tìm thấy đơn bán hàng!"));
+
+      byte[] pdfBytes = pdfGenerator.generateInvoicePdf(salesOrder);
+      invoice.setFile(pdfBytes);
+      invoice = invoiceRepository.save(invoice);
+    }
+    
     return convertToDto(invoice);
   }
 
