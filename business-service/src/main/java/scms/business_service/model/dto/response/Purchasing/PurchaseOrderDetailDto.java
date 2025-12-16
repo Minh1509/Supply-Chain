@@ -10,9 +10,11 @@ public class PurchaseOrderDetailDto {
   private Long itemId;
   private String itemCode;
   private String itemName;
+  private String itemUrl;
   private Long supplierItemId;
   private String supplierItemCode;
   private String supplierItemName;
+  private String supplierItemUrl;
   private Double discount;
   private Double quantity;
   private Double itemPrice;

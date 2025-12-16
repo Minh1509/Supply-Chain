@@ -178,6 +178,7 @@ public class RequestForQuotationService {
                     if (item != null) {
                         d.setItemCode(item.getItemCode());
                         d.setItemName(item.getItemName());
+                        d.setItemUrl(item.getImageUrl());
                     }
 
                     ItemDto supplierItem = itemFutures.get(detail.getSupplierItemId()).join();
@@ -185,7 +186,7 @@ public class RequestForQuotationService {
                         d.setSupplierItemCode(supplierItem.getItemCode());
                         d.setSupplierItemName(supplierItem.getItemName());
                         d.setSupplierItemPrice(supplierItem.getExportPrice());
-                        d.setImageUrl(supplierItem.getImageUrl());
+                        d.setSupplierItemUrl(supplierItem.getImageUrl());
                     }
 
                     return d;

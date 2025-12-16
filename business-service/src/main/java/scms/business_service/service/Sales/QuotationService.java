@@ -202,12 +202,14 @@ public class QuotationService {
               if (item != null) {
                 d.setItemCode(item.getItemCode());
                 d.setItemName(item.getItemName());
+                d.setItemUrl(item.getImageUrl());
               }
 
               ItemDto customerItem = itemFutures.get(detail.getCustomerItemId()).join();
               if (customerItem != null) {
                 d.setCustomerItemCode(customerItem.getItemCode());
                 d.setCustomerItemName(customerItem.getItemName());
+                d.setCustomerItemUrl(customerItem.getImageUrl());
               }
 
               return d;

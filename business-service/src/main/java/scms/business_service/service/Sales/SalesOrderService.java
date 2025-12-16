@@ -194,6 +194,7 @@ public class SalesOrderService {
       if (item != null) {
         dto.setItemCode(item.getItemCode());
         dto.setItemName(item.getItemName());
+        dto.setItemUrl(item.getImageUrl());
       }
       
       result.add(dto);
@@ -314,12 +315,14 @@ public class SalesOrderService {
                 if (item != null) {
                   detailDto.setItemCode(item.getItemCode());
                   detailDto.setItemName(item.getItemName());
+                  detailDto.setItemUrl(item.getImageUrl());
                 }
 
                 ItemDto customerItem = externalServicePublisher.getItemById(detail.getCustomerItemId());
                 if (customerItem != null) {
                   detailDto.setCustomerItemCode(customerItem.getItemCode());
                   detailDto.setCustomerItemName(customerItem.getItemName());
+                  detailDto.setCustomerItemUrl(customerItem.getImageUrl());
                 }
 
                 return detailDto;

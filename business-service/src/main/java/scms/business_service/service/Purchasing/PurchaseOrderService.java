@@ -207,6 +207,7 @@ public class PurchaseOrderService {
             if (item != null) {
                 dto.setItemCode(item.getItemCode());
                 dto.setItemName(item.getItemName());
+                dto.setItemUrl(item.getImageUrl());
             }
 
             result.add(dto);
@@ -350,12 +351,14 @@ public class PurchaseOrderService {
                     if (item != null) {
                         detailDto.setItemCode(item.getItemCode());
                         detailDto.setItemName(item.getItemName());
+                        detailDto.setItemUrl(item.getImageUrl());
                     }
 
                     ItemDto supplierItem = itemFutures.get(detail.getSupplierItemId()).join();
                     if (supplierItem != null) {
                         detailDto.setSupplierItemCode(supplierItem.getItemCode());
                         detailDto.setSupplierItemName(supplierItem.getItemName());
+                        detailDto.setSupplierItemUrl(supplierItem.getImageUrl());
                     }
 
                     return detailDto;

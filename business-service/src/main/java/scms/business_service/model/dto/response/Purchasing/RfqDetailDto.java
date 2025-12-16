@@ -10,10 +10,12 @@ public class RfqDetailDto {
   private Long itemId;
   private String itemCode;
   private String itemName;
+  private String itemUrl;
   private Long supplierItemId;
   private String supplierItemCode;
   private String supplierItemName;
   private Double supplierItemPrice;
+  private String supplierItemUrl;
   private String imageUrl;
   private Double quantity;
   private String note;

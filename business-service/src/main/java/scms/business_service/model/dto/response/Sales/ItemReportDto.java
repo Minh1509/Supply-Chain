@@ -7,5 +7,6 @@ public class ItemReportDto {
   private Long itemId;
   private String itemCode;
   private String itemName;
+  private String itemUrl;
   private Double totalQuantity;
 }
