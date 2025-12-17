@@ -53,6 +53,9 @@ export class Employee extends AbstractEntity<Employee> {
   @Column({ nullable: true })
   status: string;
 
+  @Column()
+  startDate: Date;
+
   @OneToOne(() => User, (user) => user.employee)
   user: User;
 }

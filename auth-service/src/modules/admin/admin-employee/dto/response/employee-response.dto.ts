@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 
 export class EmployeeResponseDto {
   @ApiProperty()
@@ -53,4 +53,9 @@ export class EmployeeResponseDto {
   @ApiProperty()
   @Expose()
   status: string;
+
+  @ApiProperty()
+  @Expose()
+  @Type(() => Date)
+  startDate: Date;
 }

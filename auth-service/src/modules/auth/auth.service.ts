@@ -148,6 +148,9 @@ export class AuthService extends BaseService {
         position: dto.position ?? 'Quản lý',
         email: dto.email,
         status: EmployeeStatus.ACTIVE,
+        address: dto.address ?? null,
+        phoneNumber: dto.phoneNumber ?? null,
+        startDate: dto.startDate ?? null,
       });
       const savedEmployee = await employeeRepo.save(employee);
 

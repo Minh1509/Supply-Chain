@@ -23,9 +23,13 @@ export class EmployeeService {
       relations: ['department'],
     });
 
-    return plainToInstance(EmployeeResponseDto, employees, {
-      excludeExtraneousValues: true,
-    });
+    return plainToInstance(
+      EmployeeResponseDto,
+      employees.map(employee => ({ ...employee, departmentName: employee.department?.departmentName })),
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 
   async findById(id: number): Promise<EmployeeResponseDto> {
