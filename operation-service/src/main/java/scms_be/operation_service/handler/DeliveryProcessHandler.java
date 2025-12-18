@@ -1,9 +1,9 @@
 package scms_be.operation_service.handler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import scms_be.operation_service.exception.RpcException;
 import scms_be.operation_service.model.event.GenericEvent;
@@ -26,7 +26,7 @@ public class DeliveryProcessHandler {
             case "delivery_process.create": {
                 return deliveryProcessService.createDeliveryProcess(request.getDeliveryProcessData());
             }
-            case "delivery_process.get_all_by_do": {
+            case "delivery_process.get_all_by_do_id": {
                 return deliveryProcessService.getAllByDoId(request.getDoId());
             }
             case "delivery_process.update": {
