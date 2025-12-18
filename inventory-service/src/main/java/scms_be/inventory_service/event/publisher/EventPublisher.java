@@ -1,10 +1,20 @@
 package scms_be.inventory_service.event.publisher;
 
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import scms_be.inventory_service.event.constants.EventConstants;
 import scms_be.inventory_service.exception.RpcException;
 import scms_be.inventory_service.model.ErrorResponse;
-import scms_be.inventory_service.model.dto.publisher.ItemDto;
 import scms_be.inventory_service.model.dto.publisher.BOMDto;
+import scms_be.inventory_service.model.dto.publisher.ItemDto;
 import scms_be.inventory_service.model.dto.publisher.ManufactureOrderDto;
 import scms_be.inventory_service.model.dto.publisher.PurchaseOrderDto;
 import scms_be.inventory_service.model.dto.publisher.SalesOrderDto;
@@ -12,12 +22,6 @@ import scms_be.inventory_service.model.event.GenericEvent;
 import scms_be.inventory_service.model.request.publisher.BOMRequest;
 import scms_be.inventory_service.model.request.publisher.ItemRequest;
 import scms_be.inventory_service.model.request.publisher.ManuOrderRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.stereotype.Component;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -56,6 +60,37 @@ public class EventPublisher {
         // if it's a Map/LinkedHashMap, convert to ItemDto
         if (response instanceof Map) {
             ItemDto dto = objectMapper.convertValue(response, ItemDto.class);
+            log.info("Converted Map to ItemDto: {}", dto);
+            return dto;
+        }
+
+        throw new RpcException(500, "Unexpected response type: " + response.getClass());
+    }
+
+    public List<ItemDto> getAllItemByCompanyId(Long companyId) {
+        log.info("Getting item by company ID: {}", companyId);
+
+        GenericEvent event = new GenericEvent();
+        event.setPattern("item.get_all_in_company");
+        ItemRequest request = new ItemRequest();
+        request.setCompanyId(companyId);
+        event.setData(request);
+
+        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.GENERAL_SERVICE_QUEUE, event);
+
+        if (response == null) {
+            throw new RpcException(504, "No reply or timeout from general service");
+        }
+
+        if (response instanceof ErrorResponse) {
+            ErrorResponse err = (ErrorResponse) response;
+            throw new RpcException(err.getStatusCode(), err.getMessage());
+        }
+
+        // if it's a Map/LinkedHashMap, convert to ItemDto
+        if (response instanceof Map) {
+            List<ItemDto> dto = objectMapper.convertValue(response,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, ItemDto.class));
             log.info("Converted Map to ItemDto: {}", dto);
             return dto;
         }

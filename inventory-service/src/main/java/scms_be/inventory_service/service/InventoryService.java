@@ -1,5 +1,6 @@
 package scms_be.inventory_service.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,8 +64,13 @@ public class InventoryService {
           .map(this::convertToDto)
           .toList();
     } else if (itemId == 0 && warehouseId == 0) {
-      // Lấy tất cả inventory của company - có thể cần thêm method này vào repository
-      List<Inventory> inventories = inventoryRepository.findAll();
+      List<ItemDto> items = eventPublisher.getAllItemByCompanyId(companyId);
+      
+      List<Inventory> inventories = new ArrayList<>();
+      for (ItemDto item : items) {
+        List<Inventory> itemInventories = inventoryRepository.findAllByItemId(item.getItemId());
+        inventories.addAll(itemInventories);
+      }
       if (inventories.isEmpty()) {
         throw new RpcException(404, "Không tìm thấy thông tin tồn kho!");
       }
