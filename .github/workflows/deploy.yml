@@ -23,13 +23,15 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
+
             cd /home/ubuntu/Supply-Chain
 
             echo "Pull latest code"
-            git pull origin ${{ github.ref_name }}
-
-            echo "Reset HEAD"
+            git fetch origin
             git reset --hard origin/${{ github.ref_name }}
+
+            echo "Grant execute permission for mvnw"
+            find . -name "mvnw" -type f -exec chmod +x {} \;
 
             echo "Stop containers"
             docker compose -f docker-compose.prod.yml down
@@ -38,27 +40,28 @@ jobs:
             docker compose -f docker-compose.prod.yml up -d --build
 
             echo "Deploy success"
-      - name: Send mail on success with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            set -e
-            cd /home/ubuntu/Supply-Chain
 
-            echo "Pull latest code"
-            git pull origin ${{ github.ref_name }}
+      - name: Send mail on success with
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          set -e
+          cd /home/ubuntu/Supply-Chain
 
-            echo "Reset HEAD"
-            git reset --hard origin/${{ github.ref_name }}
+          echo "Pull latest code"
+          git pull origin ${{ github.ref_name }}
 
-            echo "Stop containers"
-            docker compose -f docker-compose.prod.yml down
+          echo "Reset HEAD"
+          git reset --hard origin/${{ github.ref_name }}
 
-            echo "Build & start containers"
-            docker compose -f docker-compose.prod.yml up -d --build
+          echo "Stop containers"
+          docker compose -f docker-compose.prod.yml down
 
-            echo "Deploy success"
+          echo "Build & start containers"
+          docker compose -f docker-compose.prod.yml up -d --build
+
+          echo "Deploy success"
       - name: Send mail on success
         if: ${{ success() }}
         uses: dawidd6/action-send-mail@v3
