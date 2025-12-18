@@ -31,7 +31,9 @@ jobs:
             git reset --hard origin/${{ github.ref_name }}
 
             echo "Grant execute permission for mvnw"
-            find . -path "*/mvnw" -type f -exec chmod +x {} \;
+            find . \
+              -path "./postgres-data-prod" -prune -o \
+              -name "mvnw" -type f -exec chmod +x {} \;
 
             echo "Stop containers"
             docker compose -f docker-compose.prod.yml down
