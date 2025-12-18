@@ -57,6 +57,19 @@ public class EventPublisher {
             throw new RpcException(err.getStatusCode(), err.getMessage());
         }
 
+        // if it's already a List (ArrayList), get the first item
+        if (response instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<Object> rawList = (List<Object>) response;
+            if (!rawList.isEmpty()) {
+                ItemDto dto = objectMapper.convertValue(rawList.get(0), ItemDto.class);
+                log.info("Converted first item from List to ItemDto: {}", dto);
+                return dto;
+            } else {
+                throw new RpcException(404, "Item not found");
+            }
+        }
+
         // if it's a Map/LinkedHashMap, convert to ItemDto
         if (response instanceof Map) {
             ItemDto dto = objectMapper.convertValue(response, ItemDto.class);
@@ -85,6 +98,17 @@ public class EventPublisher {
         if (response instanceof ErrorResponse) {
             ErrorResponse err = (ErrorResponse) response;
             throw new RpcException(err.getStatusCode(), err.getMessage());
+        }
+
+        // if it's already a List (ArrayList), cast it directly
+        if (response instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<Object> rawList = (List<Object>) response;
+            List<ItemDto> dtoList = rawList.stream()
+                .map(item -> objectMapper.convertValue(item, ItemDto.class))
+                .toList();
+            log.info("Converted List to ItemDto list: {}", dtoList);
+            return dtoList;
         }
 
         // if it's a Map/LinkedHashMap, convert to ItemDto
