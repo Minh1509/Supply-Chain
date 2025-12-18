@@ -71,15 +71,12 @@ public class InventoryService {
         List<Inventory> itemInventories = inventoryRepository.findAllByItemId(item.getItemId());
         inventories.addAll(itemInventories);
       }
-      if (inventories.isEmpty()) {
-        throw new RpcException(404, "Không tìm thấy thông tin tồn kho!");
-      }
+      
       return inventories.stream()
           .map(this::convertToDto)
           .toList();
-    } else {
-      throw new RpcException(404, "Không tìm thấy thông tin tồn kho!");
     }
+    return new ArrayList<>();
   }
 
   public String checkInventory(Long itemId, Long warehouseId, Double amount) {
