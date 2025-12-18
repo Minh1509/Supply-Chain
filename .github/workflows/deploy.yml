@@ -1,0 +1,79 @@
+name: Deploy Supply-Chain
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        id: deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /home/ubuntu/Supply-Chain
+
+            echo "Pull latest code"
+            git pull origin ${{ github.ref_name }}
+
+            echo "Reset HEAD"
+            git reset --hard origin/${{ github.ref_name }}
+
+            echo "Stop containers"
+            docker compose -f docker-compose.prod.yml down
+
+            echo "Build & start containers"
+            docker compose -f docker-compose.prod.yml up -d --build
+
+            echo "Deploy success"
+      - name: Send mail on success
+        if: ${{ success() }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_HOST }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          secure: ${{ secrets.MAIL_SECURE }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "Deploy SUCCESS - ${{ github.repository }}"
+          body: |
+            Deploy thành công!
+
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+
+            Thời gian: ${{ github.run_started_at }}
+          to: ${{ secrets.MAIL_TO }}
+          from: GitHub Actions
+      - name: Send mail on failure
+        if: ${{ failure() || cancelled() }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_HOST }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          secure: ${{ secrets.MAIL_SECURE }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "Deploy FAILED - ${{ github.repository }}"
+          body: |
+            Deploy thất bại!
+
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+
+            Vui lòng kiểm tra GitHub Actions log.
+          to: ${{ secrets.MAIL_TO }}
+          from: GitHub Actions
