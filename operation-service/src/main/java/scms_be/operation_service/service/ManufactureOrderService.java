@@ -84,8 +84,6 @@ public class ManufactureOrderService {
       throw new RpcException(404, "Không tìm thấy dây chuyền sản xuất!");
     }
     order.setLineId(lineDto.getLineId());
-    order.setCreatedOn(LocalDateTime.now());
-    order.setLastUpdatedOn(LocalDateTime.now());
     order.setStatus(orderRequest.getStatus());
     order.setProductsGenerated(false);
 
@@ -146,7 +144,6 @@ public class ManufactureOrderService {
     mo.setEstimatedStartTime(update.getEstimatedStartTime());
     mo.setEstimatedEndTime(update.getEstimatedEndTime());
     mo.setCreatedBy(update.getCreatedBy());
-    mo.setLastUpdatedOn(LocalDateTime.now());
     mo.setStatus(update.getStatus());
 
     return convertToDto(manufactureOrderRepository.save(mo));
@@ -252,7 +249,6 @@ public class ManufactureOrderService {
     
     mo.setCompletedQuantity(completedQuantity);
     mo.setStatus("Đã hoàn thành");
-    mo.setLastUpdatedOn(LocalDateTime.now());
     
     if (mo.getBatchNo() == null || mo.getBatchNo().isEmpty()) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));

@@ -2,6 +2,8 @@ package scms.business_service.entity.Sales;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import jakarta.persistence.*;
 
 import lombok.AllArgsConstructor;
@@ -34,6 +36,7 @@ public class Invoice {
   @Column(name = "payment_method")
   private String paymentMethod;
   
+  @CreationTimestamp
   @Column(name = "created_on")
   private LocalDateTime createdOn;
 

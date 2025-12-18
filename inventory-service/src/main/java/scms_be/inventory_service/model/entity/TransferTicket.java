@@ -3,6 +3,9 @@ package scms_be.inventory_service.model.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -43,7 +46,10 @@ public class TransferTicket {
   private String reason;
   private String createdBy;
 
+  @CreationTimestamp
   private LocalDateTime createdOn;
+  
+  @UpdateTimestamp
   private LocalDateTime lastUpdatedOn;
 
   private String status;

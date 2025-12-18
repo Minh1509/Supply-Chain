@@ -3,6 +3,9 @@ package scms.business_service.entity.Purchasing;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -42,9 +45,11 @@ public class RequestForQuotation {
   @Column(name = "created_by")
   private String createdBy;
   
+  @CreationTimestamp
   @Column(name = "created_on")
   private LocalDateTime createdOn;
   
+  @UpdateTimestamp
   @Column(name = "last_updated_on")
   private LocalDateTime lastUpdatedOn;
 

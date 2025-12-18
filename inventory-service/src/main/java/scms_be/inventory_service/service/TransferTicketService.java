@@ -56,8 +56,6 @@ public class TransferTicketService {
     ticket.setToWarehouse(toWarehouse);
     ticket.setReason(request.getReason());
     ticket.setCreatedBy(request.getCreatedBy());
-    ticket.setCreatedOn(LocalDateTime.now());
-    ticket.setLastUpdatedOn(LocalDateTime.now());
     ticket.setStatus(request.getStatus());
     ticket.setFile(request.getFile());
 
@@ -129,7 +127,6 @@ public class TransferTicketService {
     }
 
     ticket.setStatus(request.getStatus());
-    ticket.setLastUpdatedOn(LocalDateTime.now());
     ticket.setReason(request.getReason());
     TransferTicket updatedTicket = transferTicketRepository.save(ticket);
 

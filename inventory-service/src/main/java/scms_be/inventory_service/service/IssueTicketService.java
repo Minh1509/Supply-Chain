@@ -135,8 +135,6 @@ public class IssueTicketService {
     }
 
     ticket.setCreatedBy(request.getCreatedBy());
-    ticket.setCreatedOn(LocalDateTime.now());
-    ticket.setLastUpdatedOn(LocalDateTime.now());
     ticket.setStatus(request.getStatus());
     ticket.setFile(request.getFile());
     ticket.setIssueTicketDetails(details);
@@ -170,7 +168,6 @@ public class IssueTicketService {
     }
 
     ticket.setStatus(request.getStatus());
-    ticket.setLastUpdatedOn(LocalDateTime.now());
     ticket.setCreatedBy(request.getCreatedBy());
     ticket.setIssueDate(request.getIssueDate());
     issueTicketRepository.save(ticket);

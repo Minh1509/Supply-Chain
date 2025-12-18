@@ -3,6 +3,9 @@ package scms_be.inventory_service.model.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -42,8 +45,13 @@ public class ReceiveTicket {
   private String receiveType; // mo/po/tt
   private Long referenceId;
   private String createdBy;
+  
+  @CreationTimestamp
   private LocalDateTime createdOn;
+  
+  @UpdateTimestamp
   private LocalDateTime lastUpdatedOn;
+  
   private String status;
   private String file;
 

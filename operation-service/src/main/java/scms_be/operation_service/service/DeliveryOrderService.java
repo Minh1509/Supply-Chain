@@ -48,8 +48,6 @@ public class DeliveryOrderService {
     deliveryOrder.setSoId(salesOrder.getSoId());
     deliveryOrder.setDoCode(generateDoCode(salesOrder.getSoId()));
     deliveryOrder.setCreatedBy(deliveryOrderRequest.getCreatedBy());
-    deliveryOrder.setCreatedOn(LocalDateTime.now());
-    deliveryOrder.setLastUpdatedOn(LocalDateTime.now());
     deliveryOrder.setStatus(deliveryOrderRequest.getStatus());
 
     DeliveryOrder savedDeliveryOrder = deliveryOrderRepository.save(deliveryOrder);
@@ -118,7 +116,6 @@ public class DeliveryOrderService {
   public DeliveryOrderDto updateDo(Long doId, DeliveryOrderData request) {
     DeliveryOrder deliveryOrder = deliveryOrderRepository.findById(doId)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy đơn vận chuyển!"));
-    deliveryOrder.setLastUpdatedOn(LocalDateTime.now());
     deliveryOrder.setStatus(request.getStatus());
     deliveryOrder.setCreatedBy(request.getCreatedBy());
 

@@ -3,6 +3,9 @@ package scms.business_service.entity.Sales;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import scms.business_service.entity.Purchasing.PurchaseOrder;
 
 import jakarta.persistence.CascadeType;
@@ -55,9 +58,11 @@ public class SalesOrder {
   @Column(name = "created_by")
   private String createdBy;
   
+  @CreationTimestamp
   @Column(name = "created_on")
   private LocalDateTime createdOn;
   
+  @UpdateTimestamp
   @Column(name = "last_updated_on")
   private LocalDateTime lastUpdatedOn;
   

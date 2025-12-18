@@ -10,7 +10,9 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import org.hibernate.cache.spi.support.AbstractReadWriteAccess.Item;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import scms_be.inventory_service.event.publisher.EventPublisher;
@@ -77,19 +79,26 @@ public class ReceiveTicketService {
       }
       ticket.setReferenceId(manufactureOrder.getMoId());
 
-      BOMDto bom = eventPublisher.getBOMByItemId(manufactureOrder.getItemId());
-      List<BOMDetailDto> bomDetails = bom.getBomDetails();
-      for (BOMDetailDto bomDetail : bomDetails) {
-        ReceiveTicketDetail detail = new ReceiveTicketDetail();
-        detail.setTicket(ticket);
-        ItemDto item = eventPublisher.getItemById(bomDetail.getItemId());
-        if(item == null) {
-          throw new RpcException(404, "Không tìm thấy hàng hóa!");
-        }
-        detail.setItemId(item.getItemId());
-        detail.setQuantity(bomDetail.getQuantity() * manufactureOrder.getQuantity());
-        details.add(detail);
-      }
+      // BOMDto bom = eventPublisher.getBOMByItemId(manufactureOrder.getItemId());
+      // List<BOMDetailDto> bomDetails = bom.getBomDetails();
+      // for (BOMDetailDto bomDetail : bomDetails) {
+      //   ReceiveTicketDetail detail = new ReceiveTicketDetail();
+      //   detail.setTicket(ticket);
+      //   ItemDto item = eventPublisher.getItemById(bomDetail.getItemId());
+      //   if(item == null) {
+      //     throw new RpcException(404, "Không tìm thấy hàng hóa!");
+      //   }
+      //   detail.setItemId(item.getItemId());
+      //   detail.setQuantity(bomDetail.getQuantity() * manufactureOrder.getQuantity());
+      //   details.add(detail);
+      // }
+      ReceiveTicketDetail detail = new ReceiveTicketDetail();
+      detail.setTicket(ticket);
+      ItemDto item = eventPublisher.getItemById(manufactureOrder.getItemId());
+      
+      detail.setItemId(item.getItemId());
+      detail.setQuantity(manufactureOrder.getQuantity());
+      details.add(detail);
     } else if (request.getReceiveType().equals("Mua hàng")) {
       PurchaseOrderDto purchaseOrder = eventPublisher.getPurchaseOrderByCode(request.getReferenceCode());
       if (purchaseOrder == null) {
@@ -131,8 +140,6 @@ public class ReceiveTicketService {
     }
 
     ticket.setCreatedBy(request.getCreatedBy());
-    ticket.setCreatedOn(LocalDateTime.now());
-    ticket.setLastUpdatedOn(LocalDateTime.now());
     ticket.setStatus(request.getStatus());
     ticket.setFile(request.getFile());
     ticket.setReceiveTicketDetails(details);
@@ -174,7 +181,6 @@ public class ReceiveTicketService {
       throw new RpcException(400, "Không thể cập nhật phiếu đã bị hủy!");
     }
     ticket.setStatus(request.getStatus());
-    ticket.setLastUpdatedOn(LocalDateTime.now());
     ticket.setCreatedBy(request.getCreatedBy());
     ticket.setReceiveDate(request.getReceiveDate());
 
