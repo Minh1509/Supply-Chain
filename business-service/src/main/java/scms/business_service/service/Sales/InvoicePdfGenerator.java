@@ -31,6 +31,9 @@ public class InvoicePdfGenerator {
   @Autowired
   private SalesOrderDetailRepository salesOrderDetailRepository;
 
+  @Autowired
+  private scms.business_service.event.publisher.ExternalServicePublisher externalServicePublisher;
+
   private static void addCell(PdfPTable table, String text, Font font, int align) {
     PdfPCell cell = new PdfPCell(new Phrase(text, font));
     cell.setHorizontalAlignment(align);
@@ -69,12 +72,20 @@ public class InvoicePdfGenerator {
       Font labelFont = new Font(baseFont, 10, Font.BOLD);
       Font valueFont = new Font(baseFont, 10);
 
+      // Fetch Company Info
+      var seller = externalServicePublisher.getCompanyById(salesOrder.getCompanyId());
+      var buyer = externalServicePublisher.getCompanyById(salesOrder.getCustomerCompanyId());
+      
+      String sellerName = seller != null ? seller.getCompanyName() : "ID: " + salesOrder.getCompanyId();
+      String sellerAddress = seller != null ? seller.getAddress() : "Địa chỉ: N/A";
+      String buyerName = buyer != null ? buyer.getCompanyName() : "ID: " + salesOrder.getCustomerCompanyId();
+
       // Title
-      Paragraph companyTitle = new Paragraph("CÔNG TY CUNG CẤP", new Font(baseFont, 12, Font.BOLD));
+      Paragraph companyTitle = new Paragraph("CÔNG TY CUNG CẤP: " + sellerName.toUpperCase(), new Font(baseFont, 12, Font.BOLD));
       companyTitle.setAlignment(Element.ALIGN_CENTER);
       document.add(companyTitle);
 
-      Paragraph companyInfo = new Paragraph("Địa chỉ công ty", new Font(baseFont, 10, Font.ITALIC));
+      Paragraph companyInfo = new Paragraph("Địa chỉ công ty: " + sellerAddress, new Font(baseFont, 10, Font.ITALIC));
       companyInfo.setAlignment(Element.ALIGN_CENTER);
       companyInfo.setSpacingAfter(10);
       document.add(companyInfo);
@@ -83,11 +94,10 @@ public class InvoicePdfGenerator {
       invoiceTitle.setAlignment(Element.ALIGN_CENTER);
       invoiceTitle.setSpacingAfter(15);
       document.add(invoiceTitle);
-
-      // Info - Since we only have IDs, show them
+      
       document.add(createLabelValueParagraph("Mã đơn hàng: ", salesOrder.getSoCode(), labelFont, valueFont));
-      document.add(createLabelValueParagraph("Công ty bán: ", "ID: " + salesOrder.getCompanyId(), labelFont, valueFont));
-      document.add(createLabelValueParagraph("Công ty mua: ", "ID: " + salesOrder.getCustomerCompanyId(), labelFont, valueFont));
+      document.add(createLabelValueParagraph("Công ty bán: ", sellerName, labelFont, valueFont));
+      document.add(createLabelValueParagraph("Công ty mua: ", buyerName, labelFont, valueFont));
       document.add(createLabelValueParagraph("Phương thức thanh toán: ", 
           salesOrder.getPaymentMethod() != null ? salesOrder.getPaymentMethod() : "Chưa xác định", labelFont, valueFont));
 
@@ -95,7 +105,7 @@ public class InvoicePdfGenerator {
       table.setWidthPercentage(100);
       table.setSpacingBefore(10);
 
-      String[] headers = { "Mã hàng", "ID Hàng hóa", "Số lượng", "Đơn giá", "Chiết khấu", "Thành tiền" };
+      String[] headers = { "STT", "Mã hàng", "Số lượng", "Đơn giá", "Chiết khấu", "Thành tiền" };
       for (String header : headers) {
         PdfPCell cell = new PdfPCell(new Phrase(header, labelFont));
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -103,13 +113,17 @@ public class InvoicePdfGenerator {
         table.addCell(cell);
       }
 
-      // Load details and calculate totals
       var details = salesOrderDetailRepository.findBySalesOrderSoId(salesOrder.getSoId());
       double subTotal = 0.0;
       
+      int stt = 1;
       for (SalesOrderDetail detail : details) {
-        addCell(table, String.valueOf(detail.getSoDetailId()), valueFont, Element.ALIGN_LEFT);
-        addCell(table, "Item ID: " + detail.getItemId(), valueFont, Element.ALIGN_LEFT);
+        addCell(table, String.valueOf(stt++), valueFont, Element.ALIGN_CENTER);
+        
+        var item = externalServicePublisher.getItemById(detail.getItemId());
+        String itemCode = item != null ? item.getItemCode() : "";
+        
+        addCell(table, itemCode, valueFont, Element.ALIGN_LEFT);
         addCell(table, String.valueOf(detail.getQuantity()), valueFont, Element.ALIGN_RIGHT);
         addCell(table, String.format("%,.2f", detail.getItemPrice()), valueFont, Element.ALIGN_RIGHT);
         addCell(table, String.format("%,.2f", detail.getDiscount() != null ? detail.getDiscount() : 0.0), valueFont, Element.ALIGN_RIGHT);
@@ -133,7 +147,7 @@ public class InvoicePdfGenerator {
 
       DateTimeFormatter formatter = DateTimeFormatter.ofPattern("'Ngày' dd 'tháng' MM 'năm' yyyy",
           Locale.forLanguageTag("vi-VN"));
-      String formattedDate = LocalDate.now().format(formatter);
+      String formattedDate = "Hà Nội, " + LocalDate.now().format(formatter);
 
       Paragraph dateParagraph = new Paragraph(formattedDate, new Font(baseFont, 9, Font.ITALIC));
       dateParagraph.setAlignment(Element.ALIGN_RIGHT);
@@ -146,14 +160,24 @@ public class InvoicePdfGenerator {
 
       Font signFont = new Font(baseFont, 12, Font.BOLD);
 
-      PdfPCell leftCell = new PdfPCell(new Phrase("BÊN MUA", signFont));
+      PdfPCell leftCell = new PdfPCell();
+      leftCell.addElement(new Paragraph("BÊN MUA", signFont));
+      leftCell.addElement(new Paragraph("(Ký, ghi rõ họ tên)", new Font(baseFont, 10, Font.ITALIC)));
       leftCell.setHorizontalAlignment(Element.ALIGN_CENTER);
       leftCell.setBorder(Rectangle.NO_BORDER);
+      for (Element e : leftCell.getCompositeElements()) {
+          ((Paragraph) e).setAlignment(Element.ALIGN_CENTER);
+      }
       signTable.addCell(leftCell);
 
-      PdfPCell rightCell = new PdfPCell(new Phrase("BÊN BÁN", signFont));
+      PdfPCell rightCell = new PdfPCell();
+      rightCell.addElement(new Paragraph("BÊN BÁN", signFont));
+      rightCell.addElement(new Paragraph("(Ký, ghi rõ họ tên)", new Font(baseFont, 10, Font.ITALIC)));
       rightCell.setHorizontalAlignment(Element.ALIGN_CENTER);
       rightCell.setBorder(Rectangle.NO_BORDER);
+      for (Element e : rightCell.getCompositeElements()) {
+          ((Paragraph) e).setAlignment(Element.ALIGN_CENTER);
+      }
       signTable.addCell(rightCell);
 
       document.add(signTable);
