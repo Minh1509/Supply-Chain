@@ -217,7 +217,7 @@ public class RabbitMQConfig {
 
     @Bean
     public Binding deliveryProcessGetAllByDoBinding(Queue operationQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(operationQueue).to(exchange).with("delivery_process.get_all_by_do_id");
+        return BindingBuilder.bind(operationQueue).to(exchange).with("delivery_process.get_all_by_do");
     }
 
     @Bean
