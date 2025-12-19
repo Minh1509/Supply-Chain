@@ -32,7 +32,7 @@ public class ReceiveTicketHandler {
                 return receiveTicketService.getAllInCompany(request.getCompanyId());
             case "receive_ticket.get_receive_report":
                 return receiveTicketService.getReceiveReport(request.getReceiveReport(), request.getCompanyId());
-            case "receive_ticket.get_monthly_report":
+            case "receive_ticket.get_monthly_receive_report":
                 return receiveTicketService.getMonthlyReceiveReport(request.getCompanyId(), 
                     request.getReceiveType(), request.getWarehouseId());
             default:

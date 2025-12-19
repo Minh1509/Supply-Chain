@@ -60,7 +60,7 @@ public class InventoryListener {
                 case "receive_ticket.get_by_id":
                 case "receive_ticket.get_all_in_company":
                 case "receive_ticket.get_receive_report":
-                case "receive_ticket.get_monthly_report":
+                case "receive_ticket.get_monthly_receive_report":
                     return receiveTicketHandler.handle(event);
                 case "transfer_ticket.create":
                 case "transfer_ticket.update":
