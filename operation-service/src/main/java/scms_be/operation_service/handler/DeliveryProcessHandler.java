@@ -26,7 +26,7 @@ public class DeliveryProcessHandler {
             case "delivery_process.create": {
                 return deliveryProcessService.createDeliveryProcess(request.getDeliveryProcessData());
             }
-            case "delivery_process.get_all_by_do_id": {
+            case "delivery_process.get_all_by_do": {
                 return deliveryProcessService.getAllByDoId(request.getDoId());
             }
             case "delivery_process.update": {
