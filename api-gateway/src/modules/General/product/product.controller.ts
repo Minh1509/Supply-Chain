@@ -8,6 +8,7 @@ import { SwaggerApiDocument } from 'src/decorators/api-document.decorator';
 import { ProductRequestDto } from './dto/product-request.dto';
 import { ProductDto } from './dto/product.dto';
 import { PRODUCT_CONSTANTS } from './product.constant';
+import { Public } from 'src/decorators';
 
 @Controller('/product')
 @ApiBearerAuth()
@@ -29,6 +30,7 @@ export class ProductController {
     );
   }
 
+  @Public()
   @Get('/scan/:qrCode')
   async scanQRCode(@Param('qrCode') qrCode: string) {
     return await firstValueFrom(
