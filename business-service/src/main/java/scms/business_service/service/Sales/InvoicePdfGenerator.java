@@ -94,7 +94,7 @@ public class InvoicePdfGenerator {
       invoiceTitle.setAlignment(Element.ALIGN_CENTER);
       invoiceTitle.setSpacingAfter(15);
       document.add(invoiceTitle);
-      
+
       document.add(createLabelValueParagraph("Mã đơn hàng: ", salesOrder.getSoCode(), labelFont, valueFont));
       document.add(createLabelValueParagraph("Công ty bán: ", sellerName, labelFont, valueFont));
       document.add(createLabelValueParagraph("Công ty mua: ", buyerName, labelFont, valueFont));
@@ -105,7 +105,7 @@ public class InvoicePdfGenerator {
       table.setWidthPercentage(100);
       table.setSpacingBefore(10);
 
-      String[] headers = { "STT", "Mã hàng", "Số lượng", "Đơn giá", "Chiết khấu", "Thành tiền" };
+      String[] headers = { "STT", "Mã hàng hóa", "Số lượng", "Đơn giá", "Chiết khấu", "Thành tiền" };
       for (String header : headers) {
         PdfPCell cell = new PdfPCell(new Phrase(header, labelFont));
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
