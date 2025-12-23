@@ -62,11 +62,6 @@ public class PurchaseOrderService {
         Quotation quotation = quotationRepository.findById(request.getQuotationId())
                 .orElseThrow(() -> new RpcException(404, "Không tìm thấy báo giá!"));
 
-        PurchaseOrder existingPo = purchaseOrderRepository.findByQuotationQuotationId(quotation.getQuotationId());
-        if (existingPo != null) {
-            throw new RpcException(400, "Đơn mua hàng cho báo giá này đã tồn tại!");
-        }
-
         PurchaseOrder purchaseOrder = new PurchaseOrder();
         purchaseOrder.setPoCode(generatePurchaseOrderCode(request.getCompanyId(), request.getSupplierCompanyId()));
         purchaseOrder.setCompanyId(request.getCompanyId());
