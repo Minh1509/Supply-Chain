@@ -73,11 +73,6 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding itemGetByIdsBinding(Queue generalQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(generalQueue).to(exchange).with("item.get_by_ids");
-    }
-
-    @Bean
     public Binding itemUpdateBinding(Queue generalQueue, DirectExchange exchange) {
         return BindingBuilder.bind(generalQueue).to(exchange).with("item.update");
     }

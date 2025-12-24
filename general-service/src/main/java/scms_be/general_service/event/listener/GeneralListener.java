@@ -33,7 +33,6 @@ public class GeneralListener {
                 case "item.create":
                 case "item.update":
                 case "item.get_by_id":
-                case "item.get_by_ids":
                 case "item.get_all_in_company":
                 case "item.delete":
                 case "item.update_image":
