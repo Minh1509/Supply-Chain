@@ -1,5 +1,6 @@
 package scms_be.general_service.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -58,7 +59,7 @@ public class ItemService {
 
   public List<ItemDto> getItemsByIds(List<Long> itemIds) {
     if (itemIds == null || itemIds.isEmpty()) {
-      return List.of();
+      return new ArrayList<>();
     }
     List<Item> items = itemRepository.findAllById(itemIds);
     return items.stream().map(this::convertToDto).collect(Collectors.toList());
