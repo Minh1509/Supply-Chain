@@ -62,6 +62,8 @@ public class ReceiveTicketService {
   @Autowired
   private EventPublisher eventPublisher;
 
+  private final ExecutorService executor = Executors.newFixedThreadPool(20);
+
   public ReceiveTickeDto create(ReceiveTicketData request) {
     Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy kho!"));
@@ -149,31 +151,42 @@ public class ReceiveTicketService {
     ticket.setFile(request.getFile());
     ticket.setReceiveTicketDetails(details);
 
-    ReceiveTicket receiveTicket = receiveTicketRepository.save(ticket);
+    ReceiveTicket savedTicket = receiveTicketRepository.save(ticket);
     
     // Trigger event update product status
     if (request.getReceiveType().equals("Sản xuất") && 
-        "Đã hoàn thành".equals(receiveTicket.getStatus()) && 
+        "Đã hoàn thành".equals(savedTicket.getStatus()) && 
         manufactureOrder != null && 
         manufactureOrder.getBatchNo() != null) {
         
         eventPublisher.publishProductBatchStatusUpdate(manufactureOrder.getBatchNo(), "IN_WAREHOUSE");
     }
 
-    return convertToDto(receiveTicket);
+    return convertToDto(savedTicket, details);
   }
 
   public List<ReceiveTickeDto> getAllInCompany(Long companyId) {
-    return receiveTicketRepository.findByCompanyId(companyId)
-        .stream()
-        .map(this::convertToDto)
+    List<ReceiveTicket> tickets = receiveTicketRepository.findByCompanyId(companyId);
+    if (tickets.isEmpty()) return new ArrayList<>();
+
+    List<Long> ticketIds = tickets.stream().map(ReceiveTicket::getTicketId).collect(Collectors.toList());
+    List<ReceiveTicketDetail> allDetails = detailRepository.findByTicketTicketIdIn(ticketIds);
+    
+    Map<Long, List<ReceiveTicketDetail>> detailsMap = new HashMap<>();
+    for (ReceiveTicketDetail detail : allDetails) {
+      detailsMap.computeIfAbsent(detail.getTicket().getTicketId(), k -> new ArrayList<>()).add(detail);
+    }
+
+    return tickets.parallelStream()
+        .map(ticket -> convertToDto(ticket, detailsMap.getOrDefault(ticket.getTicketId(), new ArrayList<>())))
         .collect(Collectors.toList());
   }
 
   public ReceiveTickeDto getById(Long ticketId) {
     ReceiveTicket ticket = receiveTicketRepository.findById(ticketId)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy Phiếu nhập kho!"));
-    return convertToDto(ticket);
+    List<ReceiveTicketDetail> details = detailRepository.findByTicketTicketId(ticketId);
+    return convertToDto(ticket, details);
   }
 
   public ReceiveTickeDto update(Long ticketId, ReceiveTicketData request) {
@@ -189,8 +202,9 @@ public class ReceiveTicketService {
     ticket.setCreatedBy(request.getCreatedBy());
     ticket.setReceiveDate(request.getReceiveDate());
 
-    receiveTicketRepository.save(ticket);
-    return convertToDto(ticket);
+    ReceiveTicket savedTicket = receiveTicketRepository.save(ticket);
+    List<ReceiveTicketDetail> details = detailRepository.findByTicketTicketId(ticketId);
+    return convertToDto(savedTicket, details);
   }
 
   public String generateTicketCode(Long companyId) {
@@ -217,37 +231,37 @@ public class ReceiveTicketService {
           .collect(Collectors.toList());
     }
 
-    Map<Long, ItemReportDto> itemReportDtoList = new HashMap<>();
-
+    Map<Long, Double> itemQuantityMap = new HashMap<>();
     for (ReceiveTicket ticket : tickets) {
       List<ReceiveTicketDetail> details = detailRepository.findByTicketTicketId(ticket.getTicketId());
       for (ReceiveTicketDetail detail : details) {
-        ItemDto item = eventPublisher.getItemById(detail.getItemId());
-        if(item == null) {
-          throw new RpcException(404, "Không tìm thấy hàng hóa!");
-        }
-        Long itemId = item.getItemId();
-        String itemCode = item.getItemCode();
-        String itemName = item.getItemName();
-        Double quantity = detail.getQuantity();
-
-        itemReportDtoList.compute(itemId, (key, value) -> {
-          if (value == null) {
-            ItemReportDto itemReportDto = new ItemReportDto();
-            itemReportDto.setItemId(itemId);
-            itemReportDto.setItemCode(itemCode);
-            itemReportDto.setItemName(itemName);
-            itemReportDto.setTotalQuantity(quantity);
-            return itemReportDto;
-          } else {
-            value.setTotalQuantity(value.getTotalQuantity() + quantity);
-            return value;
-          }
-        });
+        itemQuantityMap.put(detail.getItemId(), itemQuantityMap.getOrDefault(detail.getItemId(), 0.0) + detail.getQuantity());
       }
     }
 
-    return new ArrayList<>(itemReportDtoList.values());
+    try {
+      Map<Long, CompletableFuture<ItemDto>> itemFutures = itemQuantityMap.keySet().stream()
+          .collect(Collectors.toMap(
+              id -> id,
+              id -> CompletableFuture.supplyAsync(() -> eventPublisher.getItemById(id), executor)
+          ));
+
+      return itemQuantityMap.entrySet().stream().map(entry -> {
+        ItemReportDto dto = new ItemReportDto();
+        dto.setItemId(entry.getKey());
+        dto.setTotalQuantity(entry.getValue());
+        try {
+          ItemDto item = itemFutures.get(entry.getKey()).join();
+          if (item != null) {
+            dto.setItemCode(item.getItemCode());
+            dto.setItemName(item.getItemName());
+          }
+        } catch (Exception e) {}
+        return dto;
+      }).collect(Collectors.toList());
+    } catch (Exception e) {
+       return new ArrayList<>();
+    }
   }
 
   public List<MonthlyInventoryReportDto> getMonthlyReceiveReport(Long companyId, String receiveType, Long warehouseId) {
@@ -296,7 +310,7 @@ public class ReceiveTicketService {
     return result;
   }
 
-  public ReceiveTickeDto convertToDto(ReceiveTicket ticket) {
+  public ReceiveTickeDto convertToDto(ReceiveTicket ticket, List<ReceiveTicketDetail> detailsList) {
     ReceiveTickeDto dto = new ReceiveTickeDto();
     dto.setTicketId(ticket.getTicketId());
     dto.setCompanyId(ticket.getCompanyId());
@@ -314,7 +328,6 @@ public class ReceiveTicketService {
     dto.setStatus(ticket.getStatus());
     dto.setFile(ticket.getFile());
 
-    ExecutorService executor = Executors.newFixedThreadPool(10);
     try {
       CompletableFuture<String> referenceCodeFuture = CompletableFuture.supplyAsync(() -> {
         if (ticket.getReceiveType().equals("Sản xuất")) {
@@ -333,8 +346,6 @@ public class ReceiveTicketService {
         }
         return "N/A";
       }, executor);
-
-      List<ReceiveTicketDetail> detailsList = detailRepository.findByTicketTicketId(ticket.getTicketId());
 
       Map<Long, CompletableFuture<ItemDto>> itemFutures = detailsList.stream()
           .map(ReceiveTicketDetail::getItemId)
@@ -355,7 +366,7 @@ public class ReceiveTicketService {
 
       dto.setReferenceCode(referenceCodeFuture.get());
 
-      List<ReceiveTicketDetailDto> detailDtos = detailsList.stream()
+      List<ReceiveTicketDetailDto> detailDtos = detailsList.parallelStream()
           .map(detail -> {
             ReceiveTicketDetailDto detailDto = new ReceiveTicketDetailDto();
             detailDto.setRTdetailId(detail.getRTdetailId());
@@ -383,8 +394,6 @@ public class ReceiveTicketService {
     } catch (Exception e) {
        if (e instanceof RuntimeException) throw (RuntimeException) e;
        e.printStackTrace();
-    } finally {
-      executor.shutdown();
     }
 
     return dto;

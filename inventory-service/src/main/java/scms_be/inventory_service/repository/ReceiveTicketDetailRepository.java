@@ -8,5 +8,6 @@ import scms_be.inventory_service.model.entity.ReceiveTicketDetail;
 public interface ReceiveTicketDetailRepository extends JpaRepository<ReceiveTicketDetail, Long> {
   
   List<ReceiveTicketDetail> findByTicketTicketId(Long ticketId);
-  
+
+  List<ReceiveTicketDetail> findByTicketTicketIdIn(List<Long> ticketIds);
 }

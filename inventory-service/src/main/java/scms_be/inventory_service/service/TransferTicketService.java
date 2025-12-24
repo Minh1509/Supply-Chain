@@ -41,6 +41,8 @@ public class TransferTicketService {
   @Autowired
   private EventPublisher eventPublisher;
 
+  private final ExecutorService executor = Executors.newFixedThreadPool(20);
+
   public TransferTicketDto createTicket(TransferTicketData request) {
     TransferTicket ticket = new TransferTicket();
    
@@ -198,7 +200,6 @@ public class TransferTicketService {
     dto.setStatus(ticket.getStatus());
     dto.setFile(ticket.getFile());
 
-    ExecutorService executor = Executors.newFixedThreadPool(10);
     try {
       List<TransferTicketDetail> detailsList = detailRepository.findByTicketTicketId(ticket.getTicketId());
 
@@ -245,8 +246,6 @@ public class TransferTicketService {
       dto.setTransferTicketDetails(details);
     } catch (Exception e) {
        e.printStackTrace();
-    } finally {
-      executor.shutdown();
     }
     
     return dto;

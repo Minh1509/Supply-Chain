@@ -10,4 +10,6 @@ import scms_be.inventory_service.model.entity.IssueTicketDetail;
 public interface IssueTicketDetailRepository extends JpaRepository<IssueTicketDetail, Long> {
   
   List<IssueTicketDetail> findByTicketTicketId(Long ticketId);
+
+  List<IssueTicketDetail> findByTicketTicketIdIn(List<Long> ticketIds);
 }
