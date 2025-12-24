@@ -8,12 +8,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -162,8 +160,21 @@ public class IssueTicketService {
       detailsMap.computeIfAbsent(detail.getTicket().getTicketId(), k -> new ArrayList<>()).add(detail);
     }
 
+    List<Long> allItemIds = allDetails.stream()
+        .map(IssueTicketDetail::getItemId)
+        .distinct()
+        .collect(Collectors.toList());
+    
+    Map<Long, ItemDto> itemsCache = allItemIds.isEmpty() ? 
+        new HashMap<>() : eventPublisher.getItemsByIds(allItemIds);
+
+    Map<Long, String> referenceCodesCache = batchFetchReferenceCodes(tickets);
+
     return tickets.parallelStream()
-        .map(ticket -> convertToDto(ticket, detailsMap.getOrDefault(ticket.getTicketId(), new ArrayList<>())))
+        .map(ticket -> convertToDto(ticket, 
+            detailsMap.getOrDefault(ticket.getTicketId(), new ArrayList<>()), 
+            itemsCache, 
+            referenceCodesCache))
         .collect(Collectors.toList());
   }
 
@@ -197,6 +208,54 @@ public class IssueTicketService {
     String year = String.valueOf(LocalDateTime.now().getYear()).substring(2);
     int count = issueTicketRepository.countByTicketCodeStartingWith(prefix);
     return prefix + year + String.format("%03d", count + 1);
+  }
+
+  private Map<Long, String> batchFetchReferenceCodes(List<IssueTicket> tickets) {
+    Map<Long, String> cache = new HashMap<>();
+    List<Long> moIds = new ArrayList<>();
+    List<Long> soIds = new ArrayList<>();
+    List<Long> transferIds = new ArrayList<>();
+    
+    for (IssueTicket ticket : tickets) {
+      if (ticket.getReferenceId() == null) continue;
+      
+      if ("Sản xuất".equals(ticket.getIssueType())) {
+        moIds.add(ticket.getReferenceId());
+      } else if ("Bán hàng".equals(ticket.getIssueType())) {
+        soIds.add(ticket.getReferenceId());
+      } else if ("Chuyển kho".equals(ticket.getIssueType())) {
+        transferIds.add(ticket.getReferenceId());
+      }
+    }
+    
+    for (Long moId : moIds) {
+      try {
+        ManufactureOrderDto mo = eventPublisher.getManufactureOrderById(moId);
+        cache.put(moId, mo != null ? mo.getMoCode() : "N/A");
+      } catch (Exception e) {
+        cache.put(moId, "N/A");
+      }
+    }
+    
+    for (Long soId : soIds) {
+      try {
+        SalesOrderDto so = eventPublisher.getSalesOrderById(soId);
+        cache.put(soId, so != null ? so.getSoCode() : "N/A");
+      } catch (Exception e) {
+        cache.put(soId, "N/A");
+      }
+    }
+    
+    for (Long transferId : transferIds) {
+      try {
+        TransferTicket tt = transferTicketRepository.findByTicketId(transferId);
+        cache.put(transferId, tt != null ? tt.getTicketCode() : "N/A");
+      } catch (Exception e) {
+        cache.put(transferId, "N/A");
+      }
+    }
+    
+    return cache;
   }
 
   public List<ItemReportDto> getIssueReport(IssueReportRequest reportRequest, Long companyId) {
@@ -297,6 +356,11 @@ public class IssueTicketService {
   }
 
   public IssueTicketDto convertToDto(IssueTicket ticket, List<IssueTicketDetail> detailsList) {
+    return convertToDto(ticket, detailsList, null, null);
+  }
+
+  public IssueTicketDto convertToDto(IssueTicket ticket, List<IssueTicketDetail> detailsList,
+                                     Map<Long, ItemDto> itemsCache, Map<Long, String> referenceCodesCache) {
     IssueTicketDto dto = new IssueTicketDto();
     dto.setTicketId(ticket.getTicketId());
     dto.setCompanyId(ticket.getCompanyId());
@@ -315,62 +379,82 @@ public class IssueTicketService {
     dto.setFile(ticket.getFile());
 
     try {
-      CompletableFuture<String> referenceCodeFuture = CompletableFuture.supplyAsync(() -> {
-        if (ticket.getIssueType().equals("Sản xuất")) {
-          ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
-          return manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A";
-        } else if (ticket.getIssueType().equals("Bán hàng")) {
-          SalesOrderDto salesOrder = eventPublisher.getSalesOrderById(ticket.getReferenceId());
-          return salesOrder != null ? salesOrder.getSoCode() : "N/A";
-        } else if (ticket.getIssueType().equals("Chuyển kho")) {
-          TransferTicket transferTicket = transferTicketRepository.findByTicketId(ticket.getReferenceId());
-          return transferTicket != null ? transferTicket.getTicketCode() : "N/A";
-        } else {
-          return "N/A";
-        }
-      }, executor);
+      // Use cache if available, otherwise fetch individually
+      if (referenceCodesCache != null && ticket.getReferenceId() != null) {
+        dto.setReferenceCode(referenceCodesCache.getOrDefault(ticket.getReferenceId(), "N/A"));
+      } else {
+        CompletableFuture<String> referenceCodeFuture = CompletableFuture.supplyAsync(() -> {
+          if (ticket.getIssueType().equals("Sản xuất")) {
+            ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
+            return manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A";
+          } else if (ticket.getIssueType().equals("Bán hàng")) {
+            SalesOrderDto salesOrder = eventPublisher.getSalesOrderById(ticket.getReferenceId());
+            return salesOrder != null ? salesOrder.getSoCode() : "N/A";
+          } else if (ticket.getIssueType().equals("Chuyển kho")) {
+            TransferTicket transferTicket = transferTicketRepository.findByTicketId(ticket.getReferenceId());
+            return transferTicket != null ? transferTicket.getTicketCode() : "N/A";
+          } else {
+            return "N/A";
+          }
+        }, executor);
+        dto.setReferenceCode(referenceCodeFuture.get());
+      }
 
-      Map<Long, CompletableFuture<ItemDto>> itemFutures = detailsList.stream()
-          .map(IssueTicketDetail::getItemId)
-          .distinct()
-          .collect(Collectors.toMap(
-              itemId -> itemId,
-              itemId -> CompletableFuture.supplyAsync(() -> eventPublisher.getItemById(itemId), executor)
-          ));
-
-      CompletableFuture<Void> allFutures = CompletableFuture.allOf(
-          Stream.concat(
-              Stream.of(referenceCodeFuture),
-              itemFutures.values().stream()
-          ).toArray(CompletableFuture[]::new)
-      );
-
-      allFutures.join();
-
-      dto.setReferenceCode(referenceCodeFuture.get());
-
-      List<IssueTicketDetailDto> detailDtos = detailsList.parallelStream()
-          .map(detail -> {
-            IssueTicketDetailDto detailDto = new IssueTicketDetailDto();
-            detailDto.setITdetailId(detail.getITdetailId());
-            detailDto.setTicketId(detail.getTicket().getTicketId());
-            detailDto.setItemId(detail.getItemId());
-            
-            try {
-              ItemDto item = itemFutures.get(detail.getItemId()).get();
+      List<IssueTicketDetailDto> detailDtos;
+      
+      if (itemsCache != null) {
+        detailDtos = detailsList.stream()
+            .map(detail -> {
+              IssueTicketDetailDto detailDto = new IssueTicketDetailDto();
+              detailDto.setITdetailId(detail.getITdetailId());
+              detailDto.setTicketId(detail.getTicket().getTicketId());
+              detailDto.setItemId(detail.getItemId());
+              
+              ItemDto item = itemsCache.get(detail.getItemId());
               if (item != null) {
                 detailDto.setItemCode(item.getItemCode());
                 detailDto.setItemName(item.getItemName());
               }
-            } catch (Exception e) {
-               e.printStackTrace();
-            }
 
-            detailDto.setQuantity(detail.getQuantity());
-            detailDto.setNote(detail.getNote());
-            return detailDto;
-          })
-          .collect(Collectors.toList());
+              detailDto.setQuantity(detail.getQuantity());
+              detailDto.setNote(detail.getNote());
+              return detailDto;
+            })
+            .collect(Collectors.toList());
+      } else {
+        Map<Long, CompletableFuture<ItemDto>> itemFutures = detailsList.stream()
+            .map(IssueTicketDetail::getItemId)
+            .distinct()
+            .collect(Collectors.toMap(
+                itemId -> itemId,
+                itemId -> CompletableFuture.supplyAsync(() -> eventPublisher.getItemById(itemId), executor)
+            ));
+
+        CompletableFuture.allOf(itemFutures.values().toArray(CompletableFuture[]::new)).join();
+
+        detailDtos = detailsList.parallelStream()
+            .map(detail -> {
+              IssueTicketDetailDto detailDto = new IssueTicketDetailDto();
+              detailDto.setITdetailId(detail.getITdetailId());
+              detailDto.setTicketId(detail.getTicket().getTicketId());
+              detailDto.setItemId(detail.getItemId());
+              
+              try {
+                ItemDto item = itemFutures.get(detail.getItemId()).get();
+                if (item != null) {
+                  detailDto.setItemCode(item.getItemCode());
+                  detailDto.setItemName(item.getItemName());
+                }
+              } catch (Exception e) {
+                 e.printStackTrace();
+              }
+
+              detailDto.setQuantity(detail.getQuantity());
+              detailDto.setNote(detail.getNote());
+              return detailDto;
+            })
+            .collect(Collectors.toList());
+      }
 
       dto.setIssueTicketDetails(detailDtos);
 

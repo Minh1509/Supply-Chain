@@ -56,6 +56,14 @@ public class ItemService {
     return convertToDto(item);
   }
 
+  public List<ItemDto> getItemsByIds(List<Long> itemIds) {
+    if (itemIds == null || itemIds.isEmpty()) {
+      return List.of();
+    }
+    List<Item> items = itemRepository.findAllById(itemIds);
+    return items.stream().map(this::convertToDto).collect(Collectors.toList());
+  }
+
   public ItemDto updateItem(Long itemId, ItemData updatedItem) {
     Item existingItem = itemRepository.findById(itemId)
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy hàng hóa!"));
