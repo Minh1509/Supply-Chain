@@ -154,16 +154,16 @@ public class IssueTicketService {
     List<IssueTicket> tickets = issueTicketRepository.findByCompanyId(companyId);
     if (tickets.isEmpty()) return new ArrayList<>();
 
-    List<Long> ticketIds = tickets.stream().map(IssueTicket::getTicketId).collect(Collectors.toList());
-    List<IssueTicketDetail> allDetails = detailRepository.findByTicketTicketIdIn(ticketIds);
+    // List<Long> ticketIds = tickets.stream().map(IssueTicket::getTicketId).collect(Collectors.toList());
+    // List<IssueTicketDetail> allDetails = detailRepository.findByTicketTicketIdIn(ticketIds);
     
-    Map<Long, List<IssueTicketDetail>> detailsMap = new HashMap<>();
-    for (IssueTicketDetail detail : allDetails) {
-      detailsMap.computeIfAbsent(detail.getTicket().getTicketId(), k -> new ArrayList<>()).add(detail);
-    }
+    // Map<Long, List<IssueTicketDetail>> detailsMap = new HashMap<>();
+    // for (IssueTicketDetail detail : allDetails) {
+    //   detailsMap.computeIfAbsent(detail.getTicket().getTicketId(), k -> new ArrayList<>()).add(detail);
+    // }
 
     return tickets.parallelStream()
-        .map(ticket -> convertToDto(ticket, detailsMap.getOrDefault(ticket.getTicketId(), new ArrayList<>())))
+        .map(ticket -> convertToDtoGetAll(ticket))//, detailsMap.getOrDefault(ticket.getTicketId(), new ArrayList<>())))
         .collect(Collectors.toList());
   }
 
@@ -399,6 +399,67 @@ public class IssueTicketService {
 
     dto.setQuantity(detail.getQuantity());
     dto.setNote(detail.getNote());
+
+    return dto;
+  }
+
+  public IssueTicketDto convertToDtoGetAll(IssueTicket ticket) {//, List<IssueTicketDetail> detailsList) {
+    IssueTicketDto dto = new IssueTicketDto();
+    dto.setTicketId(ticket.getTicketId());
+    dto.setCompanyId(ticket.getCompanyId());
+    dto.setTicketCode(ticket.getTicketCode());
+    dto.setWarehouseId(ticket.getWarehouse().getWarehouseId());
+    dto.setWarehouseCode(ticket.getWarehouse().getWarehouseCode());
+    dto.setWarehouseName(ticket.getWarehouse().getWarehouseName());
+    dto.setIssueDate(ticket.getIssueDate());
+    dto.setReason(ticket.getReason());
+    dto.setIssueType(ticket.getIssueType());
+    dto.setReferenceId(ticket.getReferenceId());
+    dto.setCreatedBy(ticket.getCreatedBy());
+    dto.setCreatedOn(ticket.getCreatedOn());
+    dto.setLastUpdatedOn(ticket.getLastUpdatedOn());
+    dto.setStatus(ticket.getStatus());
+    dto.setFile(ticket.getFile());
+
+    try {
+      CompletableFuture<String> referenceCodeFuture = CompletableFuture.supplyAsync(() -> {
+        if (ticket.getIssueType().equals("Sản xuất")) {
+          ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
+          return manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A";
+        } else if (ticket.getIssueType().equals("Bán hàng")) {
+          SalesOrderDto salesOrder = eventPublisher.getSalesOrderById(ticket.getReferenceId());
+          return salesOrder != null ? salesOrder.getSoCode() : "N/A";
+        } else if (ticket.getIssueType().equals("Chuyển kho")) {
+          TransferTicket transferTicket = transferTicketRepository.findByTicketId(ticket.getReferenceId());
+          return transferTicket != null ? transferTicket.getTicketCode() : "N/A";
+        } else {
+          return "N/A";
+        }
+      }, executor);
+
+      // Map<Long, CompletableFuture<ItemDto>> itemFutures = detailsList.stream()
+      //     .map(IssueTicketDetail::getItemId)
+      //     .distinct()
+      //     .collect(Collectors.toMap(
+      //         itemId -> itemId,
+      //         itemId -> CompletableFuture.supplyAsync(() -> eventPublisher.getItemById(itemId), executor)
+      //     ));
+
+      // CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+      //     Stream.concat(
+      //         Stream.of(referenceCodeFuture),
+      //         itemFutures.values().stream()
+      //     ).toArray(CompletableFuture[]::new)
+      // );
+
+      // allFutures.join();
+
+      dto.setReferenceCode(referenceCodeFuture.get());
+
+    } catch (Exception e) {
+       if (e instanceof RuntimeException) throw (RuntimeException) e;
+       e.printStackTrace();
+    }
 
     return dto;
   }

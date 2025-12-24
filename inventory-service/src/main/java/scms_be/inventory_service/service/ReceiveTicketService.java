@@ -169,16 +169,16 @@ public class ReceiveTicketService {
     List<ReceiveTicket> tickets = receiveTicketRepository.findByCompanyId(companyId);
     if (tickets.isEmpty()) return new ArrayList<>();
 
-    List<Long> ticketIds = tickets.stream().map(ReceiveTicket::getTicketId).collect(Collectors.toList());
-    List<ReceiveTicketDetail> allDetails = detailRepository.findByTicketTicketIdIn(ticketIds);
+    // List<Long> ticketIds = tickets.stream().map(ReceiveTicket::getTicketId).collect(Collectors.toList());
+    // List<ReceiveTicketDetail> allDetails = detailRepository.findByTicketTicketIdIn(ticketIds);
     
-    Map<Long, List<ReceiveTicketDetail>> detailsMap = new HashMap<>();
-    for (ReceiveTicketDetail detail : allDetails) {
-      detailsMap.computeIfAbsent(detail.getTicket().getTicketId(), k -> new ArrayList<>()).add(detail);
-    }
+    // Map<Long, List<ReceiveTicketDetail>> detailsMap = new HashMap<>();
+    // for (ReceiveTicketDetail detail : allDetails) {
+    //   detailsMap.computeIfAbsent(detail.getTicket().getTicketId(), k -> new ArrayList<>()).add(detail);
+    // }
 
     return tickets.parallelStream()
-        .map(ticket -> convertToDto(ticket, detailsMap.getOrDefault(ticket.getTicketId(), new ArrayList<>())))
+        .map(ticket -> convertToDtoGetAll(ticket))//, detailsMap.getOrDefault(ticket.getTicketId(), new ArrayList<>())))
         .collect(Collectors.toList());
   }
 
@@ -412,6 +412,70 @@ public class ReceiveTicketService {
     dto.setItemName(item.getItemName());
     dto.setQuantity(detail.getQuantity());
     dto.setNote(detail.getNote());
+    return dto;
+  }
+
+  public ReceiveTickeDto convertToDtoGetAll(ReceiveTicket ticket){//, List<ReceiveTicketDetail> detailsList) {
+    ReceiveTickeDto dto = new ReceiveTickeDto();
+    dto.setTicketId(ticket.getTicketId());
+    dto.setCompanyId(ticket.getCompanyId());
+    dto.setTicketCode(ticket.getTicketCode());
+    dto.setWarehouseId(ticket.getWarehouse().getWarehouseId());
+    dto.setWarehouseCode(ticket.getWarehouse().getWarehouseCode());
+    dto.setWarehouseName(ticket.getWarehouse().getWarehouseName());
+    dto.setReceiveDate(ticket.getReceiveDate());
+    dto.setReason(ticket.getReason());
+    dto.setReceiveType(ticket.getReceiveType());
+    dto.setReferenceId(ticket.getReferenceId());
+    dto.setCreatedBy(ticket.getCreatedBy());
+    dto.setCreatedOn(ticket.getCreatedOn());
+    dto.setLastUpdatedOn(ticket.getLastUpdatedOn());
+    dto.setStatus(ticket.getStatus());
+    dto.setFile(ticket.getFile());
+
+    try {
+      CompletableFuture<String> referenceCodeFuture = CompletableFuture.supplyAsync(() -> {
+        if (ticket.getReceiveType().equals("Sản xuất")) {
+          if (ticket.getReferenceId() != null) {
+            ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
+            return manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A";
+          }
+        } else if (ticket.getReceiveType().equals("Mua hàng")) {
+          if (ticket.getReferenceId() != null) {
+            PurchaseOrderDto purchaseOrder = eventPublisher.getPurchaseOrderById(ticket.getReferenceId());
+            return purchaseOrder != null ? purchaseOrder.getPoCode() : "N/A";
+          }
+        } else if (ticket.getReceiveType().equals("Chuyển kho")) {
+          TransferTicket transferTicket = transferTicketRepository.findByTicketIdWithDetails(ticket.getReferenceId());
+          return transferTicket != null ? transferTicket.getTicketCode() : "N/A";
+        }
+        return "N/A";
+      }, executor);
+
+      // Map<Long, CompletableFuture<ItemDto>> itemFutures = detailsList.stream()
+      //     .map(ReceiveTicketDetail::getItemId)
+      //     .distinct()
+      //     .collect(Collectors.toMap(
+      //         itemId -> itemId,
+      //         itemId -> CompletableFuture.supplyAsync(() -> eventPublisher.getItemById(itemId), executor)
+      //     ));
+
+      // CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+      //     Stream.concat(
+      //         Stream.of(referenceCodeFuture),
+      //         itemFutures.values().stream()
+      //     ).toArray(CompletableFuture[]::new)
+      // );
+
+      // allFutures.join();
+
+      dto.setReferenceCode(referenceCodeFuture.get());
+
+    } catch (Exception e) {
+       if (e instanceof RuntimeException) throw (RuntimeException) e;
+       e.printStackTrace();
+    }
+
     return dto;
   }
 }
