@@ -38,6 +38,9 @@ jobs:
             echo "Stop containers"
             docker compose -f docker-compose.prod.yml down
 
+            echo "Clean cache"
+            docker builder prune -a -f
+
             echo "Build & start containers"
             docker compose -f docker-compose.prod.yml up -d --build
 
