@@ -22,14 +22,14 @@ async function bootstrap() {
   app.use(morgan('dev'));
 
   app.getHttpAdapter().getInstance().set('trust proxy', trustProxy);
-  app.use(
-    rateLimit({
-      windowMs: 60 * 1000, // 1 minutes
-      max: 500, // limit each IP to 100 requests per windowMs
-      standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
-      legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
-    }),
-  );
+  // app.use(
+  //   rateLimit({
+  //     windowMs: 60 * 1000, // 1 minutes
+  //     max: 500, // limit each IP to 100 requests per windowMs
+  //     standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+  //     legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+  //   }),
+  // );
 
   // CORS
   app.enableCors({
