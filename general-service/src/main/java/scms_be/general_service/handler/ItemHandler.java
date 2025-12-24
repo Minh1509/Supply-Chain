@@ -26,8 +26,6 @@ public class ItemHandler {
                 return itemService.updateItem(req.getItemId(), req.getItem());
             case "item.get_by_id":
                 return itemService.getItemById(req.getItemId());
-            case "item.get_by_ids":
-                return itemService.getItemsByIds(req.getItemIds());
             case "item.get_all_in_company":
                 return itemService.getAllItemsInCompany(req.getCompanyId());
             case "item.delete":

@@ -1,13 +1,11 @@
 package scms_be.general_service.model.request;
 
-import java.util.List;
 import lombok.Data;
 
 @Data
 public class ItemRequest {
     private Long companyId;
     private Long itemId; // for get by id, update, delete
-    private List<Long> itemIds; // for batch get by ids
     private ItemData item;
     private String imageUrl; // for update image - nhận URL đã upload từ API Gateway
     

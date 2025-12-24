@@ -122,45 +122,6 @@ public class EventPublisher {
         throw new RpcException(500, "Unexpected response type: " + response.getClass());
     }
 
-    public Map<Long, ItemDto> getItemsByIds(List<Long> itemIds) {
-        log.info("Batch getting items by IDs: {}", itemIds);
-
-        if (itemIds == null || itemIds.isEmpty()) {
-            return Map.of();
-        }
-
-        GenericEvent event = new GenericEvent();
-        event.setPattern("item.get_by_ids");
-
-        ItemRequest request = new ItemRequest();
-        request.setItemIds(itemIds);
-        event.setData(request);
-
-        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.GENERAL_SERVICE_QUEUE, event);
-
-        if (response == null) {
-            throw new RpcException(504, "No reply or timeout from general service");
-        }
-
-        if (response instanceof ErrorResponse) {
-            ErrorResponse err = (ErrorResponse) response;
-            throw new RpcException(err.getStatusCode(), err.getMessage());
-        }
-
-        // if it's already a List (ArrayList), convert to Map
-        if (response instanceof List) {
-            @SuppressWarnings("unchecked")
-            List<Object> rawList = (List<Object>) response;
-            Map<Long, ItemDto> itemsMap = rawList.stream()
-                .map(item -> objectMapper.convertValue(item, ItemDto.class))
-                .collect(java.util.stream.Collectors.toMap(ItemDto::getItemId, item -> item));
-            log.info("Converted List to ItemDto map with {} items", itemsMap.size());
-            return itemsMap;
-        }
-
-        throw new RpcException(500, "Unexpected response type: " + response.getClass());
-    }
-
     // Function để lấy BOM theo itemId
     public BOMDto getBOMByItemId(Long itemId) {
         log.info("Getting BOM by item ID: {}", itemId);

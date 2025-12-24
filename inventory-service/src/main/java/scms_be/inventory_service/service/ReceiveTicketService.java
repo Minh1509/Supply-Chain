@@ -8,12 +8,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 
+import org.hibernate.cache.spi.support.AbstractReadWriteAccess.Item;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import scms_be.inventory_service.event.publisher.EventPublisher;
@@ -22,6 +26,8 @@ import scms_be.inventory_service.model.dto.ItemReportDto;
 import scms_be.inventory_service.model.dto.MonthlyInventoryReportDto;
 import scms_be.inventory_service.model.dto.ReceiveTickeDto;
 import scms_be.inventory_service.model.dto.ReceiveTicketDetailDto;
+import scms_be.inventory_service.model.dto.publisher.BOMDetailDto;
+import scms_be.inventory_service.model.dto.publisher.BOMDto;
 import scms_be.inventory_service.model.dto.publisher.ItemDto;
 import scms_be.inventory_service.model.dto.publisher.ManufactureOrderDto;
 import scms_be.inventory_service.model.dto.publisher.PurchaseOrderDetailDto;
@@ -171,21 +177,8 @@ public class ReceiveTicketService {
       detailsMap.computeIfAbsent(detail.getTicket().getTicketId(), k -> new ArrayList<>()).add(detail);
     }
 
-    List<Long> allItemIds = allDetails.stream()
-        .map(ReceiveTicketDetail::getItemId)
-        .distinct()
-        .collect(Collectors.toList());
-    
-    Map<Long, ItemDto> itemsCache = allItemIds.isEmpty() ? 
-        new HashMap<>() : eventPublisher.getItemsByIds(allItemIds);
-
-    Map<Long, String> referenceCodesCache = batchFetchReferenceCodes(tickets);
-
     return tickets.parallelStream()
-        .map(ticket -> convertToDto(ticket, 
-            detailsMap.getOrDefault(ticket.getTicketId(), new ArrayList<>()), 
-            itemsCache, 
-            referenceCodesCache))
+        .map(ticket -> convertToDto(ticket, detailsMap.getOrDefault(ticket.getTicketId(), new ArrayList<>())))
         .collect(Collectors.toList());
   }
 
@@ -219,54 +212,6 @@ public class ReceiveTicketService {
     String year = String.valueOf(LocalDateTime.now().getYear()).substring(2);
     int count = receiveTicketRepository.countByTicketCodeStartingWith(prefix);
     return prefix + year + String.format("%03d", count + 1);
-  }
-
-  private Map<Long, String> batchFetchReferenceCodes(List<ReceiveTicket> tickets) {
-    Map<Long, String> cache = new HashMap<>();
-    List<Long> moIds = new ArrayList<>();
-    List<Long> poIds = new ArrayList<>();
-    List<Long> transferIds = new ArrayList<>();
-    
-    for (ReceiveTicket ticket : tickets) {
-      if (ticket.getReferenceId() == null) continue;
-      
-      if ("Sản xuất".equals(ticket.getReceiveType())) {
-        moIds.add(ticket.getReferenceId());
-      } else if ("Mua hàng".equals(ticket.getReceiveType())) {
-        poIds.add(ticket.getReferenceId());
-      } else if ("Chuyển kho".equals(ticket.getReceiveType())) {
-        transferIds.add(ticket.getReferenceId());
-      }
-    }
-    
-    for (Long moId : moIds) {
-      try {
-        ManufactureOrderDto mo = eventPublisher.getManufactureOrderById(moId);
-        cache.put(moId, mo != null ? mo.getMoCode() : "N/A");
-      } catch (Exception e) {
-        cache.put(moId, "N/A");
-      }
-    }
-    
-    for (Long poId : poIds) {
-      try {
-        PurchaseOrderDto po = eventPublisher.getPurchaseOrderById(poId);
-        cache.put(poId, po != null ? po.getPoCode() : "N/A");
-      } catch (Exception e) {
-        cache.put(poId, "N/A");
-      }
-    }
-    
-    for (Long transferId : transferIds) {
-      try {
-        TransferTicket tt = transferTicketRepository.findByTicketIdWithDetails(transferId);
-        cache.put(transferId, tt != null ? tt.getTicketCode() : "N/A");
-      } catch (Exception e) {
-        cache.put(transferId, "N/A");
-      }
-    }
-    
-    return cache;
   }
 
   public List<ItemReportDto> getReceiveReport(ReceiveReportRequest reportRequest, Long companyId) {
@@ -366,11 +311,6 @@ public class ReceiveTicketService {
   }
 
   public ReceiveTickeDto convertToDto(ReceiveTicket ticket, List<ReceiveTicketDetail> detailsList) {
-    return convertToDto(ticket, detailsList, null, null);
-  }
-
-  public ReceiveTickeDto convertToDto(ReceiveTicket ticket, List<ReceiveTicketDetail> detailsList, 
-                                      Map<Long, ItemDto> itemsCache, Map<Long, String> referenceCodesCache) {
     ReceiveTickeDto dto = new ReceiveTickeDto();
     dto.setTicketId(ticket.getTicketId());
     dto.setCompanyId(ticket.getCompanyId());
@@ -389,85 +329,65 @@ public class ReceiveTicketService {
     dto.setFile(ticket.getFile());
 
     try {
-      // Use cache if available, otherwise fetch individually
-      if (referenceCodesCache != null && ticket.getReferenceId() != null) {
-        dto.setReferenceCode(referenceCodesCache.getOrDefault(ticket.getReferenceId(), "N/A"));
-      } else {
-        CompletableFuture<String> referenceCodeFuture = CompletableFuture.supplyAsync(() -> {
-          if (ticket.getReceiveType().equals("Sản xuất")) {
-            if (ticket.getReferenceId() != null) {
-              ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
-              return manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A";
-            }
-          } else if (ticket.getReceiveType().equals("Mua hàng")) {
-            if (ticket.getReferenceId() != null) {
-              PurchaseOrderDto purchaseOrder = eventPublisher.getPurchaseOrderById(ticket.getReferenceId());
-              return purchaseOrder != null ? purchaseOrder.getPoCode() : "N/A";
-            }
-          } else if (ticket.getReceiveType().equals("Chuyển kho")) {
-            TransferTicket transferTicket = transferTicketRepository.findByTicketIdWithDetails(ticket.getReferenceId());
-            return transferTicket != null ? transferTicket.getTicketCode() : "N/A";
+      CompletableFuture<String> referenceCodeFuture = CompletableFuture.supplyAsync(() -> {
+        if (ticket.getReceiveType().equals("Sản xuất")) {
+          if (ticket.getReferenceId() != null) {
+            ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
+            return manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A";
           }
-          return "N/A";
-        }, executor);
-        dto.setReferenceCode(referenceCodeFuture.get());
-      }
+        } else if (ticket.getReceiveType().equals("Mua hàng")) {
+          if (ticket.getReferenceId() != null) {
+            PurchaseOrderDto purchaseOrder = eventPublisher.getPurchaseOrderById(ticket.getReferenceId());
+            return purchaseOrder != null ? purchaseOrder.getPoCode() : "N/A";
+          }
+        } else if (ticket.getReceiveType().equals("Chuyển kho")) {
+          TransferTicket transferTicket = transferTicketRepository.findByTicketIdWithDetails(ticket.getReferenceId());
+          return transferTicket != null ? transferTicket.getTicketCode() : "N/A";
+        }
+        return "N/A";
+      }, executor);
 
-      List<ReceiveTicketDetailDto> detailDtos;
-      
-      if (itemsCache != null) {
-        detailDtos = detailsList.stream()
-            .map(detail -> {
-              ReceiveTicketDetailDto detailDto = new ReceiveTicketDetailDto();
-              detailDto.setRTdetailId(detail.getRTdetailId());
-              detailDto.setTicketId(detail.getTicket().getTicketId());
-              detailDto.setItemId(detail.getItemId());
-              
-              ItemDto item = itemsCache.get(detail.getItemId());
+      Map<Long, CompletableFuture<ItemDto>> itemFutures = detailsList.stream()
+          .map(ReceiveTicketDetail::getItemId)
+          .distinct()
+          .collect(Collectors.toMap(
+              itemId -> itemId,
+              itemId -> CompletableFuture.supplyAsync(() -> eventPublisher.getItemById(itemId), executor)
+          ));
+
+      CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+          Stream.concat(
+              Stream.of(referenceCodeFuture),
+              itemFutures.values().stream()
+          ).toArray(CompletableFuture[]::new)
+      );
+
+      allFutures.join();
+
+      dto.setReferenceCode(referenceCodeFuture.get());
+
+      List<ReceiveTicketDetailDto> detailDtos = detailsList.parallelStream()
+          .map(detail -> {
+            ReceiveTicketDetailDto detailDto = new ReceiveTicketDetailDto();
+            detailDto.setRTdetailId(detail.getRTdetailId());
+            detailDto.setTicketId(detail.getTicket().getTicketId());
+            detailDto.setItemId(detail.getItemId());
+            
+            try {
+              ItemDto item = itemFutures.get(detail.getItemId()).get();
               if (item != null) {
                 detailDto.setItemCode(item.getItemCode());
                 detailDto.setItemName(item.getItemName());
               }
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
 
-              detailDto.setQuantity(detail.getQuantity());
-              detailDto.setNote(detail.getNote());
-              return detailDto;
-            })
-            .collect(Collectors.toList());
-      } else {
-        Map<Long, CompletableFuture<ItemDto>> itemFutures = detailsList.stream()
-            .map(ReceiveTicketDetail::getItemId)
-            .distinct()
-            .collect(Collectors.toMap(
-                itemId -> itemId,
-                itemId -> CompletableFuture.supplyAsync(() -> eventPublisher.getItemById(itemId), executor)
-            ));
-
-        CompletableFuture.allOf(itemFutures.values().toArray(CompletableFuture[]::new)).join();
-
-        detailDtos = detailsList.parallelStream()
-            .map(detail -> {
-              ReceiveTicketDetailDto detailDto = new ReceiveTicketDetailDto();
-              detailDto.setRTdetailId(detail.getRTdetailId());
-              detailDto.setTicketId(detail.getTicket().getTicketId());
-              detailDto.setItemId(detail.getItemId());
-              
-              try {
-                ItemDto item = itemFutures.get(detail.getItemId()).get();
-                if (item != null) {
-                  detailDto.setItemCode(item.getItemCode());
-                  detailDto.setItemName(item.getItemName());
-                }
-              } catch (Exception e) {
-                 e.printStackTrace();
-              }
-
-              detailDto.setQuantity(detail.getQuantity());
-              detailDto.setNote(detail.getNote());
-              return detailDto;
-            })
-            .collect(Collectors.toList());
-      }
+            detailDto.setQuantity(detail.getQuantity());
+            detailDto.setNote(detail.getNote());
+            return detailDto;
+          })
+          .collect(Collectors.toList());
 
       dto.setReceiveTicketDetails(detailDtos);
 
