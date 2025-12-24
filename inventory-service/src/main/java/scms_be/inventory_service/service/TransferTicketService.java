@@ -5,6 +5,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -194,12 +198,57 @@ public class TransferTicketService {
     dto.setStatus(ticket.getStatus());
     dto.setFile(ticket.getFile());
 
-    List<TransferTicketDetailDto> details = detailRepository
-        .findByTicketTicketId(ticket.getTicketId())
-        .stream()
-        .map(this::convertToDetailDto)
-        .collect(Collectors.toList());
-    dto.setTransferTicketDetails(details);
+    ExecutorService executor = Executors.newFixedThreadPool(10);
+    try {
+      List<TransferTicketDetail> detailsList = detailRepository.findByTicketTicketId(ticket.getTicketId());
+
+      Map<Long, CompletableFuture<ItemDto>> itemFutures = detailsList.stream()
+          .map(TransferTicketDetail::getItemId)
+          .distinct()
+          .collect(Collectors.toMap(
+              itemId -> itemId,
+              itemId -> CompletableFuture.supplyAsync(() -> eventPublisher.getItemById(itemId), executor)
+          ));
+
+      CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+          itemFutures.values().toArray(new CompletableFuture[0])
+      );
+
+      allFutures.join();
+
+      List<TransferTicketDetailDto> details = detailsList.stream()
+          .map(detail -> {
+            TransferTicketDetailDto detailDto = new TransferTicketDetailDto();
+            detailDto.setTTdetailId(detail.getTTdetailId());
+            detailDto.setTicketId(detail.getTicket().getTicketId());
+            detailDto.setItemId(detail.getItemId());
+            
+            try {
+              ItemDto item = itemFutures.get(detail.getItemId()).get();
+               if (item != null) {
+                detailDto.setItemCode(item.getItemCode());
+                detailDto.setItemName(item.getItemName());
+              } else {
+                detailDto.setItemCode("ITEM_" + detail.getItemId()); // Placeholder
+                detailDto.setItemName("Item Name " + detail.getItemId()); // Placeholder
+              }
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
+
+            detailDto.setQuantity(detail.getQuantity());
+            detailDto.setNote(detail.getNote());
+            return detailDto;
+          })
+          .collect(Collectors.toList());
+      
+      dto.setTransferTicketDetails(details);
+    } catch (Exception e) {
+       e.printStackTrace();
+    } finally {
+      executor.shutdown();
+    }
+    
     return dto;
   }
 

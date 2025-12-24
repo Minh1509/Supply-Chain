@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,8 @@ import scms_be.operation_service.repository.BOMRepository;
 import scms_be.operation_service.repository.ManufactureOrderRepository;
 import scms_be.operation_service.repository.ManufactureStageDetailRepository;
 import scms_be.operation_service.repository.ManufactureStageRepository;
+
+import java.util.concurrent.*;
 
 @Slf4j
 @Service
@@ -296,22 +301,6 @@ public class ManufactureOrderService {
     dto.setMoId(mo.getMoId());
     dto.setMoCode(mo.getMoCode());
 
-    ItemDto item = eventPublisher.getItemById(mo.getItemId());
-    if (item == null) {
-      throw new RpcException(404, "Không tìm thấy hàng hóa!");
-    }
-    dto.setItemId(item.getItemId());
-    dto.setItemCode(item.getItemCode());
-    dto.setItemName(item.getItemName());
-
-    ManufactureLineDto line = eventPublisher.getManufactureLineById(mo.getLineId());
-    if (line == null) {
-      throw new RpcException(404, "Không tìm thấy dây chuyền!");
-    }
-    dto.setLineId(line.getLineId());
-    dto.setLineCode(line.getLineCode());
-    dto.setLineName(line.getLineName());
-
     dto.setType(mo.getType());
     dto.setQuantity(mo.getQuantity());
     dto.setEstimatedStartTime(mo.getEstimatedStartTime());
@@ -323,6 +312,43 @@ public class ManufactureOrderService {
     dto.setBatchNo(mo.getBatchNo());
     dto.setCompletedQuantity(mo.getCompletedQuantity());
     dto.setProductsGenerated(mo.getProductsGenerated());
+
+    ExecutorService executor = Executors.newFixedThreadPool(5);
+
+    try {
+      CompletableFuture<ItemDto> itemFuture = CompletableFuture.supplyAsync(
+          () -> eventPublisher.getItemById(mo.getItemId()), executor);
+
+      CompletableFuture<ManufactureLineDto> lineFuture = CompletableFuture.supplyAsync(
+          () -> eventPublisher.getManufactureLineById(mo.getLineId()), executor);
+
+      CompletableFuture.allOf(itemFuture, lineFuture).join();
+
+      ItemDto item = itemFuture.get();
+      if (item == null) {
+        throw new RpcException(404, "Không tìm thấy hàng hóa!");
+      }
+      dto.setItemId(item.getItemId());
+      dto.setItemCode(item.getItemCode());
+      dto.setItemName(item.getItemName());
+
+      ManufactureLineDto line = lineFuture.get();
+      if (line == null) {
+        throw new RpcException(404, "Không tìm thấy dây chuyền!");
+      }
+      dto.setLineId(line.getLineId());
+      dto.setLineCode(line.getLineCode());
+      dto.setLineName(line.getLineName());
+
+    } catch (Exception e) {
+      if (e instanceof RpcException) {
+        throw (RpcException) e;
+      }
+      e.printStackTrace();
+    } finally {
+      executor.shutdown();
+    }
+
     return dto;
   }
 }

@@ -16,6 +16,11 @@ import scms_be.inventory_service.model.request.InventoryRequest.InventoryData;
 import scms_be.inventory_service.repository.InventoryRepository;
 import scms_be.inventory_service.repository.WarehouseRepository;
 
+import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
+
 @Service
 public class InventoryService {
   @Autowired
@@ -194,13 +199,25 @@ public class InventoryService {
     inventoryDto.setWarehouseCode(inventory.getWarehouse().getWarehouseCode());
 
     inventoryDto.setItemId(inventory.getItemId());
-    ItemDto itemDto = new ItemDto();
-    itemDto = eventPublisher.getItemById(inventory.getItemId());
-    inventoryDto.setItemCode(itemDto.getItemCode());
-    inventoryDto.setItemName(itemDto.getItemName());
-    
     inventoryDto.setQuantity(inventory.getQuantity());
     inventoryDto.setOnDemandQuantity(inventory.getOnDemandQuantity());
+
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    try {
+      CompletableFuture<ItemDto> itemFuture = CompletableFuture.supplyAsync(
+          () -> eventPublisher.getItemById(inventory.getItemId()), executor);
+      
+      ItemDto itemDto = itemFuture.get();
+      if (itemDto != null) {
+        inventoryDto.setItemCode(itemDto.getItemCode());
+        inventoryDto.setItemName(itemDto.getItemName());
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      executor.shutdown();
+    }
+    
     return inventoryDto;
   }
 }

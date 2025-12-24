@@ -8,7 +8,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -290,31 +295,81 @@ public class IssueTicketService {
     dto.setReason(ticket.getReason());
     dto.setIssueType(ticket.getIssueType());
     dto.setReferenceId(ticket.getReferenceId());
-
-    if (ticket.getIssueType().equals("Sản xuất")) {
-      ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
-      dto.setReferenceCode(manufactureOrder.getMoCode());
-    } else if (ticket.getIssueType().equals("Bán hàng")) {
-      SalesOrderDto salesOrder = eventPublisher.getSalesOrderById(ticket.getReferenceId());
-      dto.setReferenceCode(salesOrder.getSoCode());
-    } else if (ticket.getIssueType().equals("Chuyển kho")) {
-      TransferTicket transferTicket = transferTicketRepository.findByTicketId(ticket.getReferenceId());
-      dto.setReferenceCode(transferTicket.getTicketCode());
-    } else {
-      dto.setReferenceCode("N/A");
-    }
-
     dto.setCreatedBy(ticket.getCreatedBy());
     dto.setCreatedOn(ticket.getCreatedOn());
     dto.setLastUpdatedOn(ticket.getLastUpdatedOn());
     dto.setStatus(ticket.getStatus());
     dto.setFile(ticket.getFile());
 
-    List<IssueTicketDetailDto> details = detailRepository.findByTicketTicketId(ticket.getTicketId())
-        .stream()
-        .map(this::convertToDetailDto)
-        .collect(Collectors.toList());
-    dto.setIssueTicketDetails(details);
+    ExecutorService executor = Executors.newFixedThreadPool(10);
+    try {
+      CompletableFuture<String> referenceCodeFuture = CompletableFuture.supplyAsync(() -> {
+        if (ticket.getIssueType().equals("Sản xuất")) {
+          ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
+          return manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A";
+        } else if (ticket.getIssueType().equals("Bán hàng")) {
+          SalesOrderDto salesOrder = eventPublisher.getSalesOrderById(ticket.getReferenceId());
+          return salesOrder != null ? salesOrder.getSoCode() : "N/A";
+        } else if (ticket.getIssueType().equals("Chuyển kho")) {
+          TransferTicket transferTicket = transferTicketRepository.findByTicketId(ticket.getReferenceId());
+          return transferTicket != null ? transferTicket.getTicketCode() : "N/A";
+        } else {
+          return "N/A";
+        }
+      }, executor);
+
+      List<IssueTicketDetail> detailsList = detailRepository.findByTicketTicketId(ticket.getTicketId());
+
+      Map<Long, CompletableFuture<ItemDto>> itemFutures = detailsList.stream()
+          .map(IssueTicketDetail::getItemId)
+          .distinct()
+          .collect(Collectors.toMap(
+              itemId -> itemId,
+              itemId -> CompletableFuture.supplyAsync(() -> eventPublisher.getItemById(itemId), executor)
+          ));
+
+      CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+          Stream.concat(
+              Stream.of(referenceCodeFuture),
+              itemFutures.values().stream()
+          ).toArray(CompletableFuture[]::new)
+      );
+
+      allFutures.join();
+
+      dto.setReferenceCode(referenceCodeFuture.get());
+
+      List<IssueTicketDetailDto> detailDtos = detailsList.stream()
+          .map(detail -> {
+            IssueTicketDetailDto detailDto = new IssueTicketDetailDto();
+            detailDto.setITdetailId(detail.getITdetailId());
+            detailDto.setTicketId(detail.getTicket().getTicketId());
+            detailDto.setItemId(detail.getItemId());
+            
+            try {
+              ItemDto item = itemFutures.get(detail.getItemId()).get();
+              if (item != null) {
+                detailDto.setItemCode(item.getItemCode());
+                detailDto.setItemName(item.getItemName());
+              }
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
+
+            detailDto.setQuantity(detail.getQuantity());
+            detailDto.setNote(detail.getNote());
+            return detailDto;
+          })
+          .collect(Collectors.toList());
+
+      dto.setIssueTicketDetails(detailDtos);
+
+    } catch (Exception e) {
+       if (e instanceof RuntimeException) throw (RuntimeException) e;
+       e.printStackTrace();
+    } finally {
+      executor.shutdown();
+    }
 
     return dto;
   }
@@ -323,7 +378,10 @@ public class IssueTicketService {
     IssueTicketDetailDto dto = new IssueTicketDetailDto();
     dto.setITdetailId(detail.getITdetailId());
     dto.setTicketId(detail.getTicket().getTicketId());
-    ItemDto item = eventPublisher.getItemById(detail.getItemId());
+    
+    // Fallback for single detail conversion if needed elsewhere, 
+    // though synchronous, it keeps the existing public method contract.
+    ItemDto item = eventPublisher.getItemById(detail.getItemId()); 
     if(item == null) {
       throw new RpcException(404, "Không tìm thấy hàng hóa!");
     }

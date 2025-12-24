@@ -8,7 +8,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.cache.spi.support.AbstractReadWriteAccess.Item;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -303,39 +308,84 @@ public class ReceiveTicketService {
     dto.setReason(ticket.getReason());
     dto.setReceiveType(ticket.getReceiveType());
     dto.setReferenceId(ticket.getReferenceId());
-
-    if (ticket.getReceiveType().equals("Sản xuất")) {
-      if (ticket.getReferenceId() != null) {
-        ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
-        dto.setReferenceCode(manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A");
-      } else {
-        dto.setReferenceCode("N/A");
-      }
-    } else if (ticket.getReceiveType().equals("Mua hàng")) {
-      if (ticket.getReferenceId() != null) {
-        PurchaseOrderDto purchaseOrder = eventPublisher.getPurchaseOrderById(ticket.getReferenceId());
-        dto.setReferenceCode(purchaseOrder != null ? purchaseOrder.getPoCode() : "N/A");
-      } else {
-        dto.setReferenceCode("N/A");
-      }
-    } else if (ticket.getReceiveType().equals("Chuyển kho")) {
-      TransferTicket transferTicket = transferTicketRepository.findByTicketIdWithDetails(ticket.getReferenceId());
-      dto.setReferenceCode(transferTicket != null ? transferTicket.getTicketCode() : "N/A");
-    } else {
-      dto.setReferenceCode("N/A");
-    }
-
     dto.setCreatedBy(ticket.getCreatedBy());
     dto.setCreatedOn(ticket.getCreatedOn());
     dto.setLastUpdatedOn(ticket.getLastUpdatedOn());
     dto.setStatus(ticket.getStatus());
     dto.setFile(ticket.getFile());
 
-    List<ReceiveTicketDetailDto> details = detailRepository.findByTicketTicketId(ticket.getTicketId())
-        .stream()
-        .map(this::convertToDetailDto)
-        .collect(Collectors.toList());
-    dto.setReceiveTicketDetails(details);
+    ExecutorService executor = Executors.newFixedThreadPool(10);
+    try {
+      CompletableFuture<String> referenceCodeFuture = CompletableFuture.supplyAsync(() -> {
+        if (ticket.getReceiveType().equals("Sản xuất")) {
+          if (ticket.getReferenceId() != null) {
+            ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
+            return manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A";
+          }
+        } else if (ticket.getReceiveType().equals("Mua hàng")) {
+          if (ticket.getReferenceId() != null) {
+            PurchaseOrderDto purchaseOrder = eventPublisher.getPurchaseOrderById(ticket.getReferenceId());
+            return purchaseOrder != null ? purchaseOrder.getPoCode() : "N/A";
+          }
+        } else if (ticket.getReceiveType().equals("Chuyển kho")) {
+          TransferTicket transferTicket = transferTicketRepository.findByTicketIdWithDetails(ticket.getReferenceId());
+          return transferTicket != null ? transferTicket.getTicketCode() : "N/A";
+        }
+        return "N/A";
+      }, executor);
+
+      List<ReceiveTicketDetail> detailsList = detailRepository.findByTicketTicketId(ticket.getTicketId());
+
+      Map<Long, CompletableFuture<ItemDto>> itemFutures = detailsList.stream()
+          .map(ReceiveTicketDetail::getItemId)
+          .distinct()
+          .collect(Collectors.toMap(
+              itemId -> itemId,
+              itemId -> CompletableFuture.supplyAsync(() -> eventPublisher.getItemById(itemId), executor)
+          ));
+
+      CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+          Stream.concat(
+              Stream.of(referenceCodeFuture),
+              itemFutures.values().stream()
+          ).toArray(CompletableFuture[]::new)
+      );
+
+      allFutures.join();
+
+      dto.setReferenceCode(referenceCodeFuture.get());
+
+      List<ReceiveTicketDetailDto> detailDtos = detailsList.stream()
+          .map(detail -> {
+            ReceiveTicketDetailDto detailDto = new ReceiveTicketDetailDto();
+            detailDto.setRTdetailId(detail.getRTdetailId());
+            detailDto.setTicketId(detail.getTicket().getTicketId());
+            detailDto.setItemId(detail.getItemId());
+            
+            try {
+              ItemDto item = itemFutures.get(detail.getItemId()).get();
+              if (item != null) {
+                detailDto.setItemCode(item.getItemCode());
+                detailDto.setItemName(item.getItemName());
+              }
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
+
+            detailDto.setQuantity(detail.getQuantity());
+            detailDto.setNote(detail.getNote());
+            return detailDto;
+          })
+          .collect(Collectors.toList());
+
+      dto.setReceiveTicketDetails(detailDtos);
+
+    } catch (Exception e) {
+       if (e instanceof RuntimeException) throw (RuntimeException) e;
+       e.printStackTrace();
+    } finally {
+      executor.shutdown();
+    }
 
     return dto;
   }

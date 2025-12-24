@@ -3,8 +3,14 @@ package scms_be.operation_service.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -133,27 +139,85 @@ public class DeliveryOrderService {
     DeliveryOrderDto deliveryOrderDto = new DeliveryOrderDto();
     deliveryOrderDto.setDoId(deliveryOrder.getDoId());
     deliveryOrderDto.setDoCode(deliveryOrder.getDoCode());
+
+    ExecutorService executor = Executors.newFixedThreadPool(10);
+    try {
+      CompletableFuture<SalesOrderDto> salesOrderFuture = CompletableFuture.supplyAsync(
+          () -> eventPublisher.getSalesOrderById(deliveryOrder.getSoId()), executor);
+
+      List<DeliveryOrderDetail> detailsList = deliveryOrderDetailRepository
+          .findByDeliveryOrder_DoId(deliveryOrder.getDoId());
+
+      Map<Long, CompletableFuture<ItemDto>> itemFutures = detailsList.stream()
+          .map(DeliveryOrderDetail::getItemId)
+          .distinct()
+          .collect(Collectors.toMap(
+              itemId -> itemId,
+              itemId -> CompletableFuture.supplyAsync(() -> eventPublisher.getItemById(itemId), executor)
+          ));
+
+      CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+          Stream.concat(
+              Stream.of(salesOrderFuture),
+              itemFutures.values().stream()
+          ).toArray(CompletableFuture[]::new)
+      );
+
+      allFutures.join();
+
+      SalesOrderDto saleDtoOrder = salesOrderFuture.get();
+      if (saleDtoOrder == null) {
+        throw new RpcException(404, "Không tìm thấy đơn bán hàng!");
+      }
+      deliveryOrderDto.setSoId(saleDtoOrder.getSoId());
+      deliveryOrderDto.setSoCode(saleDtoOrder.getSoCode());
+      deliveryOrderDto.setCreatedBy(deliveryOrder.getCreatedBy());
+      deliveryOrderDto.setCreatedOn(deliveryOrder.getCreatedOn());
+      deliveryOrderDto.setLastUpdatedOn(deliveryOrder.getLastUpdatedOn());
+      deliveryOrderDto.setDeliveryFromAddress(saleDtoOrder.getDeliveryFromAddress());
+      deliveryOrderDto.setDeliveryToAddress(saleDtoOrder.getDeliveryToAddress());
+      deliveryOrderDto.setStatus(deliveryOrder.getStatus());
+
+      List<DeliveryOrderDetailDto> deliveryOrderDetails = detailsList.stream()
+          .map(detail -> {
+            DeliveryOrderDetailDto deliveryOrderDetailDto = new DeliveryOrderDetailDto();
+            deliveryOrderDetailDto.setDeliveryOrderDetailId(detail.getDeliveryOrderDetailId());
+            deliveryOrderDetailDto.setDeliveryOrderId(detail.getDeliveryOrder().getDoId());
+            deliveryOrderDetailDto.setDeliveryOrderCode(detail.getDeliveryOrder().getDoCode());
+
+            try {
+              ItemDto item = itemFutures.get(detail.getItemId()).get();
+              if (item == null) {
+                // Potentially throw or handle null
+                throw new RpcException(404, "Không tìm thấy hàng hóa!"); 
+              }
+              deliveryOrderDetailDto.setItemId(item.getItemId());
+              deliveryOrderDetailDto.setItemCode(item.getItemCode());
+              deliveryOrderDetailDto.setItemName(item.getItemName());
+            } catch (RpcException e) {
+              throw e;
+            } catch (Exception e) {
+               if(e.getCause() instanceof RpcException) throw (RpcException) e.getCause();
+               e.printStackTrace();
+            }
+
+            deliveryOrderDetailDto.setQuantity(detail.getQuantity());
+            deliveryOrderDetailDto.setNote(detail.getNote());
+            return deliveryOrderDetailDto;
+          })
+          .collect(Collectors.toList());
+
+      deliveryOrderDto.setDeliveryOrderDetails(deliveryOrderDetails);
     
-    SalesOrderDto saleDtoOrder = eventPublisher.getSalesOrderById(deliveryOrder.getSoId());
-    if (saleDtoOrder == null) {
-      throw new RpcException(404, "Không tìm thấy đơn bán hàng!");
+    } catch (RpcException e) {
+        throw e;
+    } catch (Exception e) {
+      if (e instanceof RuntimeException) throw (RuntimeException) e;
+      e.printStackTrace();
+    } finally {
+      executor.shutdown();
     }
-    deliveryOrderDto.setSoId(saleDtoOrder.getSoId());
-    deliveryOrderDto.setSoCode(saleDtoOrder.getSoCode());
-    deliveryOrderDto.setCreatedBy(deliveryOrder.getCreatedBy());
-    deliveryOrderDto.setCreatedOn(deliveryOrder.getCreatedOn());
-    deliveryOrderDto.setLastUpdatedOn(deliveryOrder.getLastUpdatedOn());
-    deliveryOrderDto.setDeliveryFromAddress(saleDtoOrder.getDeliveryFromAddress());
-    deliveryOrderDto.setDeliveryToAddress(saleDtoOrder.getDeliveryToAddress());
-    deliveryOrderDto.setStatus(deliveryOrder.getStatus());
 
-    List<DeliveryOrderDetailDto> deliveryOrderDetails = deliveryOrderDetailRepository
-        .findByDeliveryOrder_DoId(deliveryOrder.getDoId())
-        .stream()
-        .map(this::convertToDetailDto)
-        .collect(Collectors.toList());
-
-    deliveryOrderDto.setDeliveryOrderDetails(deliveryOrderDetails);
     return deliveryOrderDto;
   }
 

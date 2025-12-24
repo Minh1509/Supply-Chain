@@ -2,8 +2,14 @@ package scms_be.operation_service.service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -196,24 +202,83 @@ public class BOMService {
     dto.setBomId(bom.getBomId());
     dto.setBomCode(bom.getBomCode());
 
-    ItemDto item = eventPublisher.getItemById(bom.getItemId());
-    if (item == null) {
-      throw new RpcException(404, "Không tìm thấy hàng hóas!");
+    ExecutorService executor = Executors.newFixedThreadPool(10);
+    try {
+      CompletableFuture<ItemDto> itemFuture = CompletableFuture.supplyAsync(
+          () -> eventPublisher.getItemById(bom.getItemId()), executor);
+
+      List<BOMDetail> detailsList = bomDetailRepository.findByBom_BomId(bom.getBomId());
+
+      Map<Long, CompletableFuture<ItemDto>> detailItemFutures = detailsList.stream()
+          .map(BOMDetail::getItemId)
+          .distinct()
+          .collect(Collectors.toMap(
+              itemId -> itemId,
+              itemId -> CompletableFuture.supplyAsync(() -> eventPublisher.getItemById(itemId), executor)
+          ));
+
+      CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+          Stream.concat(
+              Stream.of(itemFuture),
+              detailItemFutures.values().stream()
+          ).toArray(CompletableFuture[]::new)
+      );
+
+      allFutures.join();
+
+      ItemDto item = itemFuture.get();
+      if (item == null) {
+        throw new RpcException(404, "Không tìm thấy hàng hóas!");
+      }
+      dto.setItemId(item.getItemId());
+      dto.setItemCode(item.getItemCode());
+      dto.setItemName(item.getItemName());
+
+      dto.setDescription(bom.getDescription());
+      dto.setStatus(bom.getStatus());
+
+      List<BOMDetailDto> details = detailsList.stream()
+          .map(detail -> {
+            BOMDetailDto detailDto = new BOMDetailDto();
+            detailDto.setId(detail.getId());
+            detailDto.setBomId(detail.getBom().getBomId());
+            
+            try {
+               ItemDto itemDetailDto = detailItemFutures.get(detail.getItemId()).get();
+               if (itemDetailDto == null) {
+                 // Potentially throw or handle null, keeping consistency with logic
+                 // Original code threw RpcException(404) inside convertToDetailDto
+                 throw new RpcException(404, "Không tìm thấy NVL!");
+               }
+               detailDto.setItemId(itemDetailDto.getItemId());
+               detailDto.setItemName(itemDetailDto.getItemName());
+               detailDto.setItemCode(itemDetailDto.getItemCode());
+            } catch (RpcException e) {
+                throw e; // Rethrow RpcException
+            } catch (Exception e) {
+                if (e.getCause() instanceof RpcException) {
+                     throw (RpcException) e.getCause();
+                }
+                e.printStackTrace();
+            }
+
+            detailDto.setQuantity(detail.getQuantity());
+            detailDto.setNote(detail.getNote());
+            return detailDto;
+          })
+          .collect(Collectors.toList());
+
+      dto.setBomDetails(details);
+
+    } catch (RpcException e) {
+        throw e;
+    } catch (Exception e) {
+      if (e instanceof RuntimeException) throw (RuntimeException) e;
+      e.printStackTrace();
+    } finally {
+      executor.shutdown();
     }
-    dto.setItemId(item.getItemId());
-    dto.setItemCode(item.getItemCode());
-    dto.setItemName(item.getItemName());
 
-    dto.setDescription(bom.getDescription());
-    dto.setStatus(bom.getStatus());
-
-    List<BOMDetailDto> details = bomDetailRepository
-        .findByBom_BomId(bom.getBomId())
-        .stream()
-        .map(this::convertToDetailDto)
-        .collect(Collectors.toList());
-
-    dto.setBomDetails(details);
     return dto;
   }
 

@@ -2,6 +2,12 @@ package scms_be.operation_service.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
+import java.util.Map;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -140,22 +146,36 @@ public class ManufactureStageService {
     dto.setStageId(stage.getStageId());
     dto.setStageCode(stage.getStageCode());
 
-    ItemDto item = eventPublisher.getItemById(stage.getItemId());
-    if (item == null) {
-      throw new RpcException(404, "Không tìm thấy hàng hóa!");
-    }
-    dto.setItemId(item.getItemId());
-    dto.setItemCode(item.getItemCode());
-    dto.setItemName(item.getItemName());
-    dto.setDescription(stage.getDescription());
-    dto.setStatus(stage.getStatus());
+    ExecutorService executor = Executors.newFixedThreadPool(5);
+    try {
+      CompletableFuture<ItemDto> itemFuture = CompletableFuture.supplyAsync(
+          () -> eventPublisher.getItemById(stage.getItemId()), executor);
 
-    List<ManufactureStageDetailDto> details = stageDetailRepository
-        .findByStage_StageId(stage.getStageId())
-        .stream()
-        .map(this::convertToDetailDto)
-        .toList();
-    dto.setStageDetails(details);
+      ItemDto item = itemFuture.join();
+      if (item == null) {
+        throw new RpcException(404, "Không tìm thấy hàng hóa!");
+      }
+      dto.setItemId(item.getItemId());
+      dto.setItemCode(item.getItemCode());
+      dto.setItemName(item.getItemName());
+      dto.setDescription(stage.getDescription());
+      dto.setStatus(stage.getStatus());
+
+      List<ManufactureStageDetailDto> details = stageDetailRepository
+          .findByStage_StageId(stage.getStageId())
+          .stream()
+          .map(this::convertToDetailDto)
+          .toList();
+      dto.setStageDetails(details);
+    
+    } catch (RpcException e) {
+      throw e;
+    } catch (Exception e) {
+       if (e instanceof RuntimeException) throw (RuntimeException) e;
+       e.printStackTrace();
+    } finally {
+      executor.shutdown();
+    }
 
     return dto;
   }
