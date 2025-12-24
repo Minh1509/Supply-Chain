@@ -140,6 +140,12 @@ public class ManufactureOrderService {
     return convertToDto(mo);
   }
 
+  public String getMoCodeById(Long moId) {
+    ManufactureOrder mo = manufactureOrderRepository.findById(moId)
+      .orElseThrow(() -> new RpcException(404, "Không tìm thấy công lệnh sản xuất!"));
+    return mo.getMoCode();
+  }
+
   public ManufactureOrderDto update(Long id, ManuOrderData update) {
   ManufactureOrder mo = manufactureOrderRepository.findById(id)
     .orElseThrow(() -> new RpcException(404, "Không tìm thấy công lệnh sản xuất!"));

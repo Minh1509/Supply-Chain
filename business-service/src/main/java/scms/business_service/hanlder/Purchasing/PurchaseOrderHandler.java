@@ -34,6 +34,12 @@ public class PurchaseOrderHandler {
     return purchaseOrderService.getPurchaseOrderByCode(poCode);
   }
 
+  public Object handleGetCodeById(Object data) {
+    Map<String, Object> map = (Map<String, Object>) data;
+    Long poId = getLongValue(map, "poId");
+    return purchaseOrderService.getPoCodeById(poId);
+  }
+
   public Object handleGetAllInCompany(Object data) {
     Map<String, Object> map = (Map<String, Object>) data;
     Long companyId = getLongValue(map, "companyId");

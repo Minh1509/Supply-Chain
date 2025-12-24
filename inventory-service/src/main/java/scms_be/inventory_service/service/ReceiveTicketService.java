@@ -332,13 +332,11 @@ public class ReceiveTicketService {
       CompletableFuture<String> referenceCodeFuture = CompletableFuture.supplyAsync(() -> {
         if (ticket.getReceiveType().equals("Sản xuất")) {
           if (ticket.getReferenceId() != null) {
-            ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
-            return manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A";
+            return eventPublisher.getMoCodeById(ticket.getReferenceId());
           }
         } else if (ticket.getReceiveType().equals("Mua hàng")) {
           if (ticket.getReferenceId() != null) {
-            PurchaseOrderDto purchaseOrder = eventPublisher.getPurchaseOrderById(ticket.getReferenceId());
-            return purchaseOrder != null ? purchaseOrder.getPoCode() : "N/A";
+            return eventPublisher.getPoCodeById(ticket.getReferenceId());
           }
         } else if (ticket.getReceiveType().equals("Chuyển kho")) {
           TransferTicket transferTicket = transferTicketRepository.findByTicketIdWithDetails(ticket.getReferenceId());
@@ -436,38 +434,16 @@ public class ReceiveTicketService {
     try {
       CompletableFuture<String> referenceCodeFuture = CompletableFuture.supplyAsync(() -> {
         if (ticket.getReceiveType().equals("Sản xuất")) {
-          if (ticket.getReferenceId() != null) {
-            ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
-            return manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A";
-          }
+          return eventPublisher.getMoCodeById(ticket.getReferenceId());
         } else if (ticket.getReceiveType().equals("Mua hàng")) {
-          if (ticket.getReferenceId() != null) {
-            PurchaseOrderDto purchaseOrder = eventPublisher.getPurchaseOrderById(ticket.getReferenceId());
-            return purchaseOrder != null ? purchaseOrder.getPoCode() : "N/A";
-          }
+          return eventPublisher.getPoCodeById(ticket.getReferenceId());
         } else if (ticket.getReceiveType().equals("Chuyển kho")) {
           TransferTicket transferTicket = transferTicketRepository.findByTicketIdWithDetails(ticket.getReferenceId());
           return transferTicket != null ? transferTicket.getTicketCode() : "N/A";
+        } else {
+          return "N/A";
         }
-        return "N/A";
       }, executor);
-
-      // Map<Long, CompletableFuture<ItemDto>> itemFutures = detailsList.stream()
-      //     .map(ReceiveTicketDetail::getItemId)
-      //     .distinct()
-      //     .collect(Collectors.toMap(
-      //         itemId -> itemId,
-      //         itemId -> CompletableFuture.supplyAsync(() -> eventPublisher.getItemById(itemId), executor)
-      //     ));
-
-      // CompletableFuture<Void> allFutures = CompletableFuture.allOf(
-      //     Stream.concat(
-      //         Stream.of(referenceCodeFuture),
-      //         itemFutures.values().stream()
-      //     ).toArray(CompletableFuture[]::new)
-      // );
-
-      // allFutures.join();
 
       dto.setReferenceCode(referenceCodeFuture.get());
 

@@ -317,11 +317,9 @@ public class IssueTicketService {
     try {
       CompletableFuture<String> referenceCodeFuture = CompletableFuture.supplyAsync(() -> {
         if (ticket.getIssueType().equals("Sản xuất")) {
-          ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
-          return manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A";
+          return eventPublisher.getMoCodeById(ticket.getReferenceId());
         } else if (ticket.getIssueType().equals("Bán hàng")) {
-          SalesOrderDto salesOrder = eventPublisher.getSalesOrderById(ticket.getReferenceId());
-          return salesOrder != null ? salesOrder.getSoCode() : "N/A";
+          return eventPublisher.getSoCodeById(ticket.getReferenceId());
         } else if (ticket.getIssueType().equals("Chuyển kho")) {
           TransferTicket transferTicket = transferTicketRepository.findByTicketId(ticket.getReferenceId());
           return transferTicket != null ? transferTicket.getTicketCode() : "N/A";
@@ -424,11 +422,9 @@ public class IssueTicketService {
     try {
       CompletableFuture<String> referenceCodeFuture = CompletableFuture.supplyAsync(() -> {
         if (ticket.getIssueType().equals("Sản xuất")) {
-          ManufactureOrderDto manufactureOrder = eventPublisher.getManufactureOrderById(ticket.getReferenceId());
-          return manufactureOrder != null ? manufactureOrder.getMoCode() : "N/A";
+          return eventPublisher.getMoCodeById(ticket.getReferenceId());
         } else if (ticket.getIssueType().equals("Bán hàng")) {
-          SalesOrderDto salesOrder = eventPublisher.getSalesOrderById(ticket.getReferenceId());
-          return salesOrder != null ? salesOrder.getSoCode() : "N/A";
+          return eventPublisher.getSoCodeById(ticket.getReferenceId());
         } else if (ticket.getIssueType().equals("Chuyển kho")) {
           TransferTicket transferTicket = transferTicketRepository.findByTicketId(ticket.getReferenceId());
           return transferTicket != null ? transferTicket.getTicketCode() : "N/A";
@@ -436,23 +432,6 @@ public class IssueTicketService {
           return "N/A";
         }
       }, executor);
-
-      // Map<Long, CompletableFuture<ItemDto>> itemFutures = detailsList.stream()
-      //     .map(IssueTicketDetail::getItemId)
-      //     .distinct()
-      //     .collect(Collectors.toMap(
-      //         itemId -> itemId,
-      //         itemId -> CompletableFuture.supplyAsync(() -> eventPublisher.getItemById(itemId), executor)
-      //     ));
-
-      // CompletableFuture<Void> allFutures = CompletableFuture.allOf(
-      //     Stream.concat(
-      //         Stream.of(referenceCodeFuture),
-      //         itemFutures.values().stream()
-      //     ).toArray(CompletableFuture[]::new)
-      // );
-
-      // allFutures.join();
 
       dto.setReferenceCode(referenceCodeFuture.get());
 

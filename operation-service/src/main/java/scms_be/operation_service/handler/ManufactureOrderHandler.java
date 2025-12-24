@@ -31,6 +31,8 @@ public class ManufactureOrderHandler {
                 return manufactureOrderService.getAllManufactureOrdersByCompanyId(request.getCompanyId());
             case "manufacture_order.get_by_id":
                 return manufactureOrderService.getById(request.getMoId());
+            case "manufacture_order.get_code_by_id":
+                return manufactureOrderService.getMoCodeById(request.getMoId());
             case "manufacture_order.get_by_code":
                 return manufactureOrderService.getByCode(request.getMoCode());
             case "manufacture_order.update":

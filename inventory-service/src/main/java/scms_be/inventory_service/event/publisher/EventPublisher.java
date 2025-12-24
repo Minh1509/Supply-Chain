@@ -236,6 +236,38 @@ public class EventPublisher {
         throw new RpcException(500, "Unexpected response type: " + response.getClass());
     }
 
+    // Function để lấy ManufactureOrder MoCode theo moId
+    public String getMoCodeById(Long moId) {
+        log.info("Getting ManufactureOrder code by ID: {}", moId);
+        
+        GenericEvent event = new GenericEvent();
+        event.setPattern("manufacture_order.get_code_by_id");
+        
+        ManuOrderRequest request = new ManuOrderRequest();
+        request.setMoId(moId);
+        event.setData(request);
+
+        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.OPERATION_SERVICE_QUEUE, event);
+
+        if (response == null) {
+            throw new RpcException(504, "No reply or timeout from operation service");
+        }
+
+        if (response instanceof String) {
+            String moCode = (String) response;
+            log.info("Received ManufactureOrder code: {}", moCode);
+            return moCode;
+        }
+
+        if (response instanceof ErrorResponse) {
+            ErrorResponse error = (ErrorResponse) response;
+            log.error("Error getting ManufactureOrder code: {}", error.getMessage());
+            throw new RpcException(error.getStatusCode(), error.getMessage());
+        }
+
+        throw new RpcException(500, "Unexpected response type: " + response.getClass());
+    }
+
     // Function để lấy SalesOrder theo soCode
     public SalesOrderDto getSalesOrderByCode(String soCode) {
         log.info("Getting SalesOrder by code: {}", soCode);
@@ -305,6 +337,37 @@ public class EventPublisher {
             SalesOrderDto dto = objectMapper.convertValue(response, SalesOrderDto.class);
             log.info("Converted Map to SalesOrderDto: {}", dto);
             return dto;
+        }
+
+        throw new RpcException(500, "Unexpected response type: " + response.getClass());
+    }
+
+    // Function để lấy SalesOrder SoCode theo soId
+    public String getSoCodeById(Long soId) {
+        log.info("Getting SalesOrder code by ID: {}", soId);
+        
+        GenericEvent event = new GenericEvent();
+        event.setPattern("so.get_code_by_id");
+
+        Map<String, Object> data = Map.of("soId", soId);
+        event.setData(data);
+
+        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.BUSINESS_SERVICE_QUEUE, event);
+
+        if (response == null) {
+            throw new RpcException(504, "No reply or timeout from business service");
+        }
+
+        if (response instanceof String) {
+            String soCode = (String) response;
+            log.info("Received SalesOrder code: {}", soCode);
+            return soCode;
+        }
+
+        if (response instanceof ErrorResponse) {
+            ErrorResponse error = (ErrorResponse) response;
+            log.error("Error getting SalesOrder code: {}", error.getMessage());
+            throw new RpcException(error.getStatusCode(), error.getMessage());
         }
 
         throw new RpcException(500, "Unexpected response type: " + response.getClass());
@@ -383,6 +446,38 @@ public class EventPublisher {
 
         throw new RpcException(500, "Unexpected response type: " + response.getClass());
     }
+
+    // Function để lấy PurchaseOrder PoCode theo poId
+    public String getPoCodeById(Long poId) {
+        log.info("Getting PurchaseOrder code by ID: {}", poId);
+        
+        GenericEvent event = new GenericEvent();
+        event.setPattern("po.get_code_by_id");
+
+        Map<String, Object> data = Map.of("poId", poId);
+        event.setData(data);
+
+        Object response = rabbitTemplate.convertSendAndReceive(EventConstants.BUSINESS_SERVICE_QUEUE, event);
+
+        if (response == null) {
+            throw new RpcException(504, "No reply or timeout from business service");
+        }
+
+        if (response instanceof String) {
+            String poCode = (String) response;
+            log.info("Received PurchaseOrder code: {}", poCode);
+            return poCode;
+        }
+
+        if (response instanceof ErrorResponse) {
+            ErrorResponse error = (ErrorResponse) response;
+            log.error("Error getting PurchaseOrder code: {}", error.getMessage());
+            throw new RpcException(error.getStatusCode(), error.getMessage());
+        }
+
+        throw new RpcException(500, "Unexpected response type: " + response.getClass());
+    }
+    
     public void publishProductBatchStatusUpdate(String batchNo, String newStatus) {
         log.info("Publishing product batch status update: batchNo={}, newStatus={}", batchNo, newStatus);
         

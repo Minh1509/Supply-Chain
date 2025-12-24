@@ -128,6 +128,12 @@ public class SalesOrderService {
     return salesOrderDto;
   }
 
+  public String getSoCodeById(Long soId) {
+    SalesOrder salesOrder = salesOrderRepository.findById(soId)
+        .orElseThrow(() -> new RpcException(404, "Không tìm thấy đơn bán hàng!"));
+    return salesOrder.getSoCode();
+  }
+
   public SalesOrderDto getSalesOrderByPoId(Long poId) {
     SalesOrder salesOrder = salesOrderRepository.findByPurchaseOrderPoId(poId);
     if (salesOrder == null) {

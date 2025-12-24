@@ -101,7 +101,7 @@ public class TransferTicketService {
   public List<TransferTicketDto> getAllByCompany(Long companyId) {
     return transferTicketRepository.findByCompanyId(companyId)
         .stream()
-        .map(this::convertToDto)
+        .map(this::convertToDtoGetAll)
         .collect(Collectors.toList());
   }
 
@@ -270,6 +270,30 @@ public class TransferTicketService {
 
     dto.setQuantity(detail.getQuantity());
     dto.setNote(detail.getNote());
+    return dto;
+  }
+  
+  public TransferTicketDto convertToDtoGetAll(TransferTicket ticket) {
+    TransferTicketDto dto = new TransferTicketDto();
+    dto.setTicketId(ticket.getTicketId());
+    dto.setCompanyId(ticket.getCompanyId());
+
+    dto.setTicketCode(ticket.getTicketCode());
+
+    dto.setFromWarehouseId(ticket.getFromWarehouse().getWarehouseId());
+    dto.setFromWarehouseName(ticket.getFromWarehouse().getWarehouseName());
+    dto.setFromWarehouseCode(ticket.getFromWarehouse().getWarehouseCode());
+
+    dto.setToWarehouseId(ticket.getToWarehouse().getWarehouseId());
+    dto.setToWarehouseName(ticket.getToWarehouse().getWarehouseName());
+    dto.setToWarehouseCode(ticket.getToWarehouse().getWarehouseCode());
+
+    dto.setReason(ticket.getReason());
+    dto.setCreatedBy(ticket.getCreatedBy());
+    dto.setCreatedOn(ticket.getCreatedOn());
+    dto.setLastUpdatedOn(ticket.getLastUpdatedOn());
+    dto.setStatus(ticket.getStatus());
+    dto.setFile(ticket.getFile());
     return dto;
   }
 }

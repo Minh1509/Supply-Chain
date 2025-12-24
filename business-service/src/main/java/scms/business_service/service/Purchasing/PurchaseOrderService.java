@@ -124,6 +124,12 @@ public class PurchaseOrderService {
         return dto;
     }
 
+    public String getPoCodeById(Long poId) {
+        PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(poId)
+                .orElseThrow(() -> new RpcException(404, "Không tìm thấy đơn mua hàng!"));
+        return purchaseOrder.getPoCode();
+    }
+
     public PurchaseOrderDto getPurchaseOrderByQuotationId(Long quotationId) {
         PurchaseOrder purchaseOrder = purchaseOrderRepository.findByQuotationQuotationId(quotationId);
         if (purchaseOrder == null) {
