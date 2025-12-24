@@ -126,7 +126,7 @@ public class EventPublisher {
         log.info("Batch getting items by IDs: {}", itemIds);
 
         if (itemIds == null || itemIds.isEmpty()) {
-            return Map.of();
+            return new HashMap<>();
         }
 
         GenericEvent event = new GenericEvent();
@@ -147,7 +147,6 @@ public class EventPublisher {
             throw new RpcException(err.getStatusCode(), err.getMessage());
         }
 
-        // if it's already a List (ArrayList), convert to Map
         if (response instanceof List) {
             @SuppressWarnings("unchecked")
             List<Object> rawList = (List<Object>) response;
