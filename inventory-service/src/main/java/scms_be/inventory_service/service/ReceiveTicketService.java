@@ -271,7 +271,7 @@ public class ReceiveTicketService {
 
     List<ReceiveTicket> tickets = receiveTicketRepository
         .findByCompanyIdAndStatusAndLastUpdatedOnBetween(
-            companyId, "Đã nhập kho", oneYearAgo, now);
+            companyId, "Đã hoàn thành", oneYearAgo, now);
 
     if (receiveType != null && !receiveType.equals("Tất cả")) {
       tickets = tickets.stream()
