@@ -165,7 +165,7 @@ public class ManufactureOrderService {
     List<ManufactureOrder> mos = new ArrayList<>();
     for (ItemDto item : items) {
       ManufactureOrder mo = manufactureOrderRepository
-          .findByItemIdAndStatusAndLastUpdatedOnBetween(item.getItemId(), "Đã hoàn thành",
+          .findByItemIdAndStatusAndEstimatedStartTimeBetween(item.getItemId(), "Đã hoàn thành",
               reportRequest.getStartTime(), reportRequest.getEndTime());
       if (mo != null) {
         mos.add(mo);
@@ -215,7 +215,7 @@ public class ManufactureOrderService {
     List<ManufactureOrder> mos = new ArrayList<>();
     for (ItemDto item : items) {
       List<ManufactureOrder> moList = manufactureOrderRepository
-          .findAllByItemIdAndStatusAndLastUpdatedOnBetween(item.getItemId(), "Đã hoàn thành",
+          .findAllByItemIdAndStatusAndEstimatedStartTimeBetween(item.getItemId(), "Đã hoàn thành",
               oneYearAgo, now);
       if (moList != null && !moList.isEmpty()) {
         mos.addAll(moList);
@@ -231,7 +231,7 @@ public class ManufactureOrderService {
     Map<YearMonth, Double> monthlyList = new TreeMap<>();
 
     for (ManufactureOrder mo : mos) {
-      YearMonth month = YearMonth.from(mo.getEstimatedEndTime());
+      YearMonth month = YearMonth.from(mo.getEstimatedStartTime());
         Double quantity = mo.getQuantity();
         monthlyList.merge(month, quantity, Double::sum);
     }
