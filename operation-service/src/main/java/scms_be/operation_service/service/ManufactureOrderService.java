@@ -231,7 +231,7 @@ public class ManufactureOrderService {
     Map<YearMonth, Double> monthlyList = new TreeMap<>();
 
     for (ManufactureOrder mo : mos) {
-      YearMonth month = YearMonth.from(mo.getLastUpdatedOn());
+      YearMonth month = YearMonth.from(mo.getEstimatedEndTime());
         Double quantity = mo.getQuantity();
         monthlyList.merge(month, quantity, Double::sum);
     }
