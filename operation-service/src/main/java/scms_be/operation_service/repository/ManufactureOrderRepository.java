@@ -20,4 +20,6 @@ public interface ManufactureOrderRepository extends JpaRepository<ManufactureOrd
   ManufactureOrder findByMoId(Long referenceId);
 
   ManufactureOrder findByItemIdAndStatusAndLastUpdatedOnBetween(Long itemId, String status, LocalDateTime start, LocalDateTime end);
+
+  List<ManufactureOrder> findAllByItemIdAndStatusAndLastUpdatedOnBetween(Long itemId, String status, LocalDateTime start, LocalDateTime end);
 }

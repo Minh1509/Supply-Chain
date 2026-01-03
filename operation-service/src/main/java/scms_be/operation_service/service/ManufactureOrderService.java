@@ -214,11 +214,11 @@ public class ManufactureOrderService {
     List<ItemDto> items = eventPublisher.GetItemAllByCompanyId(companyId);
     List<ManufactureOrder> mos = new ArrayList<>();
     for (ItemDto item : items) {
-      ManufactureOrder mo = manufactureOrderRepository
-          .findByItemIdAndStatusAndLastUpdatedOnBetween(item.getItemId(), "Đã hoàn thành",
+      List<ManufactureOrder> moList = manufactureOrderRepository
+          .findAllByItemIdAndStatusAndLastUpdatedOnBetween(item.getItemId(), "Đã hoàn thành",
               oneYearAgo, now);
-      if (mo != null) {
-        mos.add(mo);
+      if (moList != null && !moList.isEmpty()) {
+        mos.addAll(moList);
       }
     }
 
