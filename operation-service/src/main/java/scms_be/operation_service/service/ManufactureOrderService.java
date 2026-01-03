@@ -164,11 +164,11 @@ public class ManufactureOrderService {
     List<ItemDto> items = eventPublisher.GetItemAllByCompanyId(companyId);
     List<ManufactureOrder> mos = new ArrayList<>();
     for (ItemDto item : items) {
-      ManufactureOrder mo = manufactureOrderRepository
-          .findByItemIdAndStatusAndEstimatedStartTimeBetween(item.getItemId(), "Đã hoàn thành",
+      List<ManufactureOrder> moList = manufactureOrderRepository
+          .findAllByItemIdAndStatusAndEstimatedStartTimeBetween(item.getItemId(), "Đã hoàn thành",
               reportRequest.getStartTime(), reportRequest.getEndTime());
-      if (mo != null) {
-        mos.add(mo);
+      if (moList != null && !moList.isEmpty()) {
+        mos.addAll(moList);
       }
     }
 
@@ -186,7 +186,7 @@ public class ManufactureOrderService {
       if (item == null) {
         throw new RpcException(404, "Không tìm thấy hàng hóa!");
       }
-      Double quantity = mo.getQuantity();
+      Double quantity = mo.getCompletedQuantity() != null ? mo.getCompletedQuantity() : 0.0;
 
       itemReportDtoList.compute(item.getItemId(), (key, value) -> {
         if (value == null) {
