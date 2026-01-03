@@ -288,7 +288,7 @@ public class ReceiveTicketService {
     Map<YearMonth, Double> monthlyList = new TreeMap<>();
 
     for (ReceiveTicket ticket : tickets) {
-      YearMonth month = YearMonth.from(ticket.getLastUpdatedOn());
+      YearMonth month = YearMonth.from(ticket.getReceiveDate());
 
       List<ReceiveTicketDetail> details = detailRepository.findByTicketTicketId(ticket.getTicketId());
       for (ReceiveTicketDetail detail : details) {
