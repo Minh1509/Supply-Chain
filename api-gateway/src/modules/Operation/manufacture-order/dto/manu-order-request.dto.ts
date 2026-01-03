@@ -43,18 +43,18 @@ export class ManuOrderRequestDto {
 }
 
 export class ManuReportRequestDto {
-  @ApiProperty({ description: 'Start date (ISO8601)', example: '2025-10-01' })
+  @ApiProperty({ description: 'Start time (ISO8601)', example: '2025-10-01T00:00:00' })
   @IsOptional()
   @IsISO8601()
-  startDate?: string;
+  startTime?: string;
 
-  @ApiProperty({ description: 'End date (ISO8601)', example: '2025-10-31' })
+  @ApiProperty({ description: 'End time (ISO8601)', example: '2025-10-31T23:59:59' })
   @IsOptional()
   @IsISO8601()
-  endDate?: string;
+  endTime?: string;
 
-  @ApiProperty({ description: 'Optional filter by itemId', example: 123, required: false })
+  @ApiProperty({ description: 'Type filter', example: 'Tất cả', required: false })
   @IsOptional()
-  @IsNumber()
-  itemId?: number;
+  @IsString()
+  type?: string;
 }
