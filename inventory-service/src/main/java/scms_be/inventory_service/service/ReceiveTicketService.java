@@ -216,7 +216,7 @@ public class ReceiveTicketService {
 
   public List<ItemReportDto> getReceiveReport(ReceiveReportRequest reportRequest, Long companyId) {
     List<ReceiveTicket> tickets = receiveTicketRepository
-        .findByCompanyIdAndStatusAndLastUpdatedOnBetween(companyId, "Đã nhập kho", reportRequest.getStartTime(), reportRequest.getEndTime());
+        .findByCompanyIdAndStatusAndReceiveDateBetween(companyId, "Đã nhập kho", reportRequest.getStartTime(), reportRequest.getEndTime());
 
     if (reportRequest.getReceiveType() != null && !reportRequest.getReceiveType().equals("Tất cả")) {
       tickets = tickets.stream()

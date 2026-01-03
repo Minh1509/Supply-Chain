@@ -12,6 +12,8 @@ public interface ReceiveTicketRepository extends JpaRepository<ReceiveTicket, Lo
 
   List<ReceiveTicket> findByCompanyIdAndStatusAndLastUpdatedOnBetween(Long CompanyId, String status, LocalDateTime start, LocalDateTime end);
 
+  List<ReceiveTicket> findByCompanyIdAndStatusAndReceiveDateBetween(Long companyId, String status, LocalDateTime start, LocalDateTime end);
+
   int countByTicketCodeStartingWith(String prefix);
 
 }
