@@ -473,25 +473,27 @@ public class IssueTicketService {
     double a = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
     double b = (sumY - a * sumX) / n;
 
-    double currentMonthForecast = a * (n + 1) + b;
-    double nextMonthForecast = a * (n + 2) + b;
+    double currentMonthForecast = Math.max(0, a * (n + 1) + b);
+    double nextMonthForecast = Math.max(0, a * (n + 2) + b);
+    double thirdMonthForecast = Math.max(0, a * (n + 3) + b);
 
     YearMonth currentMonth = YearMonth.now();
     MonthlyInventoryReportDto currentMonthDto = new MonthlyInventoryReportDto();
     currentMonthDto.setMonth(currentMonth.format(DateTimeFormatter.ofPattern("MM/yyyy")));
-    currentMonthDto.setTotalQuantity(currentMonthForecast);
+    currentMonthDto.setTotalQuantity(Math.round(currentMonthForecast * 100.0) / 100.0); // Round to 2 decimal places
     history.add(currentMonthDto);
 
     YearMonth nextMonth = currentMonth.plusMonths(1);
     MonthlyInventoryReportDto nextMonthDto = new MonthlyInventoryReportDto();
     nextMonthDto.setMonth(nextMonth.format(DateTimeFormatter.ofPattern("MM/yyyy")));
-    nextMonthDto.setTotalQuantity(nextMonthForecast);
+    nextMonthDto.setTotalQuantity(Math.round(nextMonthForecast * 100.0) / 100.0);
     history.add(nextMonthDto);
 
-    MonthlyInventoryReportDto extraNextMonthDto = new MonthlyInventoryReportDto();
-    extraNextMonthDto.setMonth(nextMonth.format(DateTimeFormatter.ofPattern("MM/yyyy")));
-    extraNextMonthDto.setTotalQuantity(nextMonthForecast);
-    history.add(extraNextMonthDto);
+    YearMonth thirdMonth = currentMonth.plusMonths(2);
+    MonthlyInventoryReportDto thirdMonthDto = new MonthlyInventoryReportDto();
+    thirdMonthDto.setMonth(thirdMonth.format(DateTimeFormatter.ofPattern("MM/yyyy")));
+    thirdMonthDto.setTotalQuantity(Math.round(thirdMonthForecast * 100.0) / 100.0);
+    history.add(thirdMonthDto);
 
     return history;
   }
