@@ -68,6 +68,16 @@ public class TransferTicketService {
     TransferTicket savedTicket = transferTicketRepository.save(ticket);
 
     if (request.getTransferTicketDetails() != null) {
+
+      List<Long> itemIds = request.getTransferTicketDetails().stream()
+        .map(TransferTicketDetailRequest::getItemId)
+        .collect(Collectors.toList());
+
+      Set<Long> uniqueItemIds = new HashSet<>(itemIds);
+      if (uniqueItemIds.size() < itemIds.size()) {
+        throw new RpcException(400, "Hàng hóa trong phiếu bị trùng lặp!");
+      }
+
       for (TransferTicketDetailRequest detailRequest : request.getTransferTicketDetails()) {
 
         ItemDto item = eventPublisher.getItemById(detailRequest.getItemId());
