@@ -8,10 +8,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,6 +35,8 @@ import scms_be.operation_service.repository.BOMRepository;
 import scms_be.operation_service.repository.ManufactureOrderRepository;
 import scms_be.operation_service.repository.ManufactureStageDetailRepository;
 import scms_be.operation_service.repository.ManufactureStageRepository;
+
+import java.util.concurrent.*;
 
 @Slf4j
 @Service
@@ -257,7 +259,7 @@ public class ManufactureOrderService {
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy lệnh sản xuất!"));
     
     mo.setCompletedQuantity(completedQuantity);
-    mo.setStatus("Chờ nhập kho");
+    mo.setStatus("Đã hoàn thành");
     
     if (mo.getBatchNo() == null || mo.getBatchNo().isEmpty()) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));

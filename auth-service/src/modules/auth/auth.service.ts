@@ -74,19 +74,6 @@ export class AuthService extends BaseService {
       });
     }
 
-    // Check employee code
-    if (dto.employeeCode) {
-      const existedEmployee = await this.employeeRepo.findOne({
-        where: { employeeCode: dto.employeeCode },
-      });
-      if (existedEmployee) {
-        throw new RpcException({
-          ...ERROR_RESPONSE.BAD_REQUEST,
-          message: 'Mã nhân viên đã được sử dụng!',
-        });
-      }
-    }
-
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();

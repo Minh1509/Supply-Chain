@@ -65,21 +65,10 @@ public class TransferTicketService {
     ticket.setStatus(request.getStatus());
     ticket.setFile(request.getFile());
 
-    if (request.getTransferTicketDetails() != null) {
-
-      List<Long> itemIds = request.getTransferTicketDetails().stream()
-        .map(TransferTicketDetailRequest::getItemId)
-        .collect(Collectors.toList());
-
-      Set<Long> uniqueItemIds = new HashSet<>(itemIds);
-      if (uniqueItemIds.size() < itemIds.size()) {
-        throw new RpcException(400, "Hàng hóa trong phiếu bị trùng lặp!");
-      }
-      
-    }
-
     TransferTicket savedTicket = transferTicketRepository.save(ticket);
-    for (TransferTicketDetailRequest detailRequest : request.getTransferTicketDetails()) {
+
+    if (request.getTransferTicketDetails() != null) {
+      for (TransferTicketDetailRequest detailRequest : request.getTransferTicketDetails()) {
 
         ItemDto item = eventPublisher.getItemById(detailRequest.getItemId());
         if (item == null) {
@@ -93,7 +82,8 @@ public class TransferTicketService {
         detail.setNote(detailRequest.getNote());
         detailRepository.save(detail);
       }
-      
+    }
+
     return convertToDto(savedTicket);
   }
 
