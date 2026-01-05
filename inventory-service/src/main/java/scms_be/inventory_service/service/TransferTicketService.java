@@ -65,7 +65,7 @@ public class TransferTicketService {
     ticket.setStatus(request.getStatus());
     ticket.setFile(request.getFile());
 
-    TransferTicket savedTicket = transferTicketRepository.save(ticket);
+   
 
     if (request.getTransferTicketDetails() != null) {
 
@@ -77,6 +77,7 @@ public class TransferTicketService {
       if (uniqueItemIds.size() < itemIds.size()) {
         throw new RpcException(400, "Hàng hóa trong phiếu bị trùng lặp!");
       }
+      TransferTicket savedTicket = transferTicketRepository.save(ticket);
 
       for (TransferTicketDetailRequest detailRequest : request.getTransferTicketDetails()) {
 
@@ -93,7 +94,7 @@ public class TransferTicketService {
         detailRepository.save(detail);
       }
     }
-
+     TransferTicket savedTicket = transferTicketRepository.save(ticket);
     return convertToDto(savedTicket);
   }
 
