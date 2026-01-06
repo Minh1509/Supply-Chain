@@ -259,7 +259,7 @@ public class ManufactureOrderService {
         .orElseThrow(() -> new RpcException(404, "Không tìm thấy lệnh sản xuất!"));
     
     mo.setCompletedQuantity(completedQuantity);
-    mo.setStatus("Đã hoàn thành");
+    mo.setStatus("Chờ nhập kho");
     
     if (mo.getBatchNo() == null || mo.getBatchNo().isEmpty()) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
