@@ -55,6 +55,17 @@ public class TransferTicketService {
     if (request.getTransferTicketDetails() == null || request.getTransferTicketDetails().isEmpty()) {
       throw new RpcException(400, "Danh sách hàng hóa trong phiếu chuyển kho không được để trống!");
     }
+    
+    if (request.getTransferTicketDetails() != null) {
+      List<Long> itemIds = request.getTransferTicketDetails().stream()
+        .map(TransferTicketDetailRequest::getItemId)
+        .collect(Collectors.toList());
+
+      Set<Long> uniqueItemIds = new HashSet<>(itemIds);
+      if (uniqueItemIds.size() < itemIds.size()) {
+        throw new RpcException(400, "Hàng hóa trong phiếu bị trùng lặp!");
+      }
+    }
 
     ticket.setCompanyId(request.getCompanyId());
     ticket.setTicketCode(generateTransferTicketCode(request.getCompanyId()));
