@@ -48,10 +48,4 @@ export class WarehouseController {
     );
   }
 
-  @Delete(':warehouseId')
-  async deleteWarehouse(@Param('warehouseId') warehouseId: number) {
-    return await firstValueFrom(
-      this.inventoryClient.send(WAREHOUSE_CONSTANTS.DELETE_WAREHOUSE, { warehouseId }),
-    );
-  }
 }

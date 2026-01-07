@@ -185,9 +185,19 @@ public class BOMService {
   }
 
   public void deleteBOM(Long bomId) {
-    if (!bomRepository.existsById(bomId)) {
-      throw new RpcException(404, "Không tìm thấy BOM!");
+    BOM bom = bomRepository.findById(bomId)
+        .orElseThrow(() -> new RpcException(404, "Không tìm thấy BOM!"));
+    
+    // Kiểm tra xem BOM có đang được sử dụng trong các đơn hàng sản xuất không
+    // TODO: Thêm logic kiểm tra với ManufactureOrder khi cần thiết
+    // Có thể check qua EventPublisher hoặc thêm method riêng
+    
+    // Kiểm tra trạng thái trước khi xóa
+    if ("Đang sử dụng".equals(bom.getStatus())) {
+      throw new RpcException(400, "Không thể xóa BOM đang được sử dụng!");
     }
+    
+    // Hard delete - cascade sẽ tự động xóa BOMDetails
     bomRepository.deleteById(bomId);
   }
 

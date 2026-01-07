@@ -72,7 +72,6 @@ public class InventoryListener {
                 case "warehouse.update":
                 case "warehouse.get_by_id":
                 case "warehouse.get_all_in_company":
-                case "warehouse.delete":
                     return warehouseHandler.handle(event);
                 default:
                     throw new RpcException(400, "Unknown event: " + event.getPattern());

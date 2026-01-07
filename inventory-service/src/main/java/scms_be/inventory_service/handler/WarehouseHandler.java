@@ -30,8 +30,6 @@ public class WarehouseHandler {
                 return warehouseService.getWarehouseById(request.getWarehouseId());
             case "warehouse.get_all_in_company":
                 return warehouseService.getAllWarehousesInCompany(request.getCompanyId());
-            case "warehouse.delete":
-                return warehouseService.deleteWarehouse(request.getWarehouseId());
             default:
                 throw new RpcException(400, "Unknown warehouse event: " + event.getPattern());
         }

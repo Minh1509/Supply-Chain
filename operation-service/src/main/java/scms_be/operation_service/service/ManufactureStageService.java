@@ -136,8 +136,19 @@ public class ManufactureStageService {
   }
 
   public void deleteStage(Long stageId) {
-  ManufactureStage exist = stageRepository.findById(stageId)
-    .orElseThrow(() -> new RpcException(404, "Không tìm thấy công đoạn sản xuất!"));
+    ManufactureStage exist = stageRepository.findById(stageId)
+        .orElseThrow(() -> new RpcException(404, "Không tìm thấy công đoạn sản xuất!"));
+    
+    // Kiểm tra xem ManufactureStage có đang được sử dụng trong các đơn hàng sản xuất không
+    // TODO: Thêm logic kiểm tra với ManufactureOrder khi cần thiết
+    // Có thể check qua EventPublisher hoặc thêm method riêng
+    
+    // Kiểm tra trạng thái trước khi xóa
+    if ("Đang sử dụng".equals(exist.getStatus())) {
+      throw new RpcException(400, "Không thể xóa công đoạn đang được sử dụng!");
+    }
+    
+    // Hard delete - cascade sẽ tự động xóa ManufactureStageDetails
     stageRepository.delete(exist);
   }
 

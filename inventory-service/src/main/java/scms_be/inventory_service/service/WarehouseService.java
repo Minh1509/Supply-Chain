@@ -62,15 +62,6 @@ public class WarehouseService {
     return prefix + String.format("%05d", count + 1);
   }
 
-  public boolean deleteWarehouse(Long warehouseId) {
-    Optional<Warehouse> warehouse = warehouseRepository.findById(warehouseId);
-    if (warehouse.isPresent()) {
-      warehouseRepository.delete(warehouse.get());
-      return true;
-    }
-    return false;
-  }
-
   private WarehouseDto convertToDto(Warehouse warehouse) {
     WarehouseDto dto = new WarehouseDto();
     dto.setWarehouseId(warehouse.getWarehouseId());
