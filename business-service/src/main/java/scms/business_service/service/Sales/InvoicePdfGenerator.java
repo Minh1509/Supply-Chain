@@ -50,7 +50,7 @@ public class InvoicePdfGenerator {
 
   private static void addSummaryRow(PdfPTable table, String label, String value, Font labelFont, Font valueFont) {
     PdfPCell labelCell = new PdfPCell(new Phrase(label, labelFont));
-    labelCell.setColspan(5);
+    labelCell.setColspan(6);
     labelCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
     labelCell.setPadding(5);
     table.addCell(labelCell);
@@ -101,11 +101,11 @@ public class InvoicePdfGenerator {
       document.add(createLabelValueParagraph("Phương thức thanh toán: ", 
           salesOrder.getPaymentMethod() != null ? salesOrder.getPaymentMethod() : "Chưa xác định", labelFont, valueFont));
 
-      PdfPTable table = new PdfPTable(6);
+      PdfPTable table = new PdfPTable(7);
       table.setWidthPercentage(100);
       table.setSpacingBefore(10);
 
-      String[] headers = { "STT", "Mã hàng hóa", "Số lượng", "Đơn giá", "Chiết khấu", "Thành tiền" };
+      String[] headers = { "STT", "Mã hàng hóa", "Tên hàng hóa", "Số lượng", "Đơn giá", "Chiết khấu", "Thành tiền" };
       for (String header : headers) {
         PdfPCell cell = new PdfPCell(new Phrase(header, labelFont));
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -122,8 +122,10 @@ public class InvoicePdfGenerator {
         
         var item = externalServicePublisher.getItemById(detail.getItemId());
         String itemCode = item != null ? item.getItemCode() : "";
+        String itemName = item != null ? item.getItemName() : "";
         
         addCell(table, itemCode, valueFont, Element.ALIGN_LEFT);
+        addCell(table, itemName, valueFont, Element.ALIGN_LEFT);
         addCell(table, String.valueOf(detail.getQuantity()), valueFont, Element.ALIGN_RIGHT);
         addCell(table, String.format("%,.2f", detail.getItemPrice()), valueFont, Element.ALIGN_RIGHT);
         addCell(table, String.format("%,.2f", detail.getDiscount() != null ? detail.getDiscount() : 0.0), valueFont, Element.ALIGN_RIGHT);
